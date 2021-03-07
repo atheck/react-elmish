@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "isolatedModules": true,
+    "lib": ["ESNext", "DOM"],
+    "moduleResolution": "node",
+    "strict": true,
+    "target": "esnext",
+    "strictNullChecks": true,
+    "downlevelIteration": true,
+    "importHelpers": true,
+    "resolveJsonModule": true,
+    "module": "esnext",
+    "declaration": true,
+    "outDir": "dist"
+  },
+  "typeAcquisition": {
+    "include": [
+        "jest"
+    ]
+  }
+}
