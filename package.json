@@ -32,6 +32,7 @@
     "type": "git",
     "url": "https://github.com/atheck/react-elmish.git"
   },
+  "keywords": ["react", "elm", "elmish", "state management"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts"
 }
