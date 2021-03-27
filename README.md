@@ -10,10 +10,10 @@ This library brings the elmish pattern to react.
 
 An elmish component basically consists of the following parts:
 
-* The **Model** holding the state of the component
-* The **Props** for the component
-* The **Init** function to create the initial model based on the props
-* The **Messages** to dispatch which modify the model
+* The **Model** holding the state of the component.
+* The **Props** for the component.
+* The **Init** function to create the initial model based on the props.
+* The **Messages** to dispatch which modify the model.
 * The **Update** function to modify the model based on a specific message.
 * The **View** which renders the component based on the current model.
 
@@ -37,7 +37,7 @@ export const Msg = {
 };
 ```
 
-Now we can create a typed cmd object for our messages type:
+Now we can create a `cmd` object for our messages type:
 
 ```ts
 const cmd = Elm.createCmd<Message>();
@@ -90,23 +90,29 @@ export const update = (model: Model, msg: Msg, props: Props): Elm.UpdateReturnTy
 To put all this together and to render our component, we need a React class component:
 
 ```tsx
-import * as Shared from "./App";
+import * as Shared from "../App";
 import React from "react";
 
+// Create an elmish class component
 class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
+    // Construct the component with the props and init function
     constructor(props: Shared.Props) {
         super(props, Shared.init, "App");
     }
 
+    // Assign our update function to the component
     update = Shared.update;
 
     render(): React.ReactNode {
+        // Access the model
         const { value } = this.model;
 
         return (
             <div>
+                {/* Display our current value */}
                 <p>{value}</p>
 
+                {/* Dispatch messages */}
                 <button onClick={() => this.dispatch(Shared.Msg.increment())}>Increment</button>
                 <button onClick={() => this.dispatch(Shared.Msg.decrement())}>Decrement</button>
             </div>
@@ -116,11 +122,17 @@ class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
 
 This initializes our model, assigns the update function and renders our component. You can access the current model with `this.model`.
 
+You can use this component like any other React component.
+
+> **Hint**: It is recommended to separate business logic and the view into separate modules. Here we put the `Messages`, `Model`, `Props`, `init`, and `update` functions into **App.ts**. The elmish React Component resides in a **Components** subfolder and is named **App.tsx**.
+>
+> You can even split the contents of the **App.ts** into two files: **Types.ts** (`Message`, `Model`, and `Props`) and **State.ts** (`init` and `update`).
+
 ## More on messages
 
 ### Message arguments
 
-Messages can also have arguments. You can modify the example above and pass an optional step value to the Increment message:
+Messages can also have arguments. You can modify the example above and pass an optional step value to the **Increment** message:
 
 ```ts
 export type Message =
@@ -133,7 +145,7 @@ export const Msg = {
 }
 ```
 
-Then use this argument in the update function:
+Then use this argument in the **update** function:
 
 ```ts
 ...
@@ -142,7 +154,7 @@ case "Increment":
 ...
 ```
 
-In your render method you can add a second button to increment the value by 10:
+In the **render** method you can add another button to increment the value by 10:
 
 ```tsx
 ...
@@ -152,9 +164,9 @@ In your render method you can add a second button to increment the value by 10:
 
 ### Symbols instead of strings
 
-You can also use symbols for the message type instead of strings:
+You can also use **Symbols** for the message type instead of strings:
 
-1. Declare a symbol for the message:
+1. Declare a Symbol for the message:
 
     ```ts
     const ResetMsg = Symbol("reset");
@@ -179,18 +191,22 @@ You can also use symbols for the message type instead of strings:
     }
     ```
 
-1. Handle the new message in the update function:
+1. Handle the new message in the **update** function:
 
     ```ts
+    ...
     case ResetMsg:
         return [{ value: 0 }];
-    ```ts
+    ...
+    ```
 
 ## Dispatch commands in the update function
 
-In addition to modifying the model, you can dispatch new commands in the update function.
+In addition to modifying the model, you can dispatch new commands in the **update** function.
 
-To do so, you can call one of the functions in the `cmd` object. Let's assume you have a message to display the description of the last called message:
+To do so, you can call one of the functions in the `cmd` object.
+
+Let's assume you have a message to display the description of the last called message:
 
 ```ts
 { name: "PrintLastMessage", message: string }
@@ -200,14 +216,14 @@ To do so, you can call one of the functions in the `cmd` object. Let's assume yo
 printLastMessage: (message: string): Message => ({ name: "PrintLastMessage", message }),
 ```
 
-In the update function you can dispatch that message like this:
+In the **update** function you can dispatch that message like this:
 
 ```ts
 case "Increment":
     return [{ value: model.value + 1 }, cmd.ofMsg(Msg.printLastMessage("Incremented by one"))];
 ```
 
-This new message will immediately be dispatched.
+This new message will immediately be dispatched after returning from the **update** function.
 
 This way you can also call functions and async operations with one of the following functions:
 
@@ -215,9 +231,9 @@ This way you can also call functions and async operations with one of the follow
 |---|---|
 | `cmd.none` | Does nothing. Equivalent to omit the second value. |
 | `cmd.ofMsg` | Dispatches a new message. |
-| `cmd.batch` | Let's you aggregate more than one message. |
-| `cmd.ofFunc.either` | Call a synchronous function and map the result into a message. |
-| `cmd.ofPromise.either` | Call an async function and map the result into a message. |
+| `cmd.batch` | Aggregates an array of messages. |
+| `cmd.ofFunc.either` | Calls a synchronous function and maps the result into a message. |
+| `cmd.ofPromise.either` | Calls an async function and maps the result into a message. |
 | `cmd.ofPromise.attempt` | Like `either` but ignores the success case. |
 | `cmd.ofPromise.perform` | Like `either` but ignores the error case. |
 
@@ -247,6 +263,8 @@ Elm.init({
     errorMiddleware: error => Toast.error(error.message),
 });
 ```
+
+## Error handling
 
 You can handle errors easily with the following pattern.
 
@@ -279,10 +297,32 @@ You can handle errors easily with the following pattern.
 
 The **handleError** function then calls your error handling middleware.
 
+## React life cycle management
+
+If you want to use `componentDidMount` or `componentWillUnmount` don't forget to call the base class implementation of it as the ElmComponent is using them.
+
+```ts
+class App extends Elm.ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
+    ...
+    componentDidMount() {
+        super.componentDidMount();
+
+        // your code
+    }
+
+    componentWillUnmount() {
+        super.componentWillUnmount();
+
+        // your code
+    }
+    ...
+}
+```
+
 ## Testing
 
 TODO
 
 ## ToDo
 
-* [ ] Support for functional components
+* [ ] Support for functional components using hooks
