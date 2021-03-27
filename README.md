@@ -17,7 +17,9 @@ An elmish component basically consists of the following parts:
 * The **Update** function to modify the model based on a specific message.
 * The **View** which renders the component based on the current model.
 
-First import Elm and declare the message discriminated union type:
+## App.ts
+
+First import everything from `react-elmish` and declare the **Message** discriminated union type:
 
 ```ts
 import * as Elm from "react-elmish";
@@ -59,7 +61,7 @@ export type Props = {
 };
 ```
 
-To create the initial model we need an init function:
+To create the initial model we need an **init** function:
 
 ```ts
 export const init = (props: Props): [Model, Elm.Cmd<Message>] => {
@@ -71,7 +73,7 @@ export const init = (props: Props): [Model, Elm.Cmd<Message>] => {
 };
 ```
 
-To update the model based on a message we need an update function:
+To update the model based on a message we need an **update** function:
 
 ```ts
 export const update = (model: Model, msg: Msg, props: Props): Elm.UpdateReturnType<Model, Message> => {
@@ -85,12 +87,18 @@ export const update = (model: Model, msg: Msg, props: Props): Elm.UpdateReturnTy
 };
 ```
 
-> **Hint:** If you are using typescript and eslint you can enable the [switch-exhaustive-check](https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/switch-exhaustiveness-check.md) rule.
+> **Note:** If you are using **typescript** and **typescript-eslint** you should enable the [switch-exhaustive-check](https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/switch-exhaustiveness-check.md) rule.
+
+### App.tsx
 
 To put all this together and to render our component, we need a React class component:
 
 ```tsx
+// Import everything from the App.ts
 import * as Shared from "../App";
+// Import the ElmComponent which extends the React.Component
+import { ElmComponent } from "react-elmish";
+// Don't forget to import react
 import React from "react";
 
 // Create an elmish class component
@@ -124,7 +132,7 @@ This initializes our model, assigns the update function and renders our componen
 
 You can use this component like any other React component.
 
-> **Hint**: It is recommended to separate business logic and the view into separate modules. Here we put the `Messages`, `Model`, `Props`, `init`, and `update` functions into **App.ts**. The elmish React Component resides in a **Components** subfolder and is named **App.tsx**.
+> **Note**: It is recommended to separate business logic and the view into separate modules. Here we put the `Messages`, `Model`, `Props`, `init`, and `update` functions into **App.ts**. The elmish React Component resides in a **Components** subfolder and is named **App.tsx**.
 >
 > You can even split the contents of the **App.ts** into two files: **Types.ts** (`Message`, `Model`, and `Props`) and **State.ts** (`init` and `update`).
 
@@ -277,7 +285,7 @@ You can handle errors easily with the following pattern.
         ;
     ```
 
-1. Optionally add the convenient function to the Msg object:
+1. Optionally add the convenient function to the **Msg** object:
 
     ```ts
     export const Msg = {
@@ -286,7 +294,7 @@ You can handle errors easily with the following pattern.
     }
     ```
 
-1. Handle the error message in the update function:
+1. Handle the error message in the **update** function:
 
     ```ts
     ...
@@ -299,10 +307,10 @@ The **handleError** function then calls your error handling middleware.
 
 ## React life cycle management
 
-If you want to use `componentDidMount` or `componentWillUnmount` don't forget to call the base class implementation of it as the ElmComponent is using them.
+If you want to use `componentDidMount` or `componentWillUnmount` don't forget to call the base class implementation of it as the **ElmComponent** is using them internally.
 
 ```ts
-class App extends Elm.ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
+class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
     ...
     componentDidMount() {
         super.componentDidMount();
@@ -319,13 +327,148 @@ class App extends Elm.ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
 }
 ```
 
+## Composition
+
+If you have some business logic that you want to reuse in other components, you can do this by using different sources for messages.
+
+Let's say you want to load some settings, you can write a module like this:
+
+```ts LoadSettings.ts
+import * as Elm from "react-elmish";
+
+export type Settings = {
+    // ...
+};
+
+// We use a MsgSource to differentiate between the messages
+type MessageSource = Elm.MsgSource<"LoadSettings">;
+
+// Add that MessageSource to all the messages
+export type Message =
+    | { name: "LoadSettings" } & MessageSource
+    | { name: "SettingsLoaded", settings: Settings } & MessageSource
+    | { name: "Error", error: Error } & MessageSource
+
+// Do the same for the convenient functions
+const MsgSource: MessageSource = { source: "LoadSettings" };
+
+export const Msg = {
+    loadSettings: (): Message => ({ name: "LoadSettings", ...MsgSource }),
+    settingsLoaded: (settings: Settings): Message => ({ name: "SettingsLoaded", settings, ...MsgSource }),
+    error: (error: Error): Message => ({ name: "Error", error, ...MsgSource }),
+};
+
+const cmd = Elm.createCmd<Message>();
+
+export type Model = Readonly<{
+    settings: Nullable<Settings>,
+}>;
+
+export const init = (): Model => ({
+    settings: null,
+});
+
+export const update = (_model: Model, msg: Message): Elm.UpdateReturnType<Model, Message> => {
+    switch (msg.name) {
+        case "LoadSettings":
+            return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error)];
+
+        case "SettingsLoaded":
+            return [{ settings: msg.settings }];
+
+        case "Error":
+            return Elm.handleError(msg.error);
+    }
+};
+
+const loadSettings = async (): Promise<Settings> => {
+    // Call some service (e.g. database or backend)
+    return Promise.resolve({});
+};
+```
+
+> **Note**: This module has no **View**.
+
+In other components where we want to use this **LoadSettings** module, we also need a message source:
+
+```ts Composition.ts
+import * as Elm from "react-elmish";
+// Import the LoadSettings module
+import * as LoadSettings from "./LoadSettings";
+
+// Create a message source for this module
+type MessageSource = Elm.MsgSource<"Composition">;
+
+// Here we define our local messages
+// We don't need to export them
+type CompositionMessage =
+    | { name: "MyMessage" } & MessageSource
+    ;
+
+// Combine the local messages and the ones from LoadSettings
+export type Message =
+    | CompositionMessage
+    | LoadSettings.Message
+    ;
+
+const MsgSource: MessageSource = { source: "Composition" };
+
+export const Msg = {
+    // Spread the convenient functions
+    ...LoadSettings.Msg,
+    myMessage: (): Message => ({ name: "MyMessage", ...MsgSource }),
+};
+
+const cmd = Elm.createCmd<Message>();
+
+// Include the LoadSettings Model
+export type Model = Readonly<{
+    // ...
+}> & LoadSettings.Model;
+
+export const init = (): [Model, Elm.Cmd<Message>] => {
+    const model: Model = {
+        // Spread the initial model from LoadSettings
+        ...LoadSettings.init(),
+        // ...
+    };
+
+    // Return the model and dispatch the LoadSettings message
+    return [model, cmd.ofMsg(LoadSettings.Msg.loadSettings())];
+};
+
+// In our update function, we first distinguish between the sources of the messages
+export const update = (model: Model, msg: Message): Elm.UpdateReturnType<Model, Message> => {
+    switch (msg.source) {
+        case "Composition":
+            // Then call the update function for the local messages
+            return updateComposition(model, msg);
+
+        case "LoadSettings":
+            // Or call the update function for the LoadSettings messages
+            return LoadSettings.update(model, msg);
+    }
+}
+
+// For the msg parameter we use the local CompositionMessage type
+const updateComposition = (model: Model, msg: CompositionMessage): Elm.UpdateReturnType<Model, Message> => {
+    switch (msg.name) {
+        case "MyMessage":
+            return [{}];
+    }
+}
+```
+
 ## Testing
 
 TODO
 
 ## ToDo
 
-* [ ] more examples and testing How To in readme
-* [ ] Support for functional components using hooks
-* [ ] build script with `npm run build` and `npm outdated`
-* [ ] release script to publish on npm
+* extend readme
+  * more examples
+  * testing How To
+  * call parent components
+* Support for functional components using hooks
+* build script with `npm run build` and `npm outdated`
+* release script to publish on npm
