@@ -325,4 +325,7 @@ TODO
 
 ## ToDo
 
+* [ ] more examples and testing How To in readme
 * [ ] Support for functional components using hooks
+* [ ] build script with `npm run build` and `npm outdated`
+* [ ] release script to publish on npm
