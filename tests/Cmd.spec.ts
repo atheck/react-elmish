@@ -1,4 +1,4 @@
-import { createCmd } from "./Cmd";
+import { createCmd } from "../src/Cmd";
 
 const cmd = createCmd<string>();
 
