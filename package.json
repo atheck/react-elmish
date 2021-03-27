@@ -27,6 +27,11 @@
     "test": "jest",
     "test:watch": "jest --watch"
   },
+  "homepage": "https://github.com/atheck/react-elmish",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/atheck/react-elmish.git"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts"
 }
