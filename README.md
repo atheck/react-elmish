@@ -1,10 +1,10 @@
-# react-elm
+# react-elmish
 
 This library brings the elmish pattern to react.
 
 ## Installation
 
-`npm install react-elm`
+`npm install react-elmish`
 
 ## Basic Usage
 
@@ -20,7 +20,7 @@ An elmish component basically consists of the following parts:
 First import Elm and declare the message discriminated union type:
 
 ```ts
-import * as Elm from "react-elm";
+import * as Elm from "react-elmish";
 
 export type Message =
     | { name: "Increment" }
@@ -241,10 +241,10 @@ Example: TODO
 
 ## Setup
 
-**react-elm** works without a setup. But if you want to use logging or some error handling middleware, you can setup **react-elm** at the start of your program.
+**react-elmish** works without a setup. But if you want to use logging or some error handling middleware, you can setup **react-elmish** at the start of your program.
 
 ```ts
-import * as Elm from "react-elm";
+import * as Elm from "react-elmish";
 
 const myLogger = {
     debug(...args: unknown []) {
