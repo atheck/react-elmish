@@ -3,14 +3,14 @@ import { LoggerService } from "./Init";
 import React from "react";
 
 /**
- * Abstrakte Klasse für React Class Components für die Verwendung von ELM.
+ * Abstract class for a react class component using the elmish pattern.
  * @export
  * @abstract
  * @class ElmComponent
  * @extends {Component<TProps, TModel>}
- * @template TModel Der Typ des Models.
- * @template TMsg Der Typ der Msg Union.
- * @template TProps Der Typ der Props.
+ * @template TModel The type of the model.
+ * @template TMsg The type of the messages.
+ * @template TProps The type of the props.
  */
 export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol }, TProps> extends React.Component<TProps> {
     private readonly _name: string;
@@ -22,9 +22,9 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
 
     /**
      * Creates an instance of ElmComponent.
-     * @param {TProps} props Die Props der Komponente.
-     * @param {() => TModel} init Die Funktion zum Initialisieren des State.
-     * @param name Der Name der Komponente.
+     * @param {TProps} props The props for the component.
+     * @param {() => TModel} init The initializer function.
+     * @param name The name of the component.
      * @memberof ElmComponent
      */
     constructor(props: TProps, init: (arg: TProps) => [TModel, Cmd<TMsg> | undefined], name: string) {
@@ -38,7 +38,7 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
     }
 
     /**
-     * Gibt das aktuelle Model zurück.
+     * Returns the current model.
      * @readonly
      * @type {Readonly<TModel>}
      * @memberof ElmComponent
@@ -48,8 +48,8 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
     }
 
     /**
-     * Wird aufgerufen nachdem die Komponente geladen wurde.
-     * Bei der Implementierung der Methode in Ableitungen, muss die Methode der Basisklasse aufgerufen werden.
+     * Is called when the component is loaded.
+     * When implementing this method, the base implementation has to be called.
      * @memberof ElmComponent
      */
     componentDidMount(): void {
@@ -62,8 +62,8 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
     }
 
     /**
-     * Wird aufgerufen bevor die Komponente entfernt wird.
-     * Bei der Implementierung der Methode in Ableitungen, muss die Methode der Basisklasse aufgerufen werden.
+     * Is called before unloading the component.
+     * When implementing this method, the base implementation has to be called.
      * @memberof ElmComponent
      */
     componentWillUnmount(): void {
@@ -81,8 +81,8 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
     }
 
     /**
-     * Löst eine Msg aus.
-     * @param {TMsg} msg Die auszulösende Msg.
+     * Dispatches a message.
+     * @param {TMsg} msg The message to dispatch.
      * @memberof ElmComponent
      */
     dispatch = (msg: TMsg): void => {
@@ -131,14 +131,11 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
     };
 
     /**
-     * Aktualisiert den State anhand einer Msg.
-     * Gibt den neuen State und eine folgende Msg zurück.
-     * Der State ist partiell. Wenn sich der State nicht geändert hat, kann das übergebene Model
-     * oder ein leeres Objekt {} zurückgegeben werden.
-     * @param {TModel} model Der aktuelle State.
-     * @param {TMsg} msg Die zu bearbeitende Msg.
-     * @param {TProps} props Die Props der Component.
-     * @returns Tuple aus neuem partiellem State und neuer auszulösenden Msg.
+     * Function to modify the model based on a message.
+     * @param {TModel} model The current model.
+     * @param {TMsg} msg The message to process.
+     * @param {TProps} props The props of the component.
+     * @returns The new model (can also be an empty object {}) and an optional new message to dispatch.
      * @abstract
      * @memberof ElmComponent
      */
@@ -146,6 +143,6 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
 }
 
 /**
- * Hilfstyp für den Rückgabewert von ElmComponent.update.
+ * Type for the return value of the update function.
  */
 export type UpdateReturnType<TModel, TMsg> = [Partial<TModel>, Cmd<TMsg>?];
