@@ -1,6 +1,6 @@
 {
   "name": "react-elmish",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Elmish for React using Typescript",
   "author": "atheck",
   "license": "MIT",
@@ -32,7 +32,12 @@
     "type": "git",
     "url": "https://github.com/atheck/react-elmish.git"
   },
-  "keywords": ["react", "elm", "elmish", "state management"],
+  "keywords": [
+    "react",
+    "elm",
+    "elmish",
+    "state management"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts"
 }
