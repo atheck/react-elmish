@@ -63,6 +63,42 @@ class Command<TMsg> {
 
             return [bind];
         },
+
+        /**
+        * Creates a command out of a simple function and ignores the error case.
+        * @param task The function to call.
+        * @param ofSuccess Creates the message to dispatch after a successful call of the task.
+        * @param args The parameters of the task.
+        */
+         perform<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofSuccess: (result: TReturn) => TMsg, ...args: TArgs): Cmd<TMsg> {
+            const bind = (dispatch: Dispatch<TMsg>) => {
+                try {
+                    const result = task(...args);
+
+                    dispatch(ofSuccess(result));
+                } catch {}
+            };
+
+            return [bind];
+        },
+
+        /**
+        * Creates a command out of a simple function and ignores the success case.
+        * @param task The function to call.
+        * @param ofError Creates the message to dispatch when an error occurred.
+        * @param args The parameters of the task.
+        */
+         attempt<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofError: (error: Error) => TMsg, ...args: TArgs): Cmd<TMsg> {
+            const bind = (dispatch: Dispatch<TMsg>) => {
+                try {
+                    task(...args);
+                } catch (error) {
+                    dispatch(ofError(error));
+                }
+            };
+
+            return [bind];
+        },
     };
 
     /**
