@@ -208,45 +208,6 @@ You can also use **Symbols** for the message type instead of strings:
     ...
     ```
 
-## Dispatch commands in the update function
-
-In addition to modifying the model, you can dispatch new commands in the **update** function.
-
-To do so, you can call one of the functions in the `cmd` object.
-
-Let's assume you have a message to display the description of the last called message:
-
-```ts
-{ name: "PrintLastMessage", message: string }
-
-...
-
-printLastMessage: (message: string): Message => ({ name: "PrintLastMessage", message }),
-```
-
-In the **update** function you can dispatch that message like this:
-
-```ts
-case "Increment":
-    return [{ value: model.value + 1 }, cmd.ofMsg(Msg.printLastMessage("Incremented by one"))];
-```
-
-This new message will immediately be dispatched after returning from the **update** function.
-
-This way you can also call functions and async operations with one of the following functions:
-
-| Function | Description |
-|---|---|
-| `cmd.none` | Does nothing. Equivalent to omit the second value. |
-| `cmd.ofMsg` | Dispatches a new message. |
-| `cmd.batch` | Aggregates an array of messages. |
-| `cmd.ofFunc.either` | Calls a synchronous function and maps the result into a message. |
-| `cmd.ofPromise.either` | Calls an async function and maps the result into a message. |
-| `cmd.ofPromise.attempt` | Like `either` but ignores the success case. |
-| `cmd.ofPromise.perform` | Like `either` but ignores the error case. |
-
-Example: TODO
-
 ## Setup
 
 **react-elmish** works without a setup. But if you want to use logging or some error handling middleware, you can setup **react-elmish** at the start of your program.
@@ -304,6 +265,92 @@ You can handle errors easily with the following pattern.
     ```
 
 The **handleError** function then calls your error handling middleware.
+
+## Dispatch commands in the update function
+
+In addition to modifying the model, you can dispatch new commands in the **update** function.
+
+To do so, you can call one of the functions in the `cmd` object.
+
+Let's assume you have a message to display the description of the last called message:
+
+```ts
+{ name: "PrintLastMessage", message: string }
+
+...
+
+printLastMessage: (message: string): Message => ({ name: "PrintLastMessage", message }),
+```
+
+In the **update** function you can dispatch that message like this:
+
+```ts
+case "Increment":
+    return [{ value: model.value + 1 }, cmd.ofMsg(Msg.printLastMessage("Incremented by one"))];
+```
+
+This new message will immediately be dispatched after returning from the **update** function.
+
+This way you can also call functions and async operations with one of the following functions:
+
+| Function | Description |
+|---|---|
+| `cmd.none` | Does nothing. Equivalent to omit the second value. |
+| `cmd.ofMsg` | Dispatches a new message. |
+| `cmd.batch` | Aggregates an array of messages. |
+| `cmd.ofFunc.either` | Calls a synchronous function and maps the result into a message. |
+| `cmd.ofFunc.attempt` | Like `either` but ignores the success case.  |
+| `cmd.ofFunc.perform` | Like `either` but ignores the error case.  |
+| `cmd.ofPromise.either` | Calls an async function and maps the result into a message. |
+| `cmd.ofPromise.attempt` | Like `either` but ignores the success case. |
+| `cmd.ofPromise.perform` | Like `either` but ignores the error case. |
+
+So, for an async function like:
+
+```ts
+const loadSettings = async (arg1: string, arg2: number): Promise<Settings> => {
+    const settings = await Storage.loadSettings();
+    return settings;
+}
+```
+
+you can define the following messages:
+
+```ts
+export type Messages =
+    ...
+    | { name: "LoadSettings" },
+    | { name: "SettingsLoaded", settings: Settings }
+    | { name: "Error", error: Error }
+    ...
+
+export const Msg = {
+    ...
+    loadSettings: (): Message => ({ name: "LoadSettings" }),
+    settingsLoaded: (settings: Settings): Message => ({ name: "SettingsLoaded", settings }),
+    error: (error: Error): Message => ({ name: "Error", error }),
+    ...
+};
+```
+
+and handle the messages in the **update** function:
+
+```ts
+...
+case "LoadSettings":
+    // Create a command out of the async function with the provided arguments
+    // If loadSettings resolves it dispatches "SettingsLoaded"
+    // If it fails it dispatches "Error"
+    // The return type of loadSettings must fit Msg.settingsLoaded
+    return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error, "firstArg", 123)];
+
+case "SettingsLoaded":
+    return [{ settings: msg.settings }];
+
+case "Error":
+    return Elm.handleError(msg.error);
+...
+```
 
 ## React life cycle management
 
@@ -459,16 +506,111 @@ const updateComposition = (model: Model, msg: CompositionMessage): Elm.UpdateRet
 }
 ```
 
+## Call back parent components
+
+Since each component has its own model and messages, communication with parent components is done via callback functions.
+
+To inform the parent component about some action, let's say to close a dialog form, you do the following:
+
+1. Create a message
+
+    ```ts Dialog.ts
+    export type Message =
+        ...
+        | { name: "Close" }
+        ...
+
+    export const Msg = {
+        ...
+        close: (): Message => ({ name: "Close" }),
+        ...
+    }
+    ```
+
+1. Define a callback function property in the **Props**:
+
+    ```ts Dialog.ts
+    export type Props = {
+        onClose: () => void,
+    };
+    ```
+
+1. Handle the message and call the callback function:
+
+    ```ts Dialog.ts
+    ...
+    case "Close":
+        props.onClose();
+        return [{}];
+    ...
+    ```
+
+1. In the **render** method of the parent component pass the callback as prop
+
+    ```tsx Parent.tsx
+    ...
+    <Dialog onClose={() => this.dispatch(Msg.closeDialog())}>
+    ...
+    ```
+
 ## Testing
 
-TODO
+To test your **update** function you can use some helper functions in `react-elmish/dist/Testing`:
 
-## ToDo
+| Function | Description |
+| --- | --- |
+| `getOfMsgParams` | Extracts the messages out of a command |
+| `runSingleOfPromiseCmd` | Executes a single command created with one of the `ofPromise`-functions. |
+| ... more to come |
 
-* extend readme
-  * more examples
-  * testing How To
-  * call parent components
-* Support for functional components using hooks
-* build script with `npm run build` and `npm outdated`
-* release script to publish on npm
+### Testing the model and simple message commands
+
+```ts
+import * as Testing from "react-elmish/dist/Testing";
+
+...
+it("returns the correct model and cmd", () => {
+    // arrange
+    const model = // create model for test
+    const props = // create props for test
+    const msg = Shared.Msg.test();
+
+    const expectedValue = // what you expect in the model
+    const expectedCmds = [
+        Shared.Msg.expectedMsg1("arg"),
+        Shared.Msg.expectedMsg2(),
+    ];
+
+    // act
+    const [newModel, cmd] = Shared.update(model, msg, props);
+
+    // assert
+    expect(newModel.value).toEqual(expectedValue);
+    expect(Testing.getOfMsgParams(cmd)).toEqual(expectedCmds);
+});
+...
+```
+
+### Testing async function commands
+
+```ts
+import * as Testing from "react-elmish/dist/Testing";
+
+...
+it("returns the correct cmd", () => {
+    // arrange
+    const model = // create model for test
+    const props = // create props for test
+    const msg = Shared.Msg.asyncTest();
+
+    const functionMock = // some mocked function which should be called when the "AsyncTest" messages is handled
+
+    // act
+    const [, cmd] = Shared.update(model, msg, props);
+
+    // assert
+    cmd && await Testing.runSingleOfPromiseCmd(cmd);
+    expect(functionMock).toBeCalled();
+});
+...
+```
