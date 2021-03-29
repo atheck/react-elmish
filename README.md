@@ -17,7 +17,7 @@ An elmish component basically consists of the following parts:
 * The **Update** function to modify the model based on a specific message.
 * The **View** which renders the component based on the current model.
 
-## App.ts
+### App.ts
 
 First import everything from `react-elmish` and declare the **Message** discriminated union type:
 
@@ -270,28 +270,7 @@ The **handleError** function then calls your error handling middleware.
 
 In addition to modifying the model, you can dispatch new commands in the **update** function.
 
-To do so, you can call one of the functions in the `cmd` object.
-
-Let's assume you have a message to display the description of the last called message:
-
-```ts
-{ name: "PrintLastMessage", message: string }
-
-...
-
-printLastMessage: (message: string): Message => ({ name: "PrintLastMessage", message }),
-```
-
-In the **update** function you can dispatch that message like this:
-
-```ts
-case "Increment":
-    return [{ value: model.value + 1 }, cmd.ofMsg(Msg.printLastMessage("Incremented by one"))];
-```
-
-This new message will immediately be dispatched after returning from the **update** function.
-
-This way you can also call functions and async operations with one of the following functions:
+To do so, you can call one of the functions in the `cmd` object:
 
 | Function | Description |
 |---|---|
@@ -305,7 +284,35 @@ This way you can also call functions and async operations with one of the follow
 | `cmd.ofPromise.attempt` | Like `either` but ignores the success case. |
 | `cmd.ofPromise.perform` | Like `either` but ignores the error case. |
 
-So, for an async function like:
+### Dispatch a message
+
+Let's assume you have a message to display the description of the last called message:
+
+```ts
+export type Message =
+    ...
+    | { name: "PrintLastMessage", message: string }
+    ...
+
+export const Msg = {
+    ...
+    printLastMessage: (message: string): Message => ({ name: "PrintLastMessage", message }),
+    ...
+}
+```
+
+In the **update** function you can dispatch that message like this:
+
+```ts
+case "Increment":
+    return [{ value: model.value + 1 }, cmd.ofMsg(Msg.printLastMessage("Incremented by one"))];
+```
+
+This new message will immediately be dispatched after returning from the **update** function.
+
+### Call an async function
+
+This way you can also call functions and async operations. For an async function like:
 
 ```ts
 const loadSettings = async (arg1: string, arg2: number): Promise<Settings> => {
