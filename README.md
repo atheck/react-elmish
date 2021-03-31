@@ -91,7 +91,9 @@ export const update = (model: Model, msg: Msg, props: Props): Elm.UpdateReturnTy
 
 ### App.tsx
 
-To put all this together and to render our component, we need a React class component:
+To put all this together and to render our component, we need a React component.
+
+This can be a **class component**:
 
 ```tsx
 // Import everything from the App.ts
@@ -128,9 +130,32 @@ class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
     }
 ```
 
-This initializes our model, assigns the update function and renders our component. You can access the current model with `this.model`.
+Or it can be a **functional component**:
 
-You can use this component like any other React component.
+```tsx
+// Import everything from the App.ts
+import * as Shared from "../App";
+// Import the useElmish hook
+import { useElmish } from "react-elmish";
+
+const App = (props: Shared.Props) => {
+    // Call the useElmish hook, it returns the current model and the dispatch function
+    const [model, dispatch] = useElmish(props, Shared.init, Shared.update, "App");
+
+    return (
+        <div>
+            {/* Display our current value */}
+            <p>{model.value}</p>
+
+            {/* dispatch messages */}
+            <button onClick={() => dispatch(Shared.Msg.increment())}>Increment</button>
+            <button onClick={() => dispatch(Shared.Msg.decrement())}>Decrement</button>
+        </div>
+    );
+};
+```
+
+You can use these components like any other React component.
 
 > **Note**: It is recommended to separate business logic and the view into separate modules. Here we put the `Messages`, `Model`, `Props`, `init`, and `update` functions into **App.ts**. The elmish React Component resides in a **Components** subfolder and is named **App.tsx**.
 >
@@ -361,7 +386,7 @@ case "Error":
 
 ## React life cycle management
 
-If you want to use `componentDidMount` or `componentWillUnmount` don't forget to call the base class implementation of it as the **ElmComponent** is using them internally.
+If you want to use `componentDidMount` or `componentWillUnmount` in a class component, don't forget to call the base class implementation of it as the **ElmComponent** is using them internally.
 
 ```ts
 class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
@@ -380,6 +405,8 @@ class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
     ...
 }
 ```
+
+In a functional component you can use the **useEffect** hook as normal.
 
 ## Composition
 

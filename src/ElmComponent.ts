@@ -108,8 +108,6 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
                     if (modelHasChanged(model)) {
                         this._currentModel = { ...this._currentModel, ...model };
                         modified = true;
-
-                        LoggerService?.debug("Elm", "new temp model for", this._name, this._currentModel);
                     }
 
                     if (cmd) {
@@ -124,7 +122,7 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
             this._reentered = false;
 
             if (this._mounted && modified) {
-                LoggerService?.info("Elm", "update model for", this._name);
+                LoggerService?.debug("Elm", "update model for", this._name, this._currentModel);
                 this.forceUpdate();
             }
         }
