@@ -4,8 +4,9 @@
   "description": "Elmish for React using Typescript",
   "author": "atheck",
   "license": "MIT",
-  "dependencies": {
-    "react": ">=16.0.0"
+  "dependencies": {},
+  "peerDependencies": {
+    "react": ">=16.8.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.13.10",
