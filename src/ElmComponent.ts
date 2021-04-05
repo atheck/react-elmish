@@ -1,5 +1,5 @@
 import { Cmd } from "./Cmd";
-import { LoggerService } from "./Init";
+import { DispatchMiddleware, IMessage, LoggerService } from "./Init";
 import React from "react";
 
 /**
@@ -12,7 +12,7 @@ import React from "react";
  * @template TMsg The type of the messages.
  * @template TProps The type of the props.
  */
-export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol }, TProps> extends React.Component<TProps> {
+export abstract class ElmComponent<TModel, TMsg extends IMessage, TProps> extends React.Component<TProps> {
     private readonly _name: string;
     private _initCmd: Nullable<Cmd<TMsg>> | undefined;
     private readonly _buffer: TMsg [] = [];
@@ -89,6 +89,10 @@ export abstract class ElmComponent<TModel, TMsg extends { name: string | symbol 
         const modelHasChanged = (model: Partial<TModel>): boolean => {
             return model !== this._currentModel && Object.getOwnPropertyNames(model).length > 0;
         };
+
+        if (DispatchMiddleware) {
+            DispatchMiddleware(msg);
+        }
 
         if (this._reentered) {
             this._buffer.push(msg);

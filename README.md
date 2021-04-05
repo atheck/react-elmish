@@ -235,7 +235,7 @@ You can also use **Symbols** for the message type instead of strings:
 
 ## Setup
 
-**react-elmish** works without a setup. But if you want to use logging or some error handling middleware, you can setup **react-elmish** at the start of your program.
+**react-elmish** works without a setup. But if you want to use logging or some middleware, you can setup **react-elmish** at the start of your program.
 
 ```ts
 import * as Elm from "react-elmish";
@@ -255,8 +255,13 @@ const myLogger = {
 Elm.init({
     logger: myLogger,
     errorMiddleware: error => Toast.error(error.message),
+    dispatchMiddleware: msg => console.log(msg),
 });
 ```
+
+The error middleware function is called by the `handleError` function (see [Error handling](#error-handling)).
+
+The dispatch middleware function is called whenever a Message is dispatched.
 
 ## Error handling
 

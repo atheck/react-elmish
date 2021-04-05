@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { UpdateReturnType } from ".";
 import { Cmd, Dispatch } from "./Cmd";
-import { LoggerService } from "./Init";
+import { DispatchMiddleware, LoggerService } from "./Init";
 
 export const useElmish = <TProps, TModel, TMsg extends { name: string | symbol }>(props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], update: (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] => {
     let reentered = false;
@@ -40,6 +40,10 @@ export const useElmish = <TProps, TModel, TMsg extends { name: string | symbol }
         const modelHasChanged = (updatedModel: Partial<TModel>): boolean => {
             return updatedModel !== model && Object.getOwnPropertyNames(updatedModel).length > 0;
         };
+
+        if (DispatchMiddleware) {
+            DispatchMiddleware(msg);
+        }
 
         if (reentered) {
             buffer.push(msg);
