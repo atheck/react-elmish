@@ -1,13 +1,9 @@
-name: Build
+name: Publish
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+    tags:
+      - *
 
 jobs:
   test:
@@ -24,7 +20,7 @@ jobs:
           npm install
           npm run test
 
-  build:
+  publish:
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -36,5 +32,11 @@ jobs:
             node-version: 14
       - name: Build
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm run build
+      - name: Publish
+        run: |
+          npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
+          npm publish --ignore-scripts
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
