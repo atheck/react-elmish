@@ -25,9 +25,15 @@ jobs:
           npm run build
 
   test:
-      needs: build
-      runs-on: ubuntu-latest
-      steps:
-        - name: Test
-          run: npm run test
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: SetupNode
+        uses: actions/setup-node@v2
+        with:
+            node-version: 14
+      - name: Test
+        run: npm run test
 
