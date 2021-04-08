@@ -33,12 +33,24 @@ export const getOfMsgParams = <TMsg>(cmd?: Cmd<TMsg>): TMsg [] => {
  * @param cmd The command to process.
  * @returns The array of processed messages.
  */
-export const execCmd = <TMsg>(cmd: Cmd<TMsg>): Promise<TMsg []> => {
-    const callers = cmd.map(c => new Promise<TMsg>((resolve) => {
+export const execCmd = async <TMsg>(cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []> => {
+    if (!cmd) {
+        return Promise.resolve([]);
+    }
+
+    const callers = cmd.map(c => new Promise<Nullable<TMsg>>((resolve, reject) => {
         const dispatch = (msg: TMsg) => resolve(msg);
 
-        c(dispatch);
+        c(dispatch, error => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(null);
+            }
+        });
     }));
 
-    return Promise.all(callers);
+    const results = await Promise.all(callers);
+
+    return results;
 };
