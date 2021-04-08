@@ -630,7 +630,11 @@ it("returns the correct model and cmd", () => {
 ...
 ```
 
-### Testing async function commands
+### Testing all (async) messages
+
+With `execCmd` you can execute all commands in a test scenario. All functions are called and awaited. The function returns all new messages (success or error messages).
+
+It also resolves for `attempt` functions if the called functions succeed. And it rejects for `perform` functions if the called functions fail.
 
 ```ts
 import * as Testing from "react-elmish/dist/Testing";
@@ -638,18 +642,20 @@ import * as Testing from "react-elmish/dist/Testing";
 ...
 it("returns the correct cmd", () => {
     // arrange
-    const model = // create model for test
-    const props = // create props for test
+    const model = { /* create model */ };
+    const props = { /* create props */ };
     const msg = Shared.Msg.asyncTest();
 
-    const functionMock = // some mocked function which should be called when the "AsyncTest" messages is handled
+    // mock function which is called when the "AsyncTest" message is handled
+    const functionMock = jest.fn();
 
     // act
     const [, cmd] = Shared.update(model, msg, props);
+    const messages = await Testing.execCmd(cmd);
 
     // assert
-    cmd && await Testing.runSingleOfPromiseCmd(cmd);
     expect(functionMock).toBeCalled();
+    expect(messages).toEqual([Shared.Msg.asyncTestSuccess()])
 });
 ...
 ```
