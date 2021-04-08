@@ -1,5 +1,8 @@
 # react-elmish
 
+![Build](https://github.com/atheck/react-elmish/actions/workflows/main.yml/badge.svg)
+![npm](https://img.shields.io/npm/v/react-elmish)
+
 This library brings the elmish pattern to react.
 
 ## Installation
