@@ -602,7 +602,7 @@ To test your **update** function you can use some helper functions in `react-elm
 | Function | Description |
 | --- | --- |
 | `getOfMsgParams` | Extracts the messages out of a command |
-| `runSingleOfPromiseCmd` | Executes a single command created with one of the `ofPromise`-functions. |
+| `execCmd` | Executes the provided command and returns an array of all messages. |
 | ... more to come |
 
 ### Testing the model and simple message commands
