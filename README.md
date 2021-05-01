@@ -503,8 +503,6 @@ export type Message =
 const MsgSource: MessageSource = { source: "Composition" };
 
 export const Msg = {
-    // Spread the convenient functions
-    ...LoadSettings.Msg,
     myMessage: (): Message => ({ name: "MyMessage", ...MsgSource }),
 };
 
@@ -603,7 +601,6 @@ To test your **update** function you can use some helper functions in `react-elm
 | --- | --- |
 | `getOfMsgParams` | Extracts the messages out of a command |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
-| ... more to come |
 
 ### Testing the model and simple message commands
 
