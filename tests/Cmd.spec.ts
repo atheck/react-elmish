@@ -207,7 +207,7 @@ describe("Cmd", () => {
                 expect(task).toHaveBeenCalledTimes(1);
             });
 
-            it("dispatches the success message", async done => {
+            it("dispatches the success message", async () => {
                 // arrange
                 const task = jest.fn(resolveTask);
                 const result = cmd.ofPromise.either(task, successMsg, errorMsg);
@@ -222,10 +222,9 @@ describe("Cmd", () => {
 
                 // assert
                 expect(message).toBe("success");
-                done();
             });
 
-            it("dispatches the error message", async done => {
+            it("dispatches the error message", async () => {
                 // arrange
                 const task = jest.fn(() => new Promise((_, reject) => reject("error")));
                 const result = cmd.ofPromise.either(task, successMsg, errorMsg);
@@ -240,7 +239,6 @@ describe("Cmd", () => {
 
                 // assert
                 expect(message).toBe("error");
-                done();
             });
         });
 
@@ -266,7 +264,7 @@ describe("Cmd", () => {
                 expect(task).toHaveBeenCalledTimes(1);
             });
 
-            it("dispatches the success message", async done => {
+            it("dispatches the success message", async () => {
                 // arrange
                 const task = jest.fn(resolveTask);
                 const result = cmd.ofPromise.perform(task, successMsg);
@@ -281,19 +279,18 @@ describe("Cmd", () => {
 
                 // assert
                 expect(message).toBe("success");
-                done();
             });
 
-            it("ignores an error", async done => {
+            it("ignores an error", async () => {
                 // arrange
                 const task = jest.fn(() => new Promise((_, reject) => reject("error")));
                 const result = cmd.ofPromise.perform(task, successMsg);
 
                 // act
-                result[0](jest.fn());
+                const succeeds = () => result[0](jest.fn());
 
                 // assert
-                done();
+                expect(succeeds).not.toThrow();
             });
         });
 
@@ -319,7 +316,7 @@ describe("Cmd", () => {
                 expect(task).toHaveBeenCalledTimes(1);
             });
 
-            it("ignores the success", async done => {
+            it("ignores the success", async () => {
                 // arrange
                 const task = jest.fn(resolveTask);
                 const result = cmd.ofPromise.attempt(task, errorMsg);
@@ -328,10 +325,9 @@ describe("Cmd", () => {
                 result[0](jest.fn());
 
                 // assert
-                done();
             });
 
-            it("dispatches the error message", async done => {
+            it("dispatches the error message", async () => {
                 // arrange
                 const task = jest.fn(() => new Promise((_, reject) => reject("error")));
                 const result = cmd.ofPromise.attempt(task, errorMsg);
@@ -346,7 +342,6 @@ describe("Cmd", () => {
 
                 // assert
                 expect(message).toBe("error");
-                done();
             });
         });
     });
