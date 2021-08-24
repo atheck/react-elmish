@@ -7,31 +7,6 @@ export const useElmish = <TProps, TModel, TMsg extends { name: string | symbol }
     let reentered = false;
     let buffer: TMsg [] = [];
 
-    const execCmd = (cmd: Cmd<TMsg>) => {
-        cmd.forEach(call => {
-            try {
-                call(dispatch);
-            } catch (error) {
-                LoggerService?.error(error);
-            }
-        });
-    };
-
-    const state = useState<Nullable<TModel>>(null);
-    let model = state[0];
-    const setModel = state[1];
-
-    if (!model) {
-        const [initModel, initCmd] = init(props);
-
-        model = initModel;
-        setModel(model);
-
-        if (initCmd) {
-            execCmd(initCmd);
-        }
-    }
-
     const dispatch = (msg: TMsg): void => {
         if (!model) {
             return;
@@ -88,6 +63,31 @@ export const useElmish = <TProps, TModel, TMsg extends { name: string | symbol }
             }
         }
     };
+
+    const execCmd = (cmd: Cmd<TMsg>) => {
+        cmd.forEach(call => {
+            try {
+                call(dispatch);
+            } catch (error) {
+                LoggerService?.error(error);
+            }
+        });
+    };
+
+    const state = useState<Nullable<TModel>>(null);
+    let model = state[0];
+    const setModel = state[1];
+
+    if (!model) {
+        const [initModel, initCmd] = init(props);
+
+        model = initModel;
+        setModel(model);
+
+        if (initCmd) {
+            execCmd(initCmd);
+        }
+    }
 
     return [model, dispatch];
 };
