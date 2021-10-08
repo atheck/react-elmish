@@ -6,6 +6,21 @@ import { DispatchMiddleware, LoggerService } from "./Init";
 export const useElmish = <TProps, TModel, TMsg extends { name: string | symbol }>(props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], update: (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] => {
     let reentered = false;
     let buffer: TMsg [] = [];
+    let currentModel: Partial<TModel> = {};
+
+    const state = useState<Nullable<TModel>>(null);
+    let model = state[0];
+    const setModel = state[1];
+
+    const execCmd = (cmd: Cmd<TMsg>) => {
+        cmd.forEach(call => {
+            try {
+                call(dispatch);
+            } catch (error) {
+                LoggerService?.error(error);
+            }
+        });
+    };
 
     const dispatch = (msg: TMsg): void => {
         if (!model) {
@@ -26,7 +41,6 @@ export const useElmish = <TProps, TModel, TMsg extends { name: string | symbol }
             reentered = true;
 
             let nextMsg: TMsg | undefined = msg;
-            let currentModel: Partial<TModel> = {};
             let modified = false;
 
             while (nextMsg) {
@@ -38,6 +52,7 @@ export const useElmish = <TProps, TModel, TMsg extends { name: string | symbol }
 
                     if (modelHasChanged(newModel)) {
                         currentModel = { ...currentModel, ...newModel };
+
                         modified = true;
                     }
 
@@ -63,20 +78,6 @@ export const useElmish = <TProps, TModel, TMsg extends { name: string | symbol }
             }
         }
     };
-
-    const execCmd = (cmd: Cmd<TMsg>) => {
-        cmd.forEach(call => {
-            try {
-                call(dispatch);
-            } catch (error) {
-                LoggerService?.error(error);
-            }
-        });
-    };
-
-    const state = useState<Nullable<TModel>>(null);
-    let model = state[0];
-    const setModel = state[1];
 
     if (!model) {
         const [initModel, initCmd] = init(props);
