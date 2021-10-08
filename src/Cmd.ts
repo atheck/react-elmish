@@ -58,7 +58,7 @@ class Command<TMsg> {
 
                     dispatch(ofSuccess(result));
                 } catch (error) {
-                    dispatch(ofError(error));
+                    dispatch(ofError(error as Error));
                 }
             };
 
@@ -79,7 +79,7 @@ class Command<TMsg> {
                     dispatch(ofSuccess(result));
                 } catch (error) {
                     if (fallback) {
-                        fallback(error);
+                        fallback(error as Error);
                     }
                 }
             };
@@ -102,7 +102,7 @@ class Command<TMsg> {
                         fallback();
                     }
                 } catch (error) {
-                    dispatch(ofError(error));
+                    dispatch(ofError(error as Error));
                 }
             };
 
