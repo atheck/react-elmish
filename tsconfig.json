@@ -14,12 +14,11 @@
     "resolveJsonModule": true,
     "module": "esnext",
     "declaration": true,
-    "outDir": "dist"
   },
   "typeAcquisition": {
     "include": [
         "jest"
     ]
   },
-  "include": ["src"]
+  "include": ["src", "tests"]
 }
