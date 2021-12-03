@@ -1,5 +1,5 @@
+import { errorMiddleware, LoggerService } from "./Init";
 import { UpdateReturnType } from "./ElmComponent";
-import { LoggerService, ErrorMiddleware } from "./Init";
 
 /**
  * Handles an error.
@@ -8,8 +8,8 @@ import { LoggerService, ErrorMiddleware } from "./Init";
  * @param {Error} error The error.
  */
 export const handleError = <TModel, TMsg>(error: Error): UpdateReturnType<TModel, TMsg> => {
-    if (ErrorMiddleware) {
-        ErrorMiddleware(error);
+    if (errorMiddleware) {
+        errorMiddleware(error);
     }
     LoggerService?.error(error);
 
@@ -23,4 +23,6 @@ declare global {
 /**
  * Creates a MsgSource type.
  */
-export type MsgSource<T extends string> = { source: T };
+export interface MsgSource<T extends string> {
+    source: T,
+}

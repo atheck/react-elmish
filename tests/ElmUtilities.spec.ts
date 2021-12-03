@@ -1,24 +1,26 @@
-import { ILogger, init } from "../src/Init";
+import { init, Logger } from "../src/Init";
 import { handleError } from "../src/ElmUtilities";
+import { UpdateReturnType } from "../src";
 
 describe("ElmUtilities", () => {
     describe("handleError", () => {
         it("returns empty new model", () => {
             // act
-            const [model, cmd] = handleError(new Error());
+            const [model, cmd] = handleError(new Error("error"));
 
             // assert
-            expect(model).toEqual({});
+            expect(model).toStrictEqual({});
             expect(cmd).toBeUndefined();
         });
 
         it("calls the error middleware if specified", () => {
             // arrange
             const mockErrorMiddleware = jest.fn();
+            const error = new Error("Some error");
+
             init({
                 errorMiddleware: mockErrorMiddleware,
             });
-            const error = new Error("Some error");
 
             // act
             handleError(error);
@@ -30,11 +32,12 @@ describe("ElmUtilities", () => {
 
         it("does work without an error middleware", () => {
             // arrange
-            init({});
             const error = new Error("Some error");
 
+            init({});
+
             // act
-            const succeeds = () => handleError(error);
+            const succeeds = (): UpdateReturnType<unknown, unknown> => handleError(error);
 
             // assert
             expect(succeeds).not.toThrow();
@@ -43,15 +46,16 @@ describe("ElmUtilities", () => {
         it("calls the logger service if specified", () => {
             // arrange
             const mockLogError = jest.fn();
-            const mockLogger: ILogger = {
+            const mockLogger: Logger = {
                 debug: jest.fn(),
                 info: jest.fn(),
                 error: mockLogError,
-            }
+            };
+            const error = new Error("Some error");
+
             init({
                 logger: mockLogger,
             });
-            const error = new Error("Some error");
 
             // act
             handleError(error);

@@ -20,13 +20,14 @@ class Command<TMsg> {
     /**
      * Represents an empty command.
      */
-    none = [];
+    public none = [];
 
     /**
      * Creates a command out of a specific message.
      * @param {TMsg} msg The specific message.
      */
-    ofMsg(msg: TMsg): Cmd<TMsg> {
+    // eslint-disable-next-line class-methods-use-this
+    public ofMsg (msg: TMsg): Cmd<TMsg> {
         return [dispatch => dispatch(msg)];
     }
 
@@ -34,16 +35,15 @@ class Command<TMsg> {
      * Aggregates multiple commands.
      * @param {Cmd<TMsg> []} commands Array of commands.
      */
-    batch(...commands: Cmd<TMsg> []): Cmd<TMsg> {
-        const result: Cmd<TMsg> = [];
-
-        return result.concat(...commands);
+    // eslint-disable-next-line class-methods-use-this
+    public batch (...commands: Cmd<TMsg> []): Cmd<TMsg> {
+        return commands.flat();
     }
 
     /**
      * Provides functionalities to create commands from simple functions.
      */
-    ofFunc = {
+    public ofFunc = {
         /**
         * Creates a command out of a simple function and maps the result.
         * @param task The function to call.
@@ -52,13 +52,13 @@ class Command<TMsg> {
         * @param args The parameters of the task.
         */
         either<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofSuccess: (result: TReturn) => TMsg, ofError: (error: Error) => TMsg, ...args: TArgs): Cmd<TMsg> {
-            const bind = (dispatch: Dispatch<TMsg>) => {
+            const bind = (dispatch: Dispatch<TMsg>): void => {
                 try {
                     const result = task(...args);
 
                     dispatch(ofSuccess(result));
-                } catch (error) {
-                    dispatch(ofError(error as Error));
+                } catch (ex: unknown) {
+                    dispatch(ofError(ex as Error));
                 }
             };
 
@@ -71,15 +71,15 @@ class Command<TMsg> {
         * @param ofSuccess Creates the message to dispatch after a successful call of the task.
         * @param args The parameters of the task.
         */
-         perform<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofSuccess: (result: TReturn) => TMsg, ...args: TArgs): Cmd<TMsg> {
-            const bind = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => {
+        perform<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofSuccess: (result: TReturn) => TMsg, ...args: TArgs): Cmd<TMsg> {
+            const bind = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler): void => {
                 try {
                     const result = task(...args);
 
                     dispatch(ofSuccess(result));
-                } catch (error) {
+                } catch (ex: unknown) {
                     if (fallback) {
-                        fallback(error as Error);
+                        fallback(ex as Error);
                     }
                 }
             };
@@ -93,16 +93,16 @@ class Command<TMsg> {
         * @param ofError Creates the message to dispatch when an error occurred.
         * @param args The parameters of the task.
         */
-         attempt<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofError: (error: Error) => TMsg, ...args: TArgs): Cmd<TMsg> {
-            const bind = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => {
+        attempt<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofError: (error: Error) => TMsg, ...args: TArgs): Cmd<TMsg> {
+            const bind = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler): void => {
                 try {
                     task(...args);
 
                     if (fallback) {
                         fallback();
                     }
-                } catch (error) {
-                    dispatch(ofError(error as Error));
+                } catch (ex: unknown) {
+                    dispatch(ofError(ex as Error));
                 }
             };
 
@@ -113,7 +113,7 @@ class Command<TMsg> {
     /**
      * Provides functionalities to create commands from async functions.
      */
-    ofPromise = {
+    public ofPromise = {
         /**
         * Creates a command out of an async function and maps the result.
         * @param task The async function to call.
@@ -122,8 +122,9 @@ class Command<TMsg> {
         * @param args The parameters of the task.
         */
         either<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => Promise<TReturn>, ofSuccess: (result: TReturn) => TMsg, ofError: (error: Error) => TMsg, ...args: TArgs): Cmd<TMsg> {
-            const bind = (dispatch: Dispatch<TMsg>) => {
-                task(...args).then(result => dispatch(ofSuccess(result))).catch(error => dispatch(ofError(error)));
+            const bind = (dispatch: Dispatch<TMsg>): void => {
+                task(...args).then(result => dispatch(ofSuccess(result)))
+                    .catch((ex: Error) => dispatch(ofError(ex)));
             };
 
             return [bind];
@@ -136,8 +137,13 @@ class Command<TMsg> {
         * @param args The parameters of the task.
         */
         perform<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => Promise<TReturn>, ofSuccess: (result: TReturn) => TMsg, ...args: TArgs): Cmd<TMsg> {
-            const bind = (dispatch: Dispatch<TMsg>, fallback: FallbackHandler = () => undefined) => {
-                task(...args).then(result => dispatch(ofSuccess(result))).catch(fallback);
+            const defaultFallbackHandler = (): void => {
+                // blank
+            };
+
+            const bind = (dispatch: Dispatch<TMsg>, fallback: FallbackHandler = defaultFallbackHandler): void => {
+                task(...args).then(result => dispatch(ofSuccess(result)))
+                    .catch(fallback);
             };
 
             return [bind];
@@ -150,12 +156,13 @@ class Command<TMsg> {
         * @param args The parameters of the task.
         */
         attempt<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => Promise<TReturn>, ofError: (error: Error) => TMsg, ...args: TArgs): Cmd<TMsg> {
-            const bind = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => {
+            const bind = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler): void => {
                 task(...args).then(() => {
                     if (fallback) {
                         fallback();
                     }
-                }).catch(error => dispatch(ofError(error)));
+                })
+                    .catch((ex: Error) => dispatch(ofError(ex)));
             };
 
             return [bind];
@@ -168,6 +175,6 @@ class Command<TMsg> {
  * @template TMsg The type of the Msg discriminated union.
  * @see Command
  */
-export const createCmd = <TMsg>(): Command<TMsg> => {
+export function createCmd<TMsg> (): Command<TMsg> {
     return new Command<TMsg>();
-};
+}

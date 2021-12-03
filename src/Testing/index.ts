@@ -5,43 +5,45 @@ import { Cmd } from "../Cmd";
  * @param cmd The command to process.
  * @deprecated Use execCmd instead.
  */
-export const runSingleOfPromiseCmd = async <TMsg>(cmd: Cmd<TMsg>): Promise<void> => {
-    return new Promise<void>((resolve) => {
-        const dispatch = () => resolve();
+export async function runSingleOfPromiseCmd<TMsg> (cmd: Cmd<TMsg>): Promise<void> {
+    return new Promise<void>(resolve => {
+        const dispatch = (): void => resolve();
 
         cmd[0](dispatch);
     });
-};
+}
 
 /**
  * Extracts the messages out of a command.
  * @param cmd The command to process.
  * @returns The array of messages.
  */
-export const getOfMsgParams = <TMsg>(cmd?: Cmd<TMsg>): TMsg [] => {
+export function getOfMsgParams<TMsg> (cmd?: Cmd<TMsg>): TMsg [] {
     const msgNames: TMsg [] = [];
 
-    const dispatch = (msg: TMsg) => msgNames.push(msg);
+    const dispatch = (msg: TMsg): void => {
+        msgNames.push(msg);
+    };
 
-    cmd?.map(c => c(dispatch));
+    cmd?.map(currentCmd => currentCmd(dispatch));
 
     return msgNames;
-};
+}
 
 /**
  * Executes all commands and resolves the messages.
  * @param cmd The command to process.
  * @returns The array of processed messages.
  */
-export const execCmd = async <TMsg>(cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []> => {
+export async function execCmd<TMsg> (cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []> {
     if (!cmd) {
         return Promise.resolve([]);
     }
 
-    const callers = cmd.map(c => new Promise<Nullable<TMsg>>((resolve, reject) => {
-        const dispatch = (msg: TMsg) => resolve(msg);
+    const callers = cmd.map(async currentCmd => new Promise<Nullable<TMsg>>((resolve, reject) => {
+        const dispatch = (msg: TMsg): void => resolve(msg);
 
-        c(dispatch, error => {
+        currentCmd(dispatch, error => {
             if (error) {
                 reject(error);
             } else {
@@ -53,4 +55,4 @@ export const execCmd = async <TMsg>(cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []>
     const results = await Promise.all(callers);
 
     return results;
-};
+}

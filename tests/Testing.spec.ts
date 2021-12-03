@@ -1,5 +1,5 @@
-import { execCmd } from "../src/Testing";
 import { createCmd } from "../src/Cmd";
+import { execCmd } from "../src/Testing";
 
 type Message =
     | { name: "Msg1" }
@@ -16,198 +16,186 @@ describe("Testing", () => {
             const messages = await execCmd();
 
             // assert
-            expect(messages).toEqual([]);
+            expect(messages).toStrictEqual([]);
         });
 
         it("executes all message commands", async () => {
             // arrange
-            const cmds = cmd.batch(cmd.ofMsg({ name: "Msg1" }), cmd.ofMsg({ name: "Msg2" }));
+            const commands = cmd.batch(cmd.ofMsg({ name: "Msg1" }), cmd.ofMsg({ name: "Msg2" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([{ name: "Msg1" }, { name: "Msg2" }]);
+            expect(messages).toStrictEqual([{ name: "Msg1" }, { name: "Msg2" }]);
         });
 
         it("executes all ofFunc commands", async () => {
             // arrange
             const func = (): void => {
-                return;
+                // blank
             };
 
-            const cmds = cmd.batch(cmd.ofFunc.either(func, () => ({ name: "Msg1" }), () => ({ name: "Error"})), cmd.ofMsg({ name: "Msg2" }));
+            const commands = cmd.batch(cmd.ofFunc.either(func, () => ({ name: "Msg1" }), () => ({ name: "Error" })), cmd.ofMsg({ name: "Msg2" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([{ name: "Msg1" }, { name: "Msg2" }]);
+            expect(messages).toStrictEqual([{ name: "Msg1" }, { name: "Msg2" }]);
         });
 
         it("executes all ofFunc commands, fail", async () => {
             // arrange
             const func = (): void => {
-                throw Error();
+                throw new Error("error");
             };
 
-            const cmds = cmd.batch(cmd.ofFunc.either(func, () => ({ name: "Msg1" }), () => ({ name: "Error"})), cmd.ofMsg({ name: "Msg2" }));
+            const commands = cmd.batch(cmd.ofFunc.either(func, () => ({ name: "Msg1" }), () => ({ name: "Error" })), cmd.ofMsg({ name: "Msg2" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([{ name: "Error" }, { name: "Msg2" }]);
+            expect(messages).toStrictEqual([{ name: "Error" }, { name: "Msg2" }]);
         });
 
         it("executes all ofPromise commands", async () => {
             // arrange
-            const asyncFunc = (): Promise<void> => {
-                return Promise.resolve();
-            };
+            const asyncFunc = async (): Promise<void> => Promise.resolve();
 
-            const cmds = cmd.batch(cmd.ofPromise.either(asyncFunc, () => ({ name: "Msg1" }), () => ({ name: "Error"})), cmd.ofMsg({ name: "Msg2" }));
+            const commands = cmd.batch(cmd.ofPromise.either(asyncFunc, () => ({ name: "Msg1" }), () => ({ name: "Error" })), cmd.ofMsg({ name: "Msg2" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([{ name: "Msg1" }, { name: "Msg2" }]);
+            expect(messages).toStrictEqual([{ name: "Msg1" }, { name: "Msg2" }]);
         });
 
         it("executes all ofPromise commands, fail", async () => {
             // arrange
-            const asyncFunc = (): Promise<void> => {
-                return Promise.reject();
-            };
+            const asyncFunc = async (): Promise<void> => Promise.reject(new Error("error"));
 
-            const cmds = cmd.batch(cmd.ofPromise.either(asyncFunc, () => ({ name: "Msg1" }), () => ({ name: "Error"})), cmd.ofMsg({ name: "Msg2" }));
+            const commands = cmd.batch(cmd.ofPromise.either(asyncFunc, () => ({ name: "Msg1" }), () => ({ name: "Error" })), cmd.ofMsg({ name: "Msg2" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([{ name: "Error" }, { name: "Msg2" }]);
+            expect(messages).toStrictEqual([{ name: "Error" }, { name: "Msg2" }]);
         });
 
         it("resolves for async attempt", async () => {
             // arrange
-            const asyncFunc = (): Promise<void> => {
-                return Promise.resolve();
-            };
+            const asyncFunc = async (): Promise<void> => Promise.resolve();
 
-            const cmds = cmd.ofPromise.attempt(asyncFunc, () => ({ name: "Error" }));
+            const commands = cmd.ofPromise.attempt(asyncFunc, () => ({ name: "Error" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([null]);
+            expect(messages).toStrictEqual([null]);
         });
 
         it("resolves for async attempt, fail", async () => {
             // arrange
-            const asyncFunc = (): Promise<void> => {
-                return Promise.reject();
-            };
+            const asyncFunc = async (): Promise<void> => Promise.reject(new Error("error"));
 
-            const cmds = cmd.ofPromise.attempt(asyncFunc, () => ({ name: "Error" }));
+            const commands = cmd.ofPromise.attempt(asyncFunc, () => ({ name: "Error" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([{ name: "Error" }]);
+            expect(messages).toStrictEqual([{ name: "Error" }]);
         });
 
         it("resolves for async perform", async () => {
             // arrange
-            const asyncFunc = (): Promise<void> => {
-                return Promise.resolve();
-            };
+            const asyncFunc = async (): Promise<void> => Promise.resolve();
 
-            const cmds = cmd.ofPromise.perform(asyncFunc, () => ({ name: "Msg1" }));
+            const commands = cmd.ofPromise.perform(asyncFunc, () => ({ name: "Msg1" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([{ name: "Msg1" }]);
+            expect(messages).toStrictEqual([{ name: "Msg1" }]);
         });
 
         it("rejects for async perform, fail", async () => {
             // arrange
-            const asyncFunc = (): Promise<void> => {
-                return Promise.reject(Error("fail"));
-            };
+            const asyncFunc = async (): Promise<void> => Promise.reject(new Error("fail"));
 
-            const cmds = cmd.ofPromise.perform(asyncFunc, () => ({ name: "Msg1" }));
+            const commands = cmd.ofPromise.perform(asyncFunc, () => ({ name: "Msg1" }));
 
             // act
-            const fail = async () => await execCmd(cmds);
+            const fail = async (): Promise<Nullable<Message> []> => await execCmd(commands);
 
             // assert
-            expect(fail()).rejects.toStrictEqual(Error("fail"));
+            await expect(fail()).rejects.toThrow("fail");
         });
 
         it("resolves for attempt", async () => {
             // arrange
             const func = (): void => {
-                return;
+                // blank
             };
 
-            const cmds = cmd.ofFunc.attempt(func, () => ({ name: "Error" }));
+            const commands = cmd.ofFunc.attempt(func, () => ({ name: "Error" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([null]);
+            expect(messages).toStrictEqual([null]);
         });
 
         it("resolves for attempt, fail", async () => {
             // arrange
             const func = (): void => {
-                throw Error("fail");
+                throw new Error("fail");
             };
 
-            const cmds = cmd.ofFunc.attempt(func, () => ({ name: "Error" }));
+            const commands = cmd.ofFunc.attempt(func, () => ({ name: "Error" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([{ name: "Error" }]);
+            expect(messages).toStrictEqual([{ name: "Error" }]);
         });
 
-        it("resolves for async perform", async () => {
+        it("resolves for sync perform", async () => {
             // arrange
             const func = (): void => {
-                return;
+                // blank
             };
 
-            const cmds = cmd.ofFunc.perform(func, () => ({ name: "Msg1" }));
+            const commands = cmd.ofFunc.perform(func, () => ({ name: "Msg1" }));
 
             // act
-            const messages = await execCmd(cmds);
+            const messages = await execCmd(commands);
 
             // assert
-            expect(messages).toEqual([{ name: "Msg1" }]);
+            expect(messages).toStrictEqual([{ name: "Msg1" }]);
         });
 
-        it("rejects for async perform, fail", async () => {
+        it("rejects for sync perform, fail", async () => {
             // arrange
             const func = (): void => {
-                throw Error("fail");
+                throw new Error("fail");
             };
 
-            const cmds = cmd.ofFunc.perform(func, () => ({ name: "Msg1" }));
+            const commands = cmd.ofFunc.perform(func, () => ({ name: "Msg1" }));
 
             // act
-            const fail = async () => await execCmd(cmds);
+            const fail = async (): Promise<Nullable<Message> []> => await execCmd(commands);
 
             // assert
-            expect(fail()).rejects.toStrictEqual(Error("fail"));
+            await expect(fail()).rejects.toThrow("fail");
         });
     });
 });

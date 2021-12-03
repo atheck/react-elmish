@@ -1,30 +1,41 @@
+/**
+ * @deprecated Use Logger instead.
+ */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ILogger {
     debug: (...args: unknown []) => void,
     info: (...args: unknown []) => void,
     error: (...args: unknown []) => void,
 }
+export interface Logger extends ILogger {}
 
+/**
+ * @deprecated Use Message instead.
+ */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IMessage {
     name: string | symbol,
 }
 
+export interface Message extends IMessage {}
+
 export type ErrorMiddlewareFunc = (error: Error) => void;
-export type DispatchMiddlewareFunc = (msg: IMessage) => void;
+export type DispatchMiddlewareFunc = (msg: Message) => void;
 
-export let LoggerService: ILogger | null = null;
-export let ErrorMiddleware: ErrorMiddlewareFunc | null = null;
-export let DispatchMiddleware: DispatchMiddlewareFunc | null = null;
+export let LoggerService: Logger | null = null;
+export let errorMiddleware: ErrorMiddlewareFunc | null = null;
+export let dispatchMiddleware: DispatchMiddlewareFunc | null = null;
 
-export type ElmOptions = {
-    logger?: ILogger,
+export interface ElmOptions {
+    logger?: Logger,
     errorMiddleware?: ErrorMiddlewareFunc,
     dispatchMiddleware?: DispatchMiddlewareFunc,
-};
+}
 
-const init = (options: ElmOptions) => {
+const init = (options: ElmOptions): void => {
     LoggerService = options.logger ?? null;
-    ErrorMiddleware = options.errorMiddleware ?? null;
-    DispatchMiddleware = options.dispatchMiddleware ?? null;
+    errorMiddleware = options.errorMiddleware ?? null;
+    dispatchMiddleware = options.dispatchMiddleware ?? null;
 };
 
 export { init };
