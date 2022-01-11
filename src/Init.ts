@@ -7,6 +7,7 @@ export interface ILogger {
     info: (...args: unknown []) => void,
     error: (...args: unknown []) => void,
 }
+// eslint-disable-next-line @delagen/deprecation/deprecation
 export interface Logger extends ILogger {}
 
 /**
@@ -17,6 +18,7 @@ export interface IMessage {
     name: string | symbol,
 }
 
+// eslint-disable-next-line @delagen/deprecation/deprecation
 export interface Message extends IMessage {}
 
 export type ErrorMiddlewareFunc = (error: Error) => void;

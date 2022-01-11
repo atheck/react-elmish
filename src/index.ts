@@ -5,6 +5,7 @@ import { ILogger, init, Logger, Message } from "./Init";
 import { useElmish } from "./Hooks";
 
 export type {
+    // eslint-disable-next-line @delagen/deprecation/deprecation
     ILogger,
     Logger,
     Message,
