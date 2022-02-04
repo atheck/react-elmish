@@ -4,7 +4,7 @@ const cmd = createCmd<string>();
 
 const successMsg = (): string => "success";
 const errorMsg = (): string => "error";
-const resolveTask = async (): Promise<unknown> => Promise.resolve();
+const resolveTask = async (): Promise<unknown> => undefined;
 
 describe("Cmd", () => {
     describe("none", () => {
@@ -242,7 +242,9 @@ describe("Cmd", () => {
 
             it("dispatches the error message", async () => {
                 // arrange
-                const task = jest.fn(async () => Promise.reject(new Error("error")));
+                const task = jest.fn(async () => {
+                    throw new Error("error");
+                });
                 const result = cmd.ofPromise.either(task, successMsg, errorMsg);
 
                 // act
@@ -295,7 +297,9 @@ describe("Cmd", () => {
 
             it("ignores an error", async () => {
                 // arrange
-                const task = jest.fn(async () => Promise.reject(new Error("error")));
+                const task = jest.fn(async () => {
+                    throw new Error("error");
+                });
                 const result = cmd.ofPromise.perform(task, successMsg);
 
                 // act
@@ -342,7 +346,9 @@ describe("Cmd", () => {
 
             it("dispatches the error message", async () => {
                 // arrange
-                const task = jest.fn(async () => Promise.reject(new Error("error")));
+                const task = jest.fn(async () => {
+                    throw new Error("error");
+                });
                 const result = cmd.ofPromise.attempt(task, errorMsg);
 
                 // act

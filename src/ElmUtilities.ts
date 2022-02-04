@@ -16,9 +16,7 @@ export const handleError = <TModel, TMsg>(error: Error): UpdateReturnType<TModel
     return [{}];
 };
 
-declare global {
-    export type Nullable<T> = T | null;
-}
+export type Nullable<T> = T | null;
 
 /**
  * Creates a MsgSource type.

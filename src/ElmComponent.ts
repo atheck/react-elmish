@@ -1,5 +1,6 @@
 import { dispatchMiddleware, LoggerService, Message } from "./Init";
 import { Cmd } from "./Cmd";
+import { Nullable } from "./ElmUtilities";
 import React from "react";
 
 /**

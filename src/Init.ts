@@ -1,25 +1,12 @@
-/**
- * @deprecated Use Logger instead.
- */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface ILogger {
+export interface Logger {
     debug: (...args: unknown []) => void,
     info: (...args: unknown []) => void,
     error: (...args: unknown []) => void,
 }
-// eslint-disable-next-line @delagen/deprecation/deprecation
-export interface Logger extends ILogger {}
 
-/**
- * @deprecated Use Message instead.
- */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface IMessage {
+export interface Message {
     name: string | symbol,
 }
-
-// eslint-disable-next-line @delagen/deprecation/deprecation
-export interface Message extends IMessage {}
 
 export type ErrorMiddlewareFunc = (error: Error) => void;
 export type DispatchMiddlewareFunc = (msg: Message) => void;

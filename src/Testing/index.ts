@@ -1,4 +1,5 @@
 import { Cmd } from "../Cmd";
+import { Nullable } from "../ElmUtilities";
 
 /**
  * Executes a single command created by one of the ofPromise functions.
@@ -37,7 +38,7 @@ export function getOfMsgParams<TMsg> (cmd?: Cmd<TMsg>): TMsg [] {
  */
 export async function execCmd<TMsg> (cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []> {
     if (!cmd) {
-        return Promise.resolve([]);
+        return [];
     }
 
     const callers = cmd.map(async currentCmd => new Promise<Nullable<TMsg>>((resolve, reject) => {

@@ -450,7 +450,7 @@ export const Msg = {
 const cmd = Elm.createCmd<Message>();
 
 export type Model = Readonly<{
-    settings: Nullable<Settings>,
+    settings: Settings | null,
 }>;
 
 export const init = (): Model => ({
@@ -659,3 +659,14 @@ it("returns the correct cmd", () => {
 });
 ...
 ```
+
+## Migration from v1.x to 2.x
+
+* Use `Logger` and `Message` instead of `ILogger` and `IMessage`.
+* The global declaration of the `Nullable` type was removed, because it is unexpected for this library to declare such a type. You can declare this type for yourself if needed:
+
+    ```ts
+    declare global {
+        type Nullable<T> = T | null;
+    }
+    ```

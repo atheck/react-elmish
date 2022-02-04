@@ -1,5 +1,6 @@
 import { createCmd } from "../src/Cmd";
 import { execCmd } from "../src/Testing";
+import { Nullable } from "../src/ElmUtilities";
 
 type Message =
     | { name: "Msg1" }
@@ -62,7 +63,7 @@ describe("Testing", () => {
 
         it("executes all ofPromise commands", async () => {
             // arrange
-            const asyncFunc = async (): Promise<void> => Promise.resolve();
+            const asyncFunc = async (): Promise<void> => undefined;
 
             const commands = cmd.batch(cmd.ofPromise.either(asyncFunc, () => ({ name: "Msg1" }), () => ({ name: "Error" })), cmd.ofMsg({ name: "Msg2" }));
 
@@ -75,7 +76,9 @@ describe("Testing", () => {
 
         it("executes all ofPromise commands, fail", async () => {
             // arrange
-            const asyncFunc = async (): Promise<void> => Promise.reject(new Error("error"));
+            const asyncFunc = async (): Promise<void> => {
+                throw new Error("error");
+            };
 
             const commands = cmd.batch(cmd.ofPromise.either(asyncFunc, () => ({ name: "Msg1" }), () => ({ name: "Error" })), cmd.ofMsg({ name: "Msg2" }));
 
@@ -88,7 +91,7 @@ describe("Testing", () => {
 
         it("resolves for async attempt", async () => {
             // arrange
-            const asyncFunc = async (): Promise<void> => Promise.resolve();
+            const asyncFunc = async (): Promise<void> => undefined;
 
             const commands = cmd.ofPromise.attempt(asyncFunc, () => ({ name: "Error" }));
 
@@ -101,7 +104,9 @@ describe("Testing", () => {
 
         it("resolves for async attempt, fail", async () => {
             // arrange
-            const asyncFunc = async (): Promise<void> => Promise.reject(new Error("error"));
+            const asyncFunc = async (): Promise<void> => {
+                throw new Error("error");
+            };
 
             const commands = cmd.ofPromise.attempt(asyncFunc, () => ({ name: "Error" }));
 
@@ -114,7 +119,7 @@ describe("Testing", () => {
 
         it("resolves for async perform", async () => {
             // arrange
-            const asyncFunc = async (): Promise<void> => Promise.resolve();
+            const asyncFunc = async (): Promise<void> => undefined;
 
             const commands = cmd.ofPromise.perform(asyncFunc, () => ({ name: "Msg1" }));
 
@@ -127,7 +132,9 @@ describe("Testing", () => {
 
         it("rejects for async perform, fail", async () => {
             // arrange
-            const asyncFunc = async (): Promise<void> => Promise.reject(new Error("fail"));
+            const asyncFunc = async (): Promise<void> => {
+                throw new Error("fail");
+            };
 
             const commands = cmd.ofPromise.perform(asyncFunc, () => ({ name: "Msg1" }));
 
