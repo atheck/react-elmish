@@ -9,9 +9,8 @@ export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }
     const buffer: TMsg [] = [];
     let currentModel: Partial<TModel> = {};
 
-    const state = useState<Nullable<TModel>>(null);
-    let model = state[0];
-    const setModel = state[1];
+    const [model, setModel] = useState<Nullable<TModel>>(null);
+    let initializedModel = model;
 
     const execCmd = (cmd: Cmd<TMsg>): void => {
         cmd.forEach(call => {
@@ -24,11 +23,11 @@ export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }
     };
 
     const dispatch = (msg: TMsg): void => {
-        if (!model) {
+        if (!initializedModel) {
             return;
         }
 
-        const modelHasChanged = (updatedModel: Partial<TModel>): boolean => updatedModel !== model && Object.getOwnPropertyNames(updatedModel).length > 0;
+        const modelHasChanged = (updatedModel: Partial<TModel>): boolean => updatedModel !== initializedModel && Object.getOwnPropertyNames(updatedModel).length > 0;
 
         if (dispatchMiddleware) {
             dispatchMiddleware(msg);
@@ -47,7 +46,7 @@ export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }
                 LoggerService?.debug("Elm", "message from", name, nextMsg);
 
                 try {
-                    const [newModel, cmd] = update({ ...model, ...currentModel }, nextMsg, props);
+                    const [newModel, cmd] = update({ ...initializedModel, ...currentModel }, nextMsg, props);
 
                     if (modelHasChanged(newModel)) {
                         currentModel = { ...currentModel, ...newModel };
@@ -78,14 +77,14 @@ export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }
         }
     };
 
-    if (!model) {
+    if (!initializedModel) {
         const [initModel, initCmd] = init(props);
 
-        model = initModel;
-        setModel(model);
+        initializedModel = initModel;
+        setModel(initializedModel);
 
         execCmd(initCmd);
     }
 
-    return [model, dispatch];
+    return [initializedModel, dispatch];
 }
