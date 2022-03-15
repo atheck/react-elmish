@@ -1,8 +1,8 @@
 import { Cmd, Dispatch } from "./Cmd";
 import { dispatchMiddleware, LoggerService } from "./Init";
+import { useCallback, useState } from "react";
 import { Nullable } from "./ElmUtilities";
 import { UpdateReturnType } from ".";
-import { useState } from "react";
 
 export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }> (props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], update: (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] {
     let reentered = false;
@@ -12,7 +12,7 @@ export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }
     const [model, setModel] = useState<Nullable<TModel>>(null);
     let initializedModel = model;
 
-    const execCmd = (cmd: Cmd<TMsg>): void => {
+    const execCmd = useCallback((cmd: Cmd<TMsg>): void => {
         cmd.forEach(call => {
             try {
                 call(dispatch);
@@ -20,9 +20,9 @@ export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }
                 LoggerService?.error(ex);
             }
         });
-    };
+    }, []);
 
-    const dispatch = (msg: TMsg): void => {
+    const dispatch = useCallback((msg: TMsg): void => {
         if (!initializedModel) {
             return;
         }
@@ -75,7 +75,7 @@ export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }
                 });
             }
         }
-    };
+    }, []);
 
     if (!initializedModel) {
         const [initModel, initCmd] = init(props);
