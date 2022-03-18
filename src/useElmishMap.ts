@@ -1,10 +1,9 @@
 import { Cmd, Dispatch } from "./Cmd";
 import { dispatchMiddleware, LoggerService } from "./Init";
+import { MessageBase, Nullable, UpdateMap } from "./ElmUtilities";
 import { useCallback, useState } from "react";
-import { Nullable } from "./ElmUtilities";
-import { UpdateReturnType } from ".";
 
-export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }> (props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], update: (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] {
+export function useElmishMap<TProps, TModel, TMsg extends MessageBase> (props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], updateMap: UpdateMap<TProps, TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] {
     let reentered = false;
     const buffer: TMsg [] = [];
     let currentModel: Partial<TModel> = {};
@@ -46,7 +45,9 @@ export function useElmish<TProps, TModel, TMsg extends { name: string | symbol }
                 LoggerService?.debug("Elm", "message from", name, nextMsg);
 
                 try {
-                    const [newModel, cmd] = update({ ...initializedModel, ...currentModel }, nextMsg, props);
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-expect-error -- We know that nextMsg fits
+                    const [newModel, cmd] = updateMap[nextMsg.name as TMsg["name"]](nextMsg, { ...initializedModel, ...currentModel }, props);
 
                     if (modelHasChanged(newModel)) {
                         currentModel = { ...currentModel, ...newModel };

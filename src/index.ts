@@ -1,8 +1,9 @@
 import { Cmd, createCmd, Dispatch } from "./Cmd";
 import { ElmComponent, UpdateReturnType } from "./ElmComponent";
-import { handleError, MsgSource } from "./ElmUtilities";
+import { handleError, MsgSource, UpdateMap } from "./ElmUtilities";
 import { init, Logger, Message } from "./Init";
-import { useElmish } from "./Hooks";
+import { useElmish } from "./useElmish";
+import { useElmishMap } from "./useElmishMap";
 
 export type {
     Logger,
@@ -11,6 +12,7 @@ export type {
     Dispatch,
     UpdateReturnType,
     MsgSource,
+    UpdateMap,
 };
 
 export {
@@ -19,4 +21,5 @@ export {
     ElmComponent,
     handleError,
     useElmish,
+    useElmishMap,
 };

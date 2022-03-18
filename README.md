@@ -164,6 +164,34 @@ You can use these components like any other React component.
 >
 > You can even split the contents of the **App.ts** into two files: **Types.ts** (`Message`, `Model`, and `Props`) and **State.ts** (`init` and `update`).
 
+## A new approach
+
+Instead of `useElmish` you can use the `useElmishMap` hook. Then you have an `UpdateMap` instead of an `update` function:
+
+```ts
+const updateMap: UpdateMap<Props, Model, Message> {
+    // Now the message is the first parameter, so it is easier to omit the model parameter.
+    Increment: (msg) => [{ value: model.value + 1 }],
+    Decrement: (msg) => [{ value: model.value - 1 }],
+}
+```
+
+Add your component looks like:
+
+```tsx
+import { useElmishMap } from "react-elmish";
+
+const App = (props: Shared.Props) => {
+    const [model, dispatch] = useElmishMap(props, init, updateMap, "App");
+
+    return (
+        <div>
+            ...
+        </div>
+    );
+};
+```
+
 ## More on messages
 
 ### Message arguments
