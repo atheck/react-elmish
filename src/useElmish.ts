@@ -2,9 +2,9 @@ import { Cmd, Dispatch } from "./Cmd";
 import { dispatchMiddleware, LoggerService } from "./Init";
 import { MessageBase, Nullable } from "./ElmUtilities";
 import { useCallback, useState } from "react";
-import { UpdateReturnType } from ".";
+import { UpdateFunction } from "./ElmComponent";
 
-export function useElmish<TProps, TModel, TMsg extends MessageBase> (props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], update: (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] {
+export function useElmish<TProps, TModel, TMsg extends MessageBase> (props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], update: UpdateFunction<TProps, TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] {
     let reentered = false;
     const buffer: TMsg [] = [];
     let currentModel: Partial<TModel> = {};

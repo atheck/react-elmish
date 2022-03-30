@@ -2,6 +2,7 @@ import { Cmd, Dispatch } from "./Cmd";
 import { dispatchMiddleware, LoggerService } from "./Init";
 import { MessageBase, Nullable, UpdateMap } from "./ElmUtilities";
 import { useCallback, useState } from "react";
+import { UpdateReturnType } from "./ElmComponent";
 
 export function useElmishMap<TProps, TModel, TMsg extends MessageBase> (props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], updateMap: UpdateMap<TProps, TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] {
     let reentered = false;
@@ -45,9 +46,7 @@ export function useElmishMap<TProps, TModel, TMsg extends MessageBase> (props: T
                 LoggerService?.debug("Elm", "message from", name, nextMsg);
 
                 try {
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-expect-error -- We know that nextMsg fits
-                    const [newModel, cmd] = updateMap[nextMsg.name as TMsg["name"]](nextMsg, { ...initializedModel, ...currentModel }, props);
+                    const [newModel, cmd] = callUpdateMap(updateMap, nextMsg, { ...initializedModel, ...currentModel }, props);
 
                     if (modelHasChanged(newModel)) {
                         currentModel = { ...currentModel, ...newModel };
@@ -88,4 +87,10 @@ export function useElmishMap<TProps, TModel, TMsg extends MessageBase> (props: T
     }
 
     return [initializedModel, dispatch];
+}
+
+export function callUpdateMap<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error -- We know that nextMsg fits
+    return updateMap[msg.name as TMessage["name"]](msg, model, props);
 }

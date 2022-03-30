@@ -1,5 +1,7 @@
+import { MessageBase, Nullable, UpdateMap } from "../ElmUtilities";
+import { callUpdateMap } from "../useElmishMap";
 import { Cmd } from "../Cmd";
-import { Nullable } from "../ElmUtilities";
+import { UpdateReturnType } from "../ElmComponent";
 
 /**
  * Executes a single command created by one of the ofPromise functions.
@@ -56,4 +58,10 @@ export async function execCmd<TMsg> (cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []
     const results = await Promise.all(callers);
 
     return results;
+}
+
+export function getUpdateFn<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>): (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage> {
+    return function (msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
+        return callUpdateMap(updateMap, msg, model, props);
+    };
 }

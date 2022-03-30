@@ -688,6 +688,19 @@ it("returns the correct cmd", () => {
 ...
 ```
 
+### Testing with an UpdateMap
+
+To test your update map (when using `useElmishMap`), you can get your `update` function by calling `getUpdateFn`:
+
+```ts
+import * as Testing from "react-elmish/dist/Testing";
+
+const update = getUpdateFn(updateMap);
+
+// in your test call update as usual
+const [model, cmd] = update(msg, model, props);
+```
+
 ## Migration from v1.x to 2.x
 
 * Use `Logger` and `Message` instead of `ILogger` and `IMessage`.

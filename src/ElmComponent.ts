@@ -140,8 +140,10 @@ export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends
      * @abstract
      * @memberof ElmComponent
      */
-    public abstract update: (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>;
+    public abstract update: UpdateFunction<TProps, TModel, TMsg>;
 }
+
+export type UpdateFunction<TProps, TModel, TMsg> = (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>;
 
 /**
  * Type for the return value of the update function.
