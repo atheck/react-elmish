@@ -36,3 +36,8 @@ export interface MsgSource<T extends string> {
 export type UpdateMap<TProps, TModel, TMsg extends MessageBase> = {
     [M in TMsg as M["name"]]: (msg: M, model: TModel, props: TProps) => UpdateReturnType<TModel, TMsg>;
 };
+
+export interface ErrorMessage {
+    name: "error",
+    error: Error,
+}
