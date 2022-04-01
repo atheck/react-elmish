@@ -1,8 +1,8 @@
 import { Cmd, Dispatch } from "../Cmd";
 import { dispatchMiddleware, LoggerService } from "../Init";
+import { InitFunction, UpdateFunction } from "../ElmComponent";
 import { MessageBase, Nullable } from "../ElmUtilities";
 import { useCallback, useState } from "react";
-import { UpdateFunction } from "../ElmComponent";
 
 /**
  * Hook to use the Elm architecture pattern in a function component.
@@ -15,7 +15,7 @@ import { UpdateFunction } from "../ElmComponent";
  * const [model, dispatch] = useElmish(props, init, update, "MyComponent");
  * @deprecated Use `useElmish` with an options object instead.
  */
-export function useElmish<TProps, TModel, TMsg extends MessageBase> (props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], update: UpdateFunction<TProps, TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] {
+export function useElmish<TProps, TModel, TMsg extends MessageBase> (props: TProps, init: InitFunction<TProps, TModel, TMsg>, update: UpdateFunction<TProps, TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] {
     let reentered = false;
     const buffer: TMsg [] = [];
     let currentModel: Partial<TModel> = {};
@@ -94,7 +94,9 @@ export function useElmish<TProps, TModel, TMsg extends MessageBase> (props: TPro
         initializedModel = initModel;
         setModel(initializedModel);
 
-        execCmd(initCmd);
+        if (initCmd) {
+            execCmd(initCmd);
+        }
     }
 
     return [initializedModel, dispatch];

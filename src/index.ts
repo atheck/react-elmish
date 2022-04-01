@@ -1,5 +1,5 @@
 import { Cmd, createCmd, Dispatch } from "./Cmd";
-import { ElmComponent, UpdateReturnType } from "./ElmComponent";
+import { ElmComponent, InitResult, UpdateReturnType } from "./ElmComponent";
 import { ErrorMessage, handleError, MsgSource, UpdateMap } from "./ElmUtilities";
 import { init, Logger, Message } from "./Init";
 import { useElmish } from "./useElmish";
@@ -9,6 +9,7 @@ export type {
     Message,
     Cmd,
     Dispatch,
+    InitResult,
     UpdateReturnType,
     MsgSource,
     UpdateMap,

@@ -1,14 +1,14 @@
 import { Cmd, Dispatch } from "./Cmd";
 import { dispatchMiddleware, LoggerService } from "./Init";
+import { InitFunction, UpdateFunction, UpdateReturnType } from "./ElmComponent";
 import { MessageBase, Nullable, UpdateMap } from "./ElmUtilities";
-import { UpdateFunction, UpdateReturnType } from "./ElmComponent";
 import { useCallback, useState } from "react";
 
 interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
-    props: TProps,
-    init: (props: TProps) => [TModel, Cmd<TMessage>],
-    update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>,
     name: string,
+    props: TProps,
+    init: InitFunction<TProps, TModel, TMessage>,
+    update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>,
 }
 
 /**
@@ -97,7 +97,9 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ props
         initializedModel = initModel;
         setModel(initializedModel);
 
-        execCmd(initCmd);
+        if (initCmd) {
+            execCmd(initCmd);
+        }
     }
 
     return [initializedModel, dispatch];

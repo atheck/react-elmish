@@ -3,6 +3,7 @@ import { dispatchMiddleware, LoggerService } from "../Init";
 import { MessageBase, Nullable, UpdateMap } from "../ElmUtilities";
 import { useCallback, useState } from "react";
 import { callUpdateMap } from "../useElmish";
+import { InitFunction } from "../ElmComponent";
 
 /**
  * Hook to use the Elm architecture pattern in a function component.
@@ -15,7 +16,7 @@ import { callUpdateMap } from "../useElmish";
  * const [model, dispatch] = useElmishMap(props, init, updateMap, "MyComponent");
  * @deprecated Use `useElmish` with an options object instead.
  */
-export function useElmishMap<TProps, TModel, TMessage extends MessageBase> (props: TProps, init: (props: TProps) => [TModel, Cmd<TMessage>], updateMap: UpdateMap<TProps, TModel, TMessage>, name: string): [TModel, Dispatch<TMessage>] {
+export function useElmishMap<TProps, TModel, TMessage extends MessageBase> (props: TProps, init: InitFunction<TProps, TModel, TMessage>, updateMap: UpdateMap<TProps, TModel, TMessage>, name: string): [TModel, Dispatch<TMessage>] {
     let reentered = false;
     const buffer: TMessage [] = [];
     let currentModel: Partial<TModel> = {};
@@ -94,7 +95,9 @@ export function useElmishMap<TProps, TModel, TMessage extends MessageBase> (prop
         initializedModel = initModel;
         setModel(initializedModel);
 
-        execCmd(initCmd);
+        if (initCmd) {
+            execCmd(initCmd);
+        }
     }
 
     return [initializedModel, dispatch];

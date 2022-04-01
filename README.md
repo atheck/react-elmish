@@ -25,7 +25,7 @@ An elmish component basically consists of the following parts:
 First import everything from `react-elmish` and declare the **Message** discriminated union type:
 
 ```ts
-import { Cmd, createCmd, UpdateReturnType, UpdateMap } from "react-elmish";
+import { Cmd, createCmd, InitResult, UpdateReturnType, UpdateMap } from "react-elmish";
 
 export type Message =
     | { name: "increment" }
@@ -57,21 +57,14 @@ export interface Props {
 }
 ```
 
-Now we create a `cmd` object for our messages type:
-
-```ts
-const cmd = createCmd<Message>();
-```
-
 To create the initial model we need an **init** function:
 
 ```ts
-export function init (props: Props): [Model, Cmd<Message>] {
+export function init (props: Props): InitResult {
     return [
         {
             value: props.initialValue,
-        },
-        cmd.none
+        }
     ];
 };
 ```
@@ -251,75 +244,19 @@ You can also use **Symbols** for the message type instead of strings:
     ...
     ```
 
-## Setup
-
-**react-elmish** works without a setup. But if you want to use logging or some middleware, you can setup **react-elmish** at the start of your program.
-
-```ts
-import * as Elm from "react-elmish";
-
-const myLogger = {
-    debug(...args: unknown []) {
-        console.debug(...args);
-    },
-    info(...args: unknown []) {
-        console.info(...args);
-    },
-    error(...args: unknown []) {
-        console.error(...args);
-    },
-}
-
-Elm.init({
-    logger: myLogger,
-    errorMiddleware: error => Toast.error(error.message),
-    dispatchMiddleware: msg => console.log(msg),
-});
-```
-
-The error middleware function is called by the `handleError` function (see [Error handling](#error-handling)).
-
-The dispatch middleware function is called whenever a Message is dispatched.
-
-## Error handling
-
-You can handle errors easily with the following pattern.
-
-1. Add an error message:
-
-    ```ts
-    import { ErrorMessage, errorMsg, handleError } from "react-elmish";
-
-    export type Message =
-        | ...
-        | ErrorMessage;
-    ```
-
-1. Optionally add the convenient function to the **Msg** object:
-
-    ```ts
-    export const Msg = {
-        ...
-        ...errorMsg,
-    }
-    ```
-
-1. Handle the error message in the **update** function:
-
-    ```ts
-    ...
-    case "error":
-        return handleError(msg.error);
-    ...
-    ```
-
-The **handleError** function then calls your error handling middleware.
-
 ## Dispatch commands in the update map or update function
 
 In addition to modifying the model, you can dispatch new commands here.
 
-To do so, you can call one of the functions in the `cmd` object:
+To do so, you have to create a `cmd` object:
+
+```ts
+import { createCmd } from "react-elmish";
+
+const cmd = createCmd<Message>();
+```
+
+Then you can call one of the functions of that object:
 
 | Function | Description |
 |---|---|
@@ -348,6 +285,8 @@ export const Msg = {
     printLastMessage: (message: string): Message => ({ name: "printLastMessage", message }),
     ...
 }
+
+const cmd = createCmd<Message>();
 ```
 
 In the **update** function you can dispatch that message like this:
@@ -407,6 +346,85 @@ case "error":
     return handleError(msg.error);
 ...
 ```
+
+### Dispatch a command from `init`
+
+The same way as in the `update` map or function, you can also dispatch an initial command in the `init` function:
+
+```ts
+export function init (props: Props): InitResult {
+    return [
+        {
+            value: props.initialValue,
+        },
+        cmd.ofMsg(Msg.loadData())
+    ];
+};
+```
+
+## Setup
+
+**react-elmish** works without a setup. But if you want to use logging or some middleware, you can setup **react-elmish** at the start of your program.
+
+```ts
+import { init } from "react-elmish";
+
+const myLogger = {
+    debug(...args: unknown []) {
+        console.debug(...args);
+    },
+    info(...args: unknown []) {
+        console.info(...args);
+    },
+    error(...args: unknown []) {
+        console.error(...args);
+    },
+}
+
+init({
+    logger: myLogger,
+    errorMiddleware: error => Toast.error(error.message),
+    dispatchMiddleware: msg => myLogger.debug(msg),
+});
+```
+
+The error middleware function is called by the `handleError` function (see [Error handling](#error-handling)).
+
+The dispatch middleware function is called whenever a Message is dispatched.
+
+## Error handling
+
+You can handle errors easily with the following pattern.
+
+1. Add an error message:
+
+    ```ts
+    import { ErrorMessage, errorMsg, handleError } from "react-elmish";
+
+    export type Message =
+        | ...
+        | ErrorMessage;
+    ```
+
+1. Optionally add the convenient function to the **Msg** object:
+
+    ```ts
+    export const Msg = {
+        ...
+        ...errorMsg,
+    }
+    ```
+
+1. Handle the error message in the **update** function:
+
+    ```ts
+    ...
+    case "error":
+        return handleError(msg.error);
+    ...
+    ```
+
+The **handleError** function then calls your error handling middleware.
 
 ## React life cycle management
 

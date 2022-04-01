@@ -28,7 +28,7 @@ export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends
      * @param name The name of the component.
      * @memberof ElmComponent
      */
-    public constructor (props: TProps, init: (arg: TProps) => [TModel, Cmd<TMsg> | undefined], name: string) {
+    public constructor (props: TProps, init: InitFunction<TProps, TModel, TMsg>, name: string) {
         super(props);
 
         const [model, cmd] = init(this.props);
@@ -143,9 +143,13 @@ export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends
     public abstract update: UpdateFunction<TProps, TModel, TMsg>;
 }
 
-export type UpdateFunction<TProps, TModel, TMsg> = (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>;
+export type InitResult<TModel, TMessage> = [TModel, Cmd<TMessage>?];
+
+export type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TModel, TMessage>;
 
 /**
  * Type for the return value of the update function.
  */
 export type UpdateReturnType<TModel, TMsg> = [Partial<TModel>, Cmd<TMsg>?];
+
+export type UpdateFunction<TProps, TModel, TMsg> = (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>;
