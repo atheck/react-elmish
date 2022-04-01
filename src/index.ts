@@ -1,8 +1,8 @@
 import { Cmd, createCmd, Dispatch } from "./Cmd";
 import { ElmComponent, InitResult, UpdateReturnType } from "./ElmComponent";
-import { ErrorMessage, handleError, MsgSource, UpdateMap } from "./ElmUtilities";
+import { ErrorMessage, errorMsg, handleError, MsgSource, UpdateMap } from "./ElmUtilities";
 import { init, Logger, Message } from "./Init";
-import { useElmish } from "./useElmish";
+import { SubscriptionResult, useElmish } from "./useElmish";
 
 export type {
     Logger,
@@ -11,6 +11,7 @@ export type {
     Dispatch,
     InitResult,
     UpdateReturnType,
+    SubscriptionResult,
     MsgSource,
     UpdateMap,
     ErrorMessage,
@@ -20,6 +21,7 @@ export {
     init,
     createCmd,
     ElmComponent,
+    errorMsg,
     handleError,
     useElmish,
 };

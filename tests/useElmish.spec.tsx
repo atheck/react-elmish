@@ -1,4 +1,4 @@
-import { Cmd, createCmd, UpdateReturnType, useElmish } from "../src";
+import { Cmd, createCmd, SubscriptionResult, UpdateReturnType, useElmish } from "../src";
 import { render, RenderResult, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 
@@ -16,6 +16,7 @@ interface Model {
 interface Props {
     init: () => [Model, Cmd<Message>],
     update: (model: Model, msg: Message, props: Props) => UpdateReturnType<Model, Message>,
+    subscription?: (model: Model) => SubscriptionResult<Message>,
 }
 
 function defaultInit (msg: Cmd<Message>): [Model, Cmd<Message>] {
@@ -47,7 +48,7 @@ function defaultUpdate (_model: Model, msg: Message): UpdateReturnType<Model, Me
 let componentModel: Model | undefined;
 const cmd = createCmd<Message>();
 
-describe("Hooks", () => {
+describe("useElmish", () => {
     it("calls the init function", () => {
         // arrange
         const init = jest.fn().mockReturnValue([{}, []]);
@@ -128,11 +129,52 @@ describe("Hooks", () => {
         // assert
         expect(componentModel).toStrictEqual({ value1: "Second", value2: "Third" });
     });
+
+    it("calls the subscription", () => {
+        // arrange
+        const mockSub = jest.fn();
+        const mockSubscription = jest.fn().mockReturnValue([cmd.ofSub(mockSub)]);
+        const [initModel, initCmd] = defaultInit(cmd.none);
+        const props: Props = {
+            init: () => [initModel, initCmd],
+            update: defaultUpdate,
+            subscription: mockSubscription,
+
+        };
+
+        // act
+        renderComponent(props);
+
+        // assert
+        expect(mockSubscription).toHaveBeenCalledWith(initModel);
+        expect(mockSub).toHaveBeenCalledWith(expect.anything());
+    });
+
+    it("calls the subscriptions destructor if provided", () => {
+        // arrange
+        const mockDestructor = jest.fn();
+        const mockSubscription = jest.fn().mockReturnValue([cmd.none, mockDestructor]);
+        const [initModel, initCmd] = defaultInit(cmd.none);
+        const props: Props = {
+            init: () => [initModel, initCmd],
+            update: defaultUpdate,
+            subscription: mockSubscription,
+
+        };
+
+        // act
+        const api = renderComponent(props);
+
+        api.unmount();
+
+        // assert
+        expect(mockDestructor).toHaveBeenCalledWith();
+    });
 });
 
 function TestComponent (props: Props): JSX.Element {
-    const { init, update } = props;
-    const [model] = useElmish({ props, init, update, name: "Test" });
+    const { init, update, subscription } = props;
+    const [model] = useElmish({ props, init, update, subscription, name: "Test" });
 
     componentModel = model;
 
@@ -146,8 +188,8 @@ function renderComponent (props: Props): RenderResult {
 }
 
 function TestComponentWithEffect (props: Props): JSX.Element {
-    const { init, update } = props;
-    const [model, dispatch] = useElmish({ props, init, update, name: "Test" });
+    const { init, update, subscription } = props;
+    const [model, dispatch] = useElmish({ props, init, update, subscription, name: "Test" });
 
     if (model.value1 === "") {
         setTimeout(() => dispatch({ name: "First" }), 5);

@@ -269,6 +269,7 @@ Then you can call one of the functions of that object:
 | `cmd.ofPromise.either` | Calls an async function and maps the result into a message. |
 | `cmd.ofPromise.attempt` | Like `either` but ignores the success case. |
 | `cmd.ofPromise.perform` | Like `either` but ignores the error case. |
+| `cmd.ofSub` | Use this function to trigger a command in a subscription. |
 
 ### Dispatch a message
 
@@ -361,6 +362,91 @@ export function init (props: Props): InitResult {
     ];
 };
 ```
+
+## Subscriptions
+
+### Working with external sources of events
+
+If you want to use external sources of events (e.g. a timer), you can use a `subscription`. With this those events can be processed by our `update` handler.
+
+Let's define a `Model` and a `Message`:
+
+```ts
+type Message =
+    | { name: "timer", date: Date };
+
+interface Model {
+    date: Date,
+}
+
+const Msg = {
+    timer: (date: Date): Message => ({ name: "timer", date }),
+};
+```
+
+Now we define the `init` function and the `update` object:
+
+```ts
+const cmd = createCmd<Message>();
+
+function init (props: Props): InitResult<Model, Message> {
+    return [{
+        date: new Date(),
+    }];
+}
+
+const update: UpdateMap<Props, Model, Message> = {
+    timer ({ date }) {
+        return [{ date }];
+    },
+};
+```
+
+Then we write our `subscription` function:
+
+```ts
+function subscription (model: Model): SubscriptionResult<Message> {
+    const sub = (dispatch: Dispatch<Message>): void => {
+        setInterval(() => dispatch(Msg.timer(new Date())), 1000) as unknown as number;
+    }
+
+    return [cmd.ofSub(sub)];
+}
+```
+
+This function gets the initialized model as parameter and returns a command.
+
+In the function component we call `useElmish` and pass the subscription to it:
+
+```ts
+const [{ date }] = useElmish({ name: "Subscriptions", props, init, update, subscription })
+```
+
+You can define and aggregate multiple subscriptions with a call to `cmd.batch(...)`.
+
+### Cleanup subscriptions
+
+In the solution above `setInterval` will trigger events even if the component is removed from the DOM. To cleanup subscriptions, we can return a `destructor` function from the subscription the same as in the `useEffect` hook.
+
+Let's rewrite our `subscription` function:
+
+```ts
+function subscription (model: Model): SubscriptionResult<Message> {
+    let timer: NodeJS.Timer;
+
+    const sub = (dispatch: Dispatch<Message>): void => {
+        timer = setInterval(() => dispatch(Msg.timer(new Date())), 1000);
+    }
+
+    const destructor = () => {
+        clearInterval(timer1);
+    }
+
+    return [cmd.ofSub(sub), destructor];
+}
+```
+
+Here we save the return value of `setInterval` and clear that interval in the returned `destructor` function.
 
 ## Setup
 

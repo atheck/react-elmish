@@ -2,13 +2,17 @@ import { Cmd, Dispatch } from "./Cmd";
 import { dispatchMiddleware, LoggerService } from "./Init";
 import { InitFunction, UpdateFunction, UpdateReturnType } from "./ElmComponent";
 import { MessageBase, Nullable, UpdateMap } from "./ElmUtilities";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+export type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];
+type Subscription<TModel, TMessage> = (model: TModel) => SubscriptionResult<TMessage>;
 
 interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
     name: string,
     props: TProps,
     init: InitFunction<TProps, TModel, TMessage>,
     update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>,
+    subscription?: Subscription<TModel, TMessage>,
 }
 
 /**
@@ -18,7 +22,7 @@ interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
  * @example
  * const [model, dispatch] = useElmish({ props, init, update, name: "MyComponent" });
  */
-export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ props, init, update, name }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
+export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props, init, update, subscription }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
     let reentered = false;
     const buffer: TMessage [] = [];
     let currentModel: Partial<TModel> = {};
@@ -101,6 +105,18 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ props
             execCmd(initCmd);
         }
     }
+
+    useEffect(() => {
+        if (subscription) {
+            const [subCmd, destructor] = subscription(initializedModel as TModel);
+
+            execCmd(subCmd);
+
+            if (destructor) {
+                return destructor;
+            }
+        }
+    }, []);
 
     return [initializedModel, dispatch];
 }

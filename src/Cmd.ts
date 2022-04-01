@@ -41,6 +41,15 @@ class Command<TMsg> {
     }
 
     /**
+     * Command to call the subscriber.
+     * @param {Sub<TMsg>} sub The subscriber function.
+     */
+    // eslint-disable-next-line class-methods-use-this
+    public ofSub (sub: Sub<TMsg>): Cmd<TMsg> {
+        return [sub];
+    }
+
+    /**
      * Provides functionalities to create commands from simple functions.
      */
     public ofFunc = {
