@@ -41,3 +41,7 @@ export interface ErrorMessage {
     name: "error",
     error: Error,
 }
+
+export const errorMsg = {
+    error: (error: Error): ErrorMessage => ({ name: "error", error }),
+};
