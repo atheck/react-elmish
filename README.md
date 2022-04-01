@@ -25,66 +25,82 @@ An elmish component basically consists of the following parts:
 First import everything from `react-elmish` and declare the **Message** discriminated union type:
 
 ```ts
-import * as Elm from "react-elmish";
+import { Cmd, createCmd, UpdateReturnType, UpdateMap } from "react-elmish";
 
 export type Message =
-    | { name: "Increment" }
-    | { name: "Decrement" }
-    ;
+    | { name: "increment" }
+    | { name: "decrement" };
 ```
 
-You can also create some convenience functions to dispatch a message:
+You can also create some convenience functions to create message objects:
 
 ```ts
 export const Msg = {
-    increment: (): Message => ({ name: "Increment" }),
-    decrement: (): Message => ({ name: "Decrement" }),
+    increment: (): Message => ({ name: "increment" }),
+    decrement: (): Message => ({ name: "decrement" }),
 };
-```
-
-Now we can create a `cmd` object for our messages type:
-
-```ts
-const cmd = Elm.createCmd<Message>();
 ```
 
 Next, declare the model:
 
 ```ts
-export type Model = Readonly<{
+export interface Model {
     value: number,
-}>;
+}
 ```
 
 The props are optional:
 
 ```ts
-export type Props = {
+export interface Props {
     initialValue: number,
-};
+}
+```
+
+Now we create a `cmd` object for our messages type:
+
+```ts
+const cmd = createCmd<Message>();
 ```
 
 To create the initial model we need an **init** function:
 
 ```ts
-export const init = (props: Props): [Model, Elm.Cmd<Message>] => {
-    const model: Model = {
-        value: props.initialValue,
-    };
-
-    return [model, cmd.none];
+export function init (props: Props): [Model, Cmd<Message>] {
+    return [
+        {
+            value: props.initialValue,
+        },
+        cmd.none
+    ];
 };
 ```
 
-To update the model based on a message we need an **update** function:
+To update the model based on a message we need an `UpdateMap` object:
 
 ```ts
-export const update = (model: Model, msg: Msg, props: Props): Elm.UpdateReturnType<Model, Message> => {
+export const update: UpdateMap<Props, Model, Message> = {
+    increment (msg, model, props) {
+        return [{ value: model.value + 1 }];
+    },
+
+    decrement (msg, model, props) {
+        return [{ value: model.value - 1 }];
+    },
+};
+```
+
+**Note:** When using an `UpdateMap` it is recommended to use camelCase for message names ("increment" instead of "Increment").
+
+Alternatively we can use an **update** function:
+
+```ts
+export const update = (model: Model, msg: Msg, props: Props): UpdateReturnType<Model, Message> => {
     switch (msg.name) {
-        case "Increment":
+        case "increment":
             return [{ value: model.value + 1 }];
 
-        case "Decrement":
+        case "decrement":
             return [{ value: model.value - 1 }];
     }
 };
@@ -96,25 +112,49 @@ export const update = (model: Model, msg: Msg, props: Props): Elm.UpdateReturnTy
 
 To put all this together and to render our component, we need a React component.
 
-This can be a **class component**:
+As a **function component**:
 
 ```tsx
 // Import everything from the App.ts
-import * as Shared from "../App";
+import { init, update, Msg, Props } from "../App";
+// Import the useElmish hook
+import { useElmish } from "react-elmish";
+
+function App (props: Props): JSX.Element {
+    // Call the useElmish hook, it returns the current model and the dispatch function
+    const [model, dispatch] = useElmish({ props, init, update, name: "App" });
+
+    return (
+        <div>
+            {/* Display our current value */}
+            <p>{model.value}</p>
+
+            {/* dispatch messages */}
+            <button onClick={() => dispatch(Msg.increment())}>Increment</button>
+            <button onClick={() => dispatch(Msg.decrement())}>Decrement</button>
+        </div>
+    );
+}
+```
+
+As a **class component**:
+
+```tsx
+// Import everything from the App.ts
+import { Model, Message, Props, init, update, Msg } as Shared from "../App";
 // Import the ElmComponent which extends the React.Component
 import { ElmComponent } from "react-elmish";
-// Don't forget to import react
 import React from "react";
 
 // Create an elmish class component
-class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
+class App extends ElmComponent<Model, Message, Props> {
     // Construct the component with the props and init function
-    constructor(props: Shared.Props) {
-        super(props, Shared.init, "App");
+    constructor(props: Props) {
+        super(props, init, "App");
     }
 
     // Assign our update function to the component
-    update = Shared.update;
+    update = update;
 
     render(): React.ReactNode {
         // Access the model
@@ -126,36 +166,11 @@ class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
                 <p>{value}</p>
 
                 {/* Dispatch messages */}
-                <button onClick={() => this.dispatch(Shared.Msg.increment())}>Increment</button>
-                <button onClick={() => this.dispatch(Shared.Msg.decrement())}>Decrement</button>
+                <button onClick={() => this.dispatch(Msg.increment())}>Increment</button>
+                <button onClick={() => this.dispatch(Msg.decrement())}>Decrement</button>
             </div>
         );
     }
-```
-
-Or it can be a **functional component**:
-
-```tsx
-// Import everything from the App.ts
-import * as Shared from "../App";
-// Import the useElmish hook
-import { useElmish } from "react-elmish";
-
-const App = (props: Shared.Props) => {
-    // Call the useElmish hook, it returns the current model and the dispatch function
-    const [model, dispatch] = useElmish(props, Shared.init, Shared.update, "App");
-
-    return (
-        <div>
-            {/* Display our current value */}
-            <p>{model.value}</p>
-
-            {/* dispatch messages */}
-            <button onClick={() => dispatch(Shared.Msg.increment())}>Increment</button>
-            <button onClick={() => dispatch(Shared.Msg.decrement())}>Decrement</button>
-        </div>
-    );
-};
 ```
 
 You can use these components like any other React component.
@@ -163,34 +178,6 @@ You can use these components like any other React component.
 > **Note**: It is recommended to separate business logic and the view into separate modules. Here we put the `Messages`, `Model`, `Props`, `init`, and `update` functions into **App.ts**. The elmish React Component resides in a **Components** subfolder and is named **App.tsx**.
 >
 > You can even split the contents of the **App.ts** into two files: **Types.ts** (`Message`, `Model`, and `Props`) and **State.ts** (`init` and `update`).
-
-## A new approach
-
-Instead of `useElmish` you can use the `useElmishMap` hook. Then you have an `UpdateMap` instead of an `update` function:
-
-```ts
-const updateMap: UpdateMap<Props, Model, Message> {
-    // Now the message is the first parameter, so it is easier to omit the model parameter.
-    Increment: (msg) => [{ value: model.value + 1 }],
-    Decrement: (msg) => [{ value: model.value - 1 }],
-}
-```
-
-Add your component looks like:
-
-```tsx
-import { useElmishMap } from "react-elmish";
-
-const App = (props: Shared.Props) => {
-    const [model, dispatch] = useElmishMap(props, init, updateMap, "App");
-
-    return (
-        <div>
-            ...
-        </div>
-    );
-};
-```
 
 ## More on messages
 
@@ -200,11 +187,11 @@ Messages can also have arguments. You can modify the example above and pass an o
 
 ```ts
 export type Message =
-    | { name: "Increment", step?: number }
+    | { name: "increment", step?: number }
     ...
 
 export const Msg = {
-    increment: (step?: number): Message => ({ name: "Increment", step }),
+    increment: (step?: number): Message => ({ name: "increment", step }),
     ...
 }
 ```
@@ -213,7 +200,7 @@ Then use this argument in the **update** function:
 
 ```ts
 ...
-case "Increment":
+case "increment":
     return [{ value: model.value + (msg.step ?? 1)}]
 ...
 ```
@@ -301,10 +288,11 @@ You can handle errors easily with the following pattern.
 1. Add an error message:
 
     ```ts
+    import { ErrorMessage, errorMsg, handleError } from "react-elmish";
+
     export type Message =
         | ...
-        | { name: "Error", error: Error }
-        ;
+        | ErrorMessage;
     ```
 
 1. Optionally add the convenient function to the **Msg** object:
@@ -312,7 +300,7 @@ You can handle errors easily with the following pattern.
     ```ts
     export const Msg = {
         ...
-        error: (error: Error): Message => ({ name: "Error", error }),
+        ...errorMsg,
     }
     ```
 
@@ -320,16 +308,16 @@ You can handle errors easily with the following pattern.
 
     ```ts
     ...
-    case "Error":
-        return Elm.handleError(msg.error);
+    case "error":
+        return handleError(msg.error);
     ...
     ```
 
 The **handleError** function then calls your error handling middleware.
 
-## Dispatch commands in the update function
+## Dispatch commands in the update map or update function
 
-In addition to modifying the model, you can dispatch new commands in the **update** function.
+In addition to modifying the model, you can dispatch new commands here.
 
 To do so, you can call one of the functions in the `cmd` object:
 
@@ -352,12 +340,12 @@ Let's assume you have a message to display the description of the last called me
 ```ts
 export type Message =
     ...
-    | { name: "PrintLastMessage", message: string }
+    | { name: "printLastMessage", message: string }
     ...
 
 export const Msg = {
     ...
-    printLastMessage: (message: string): Message => ({ name: "PrintLastMessage", message }),
+    printLastMessage: (message: string): Message => ({ name: "printLastMessage", message }),
     ...
 }
 ```
@@ -365,11 +353,11 @@ export const Msg = {
 In the **update** function you can dispatch that message like this:
 
 ```ts
-case "Increment":
+case "increment":
     return [{ value: model.value + 1 }, cmd.ofMsg(Msg.printLastMessage("Incremented by one"))];
 ```
 
-This new message will immediately be dispatched after returning from the **update** function.
+This new message will immediately be dispatched after returning from the **update**.
 
 ### Call an async function
 
@@ -387,16 +375,16 @@ you can define the following messages:
 ```ts
 export type Messages =
     ...
-    | { name: "LoadSettings" },
-    | { name: "SettingsLoaded", settings: Settings }
-    | { name: "Error", error: Error }
+    | { name: "loadSettings" },
+    | { name: "settingsLoaded", settings: Settings }
+    | ErrorMessage
     ...
 
 export const Msg = {
     ...
-    loadSettings: (): Message => ({ name: "LoadSettings" }),
-    settingsLoaded: (settings: Settings): Message => ({ name: "SettingsLoaded", settings }),
-    error: (error: Error): Message => ({ name: "Error", error }),
+    loadSettings: (): Message => ({ name: "loadSettings" }),
+    settingsLoaded: (settings: Settings): Message => ({ name: "settingsLoaded", settings }),
+    ...errorMsg,
     ...
 };
 ```
@@ -405,18 +393,18 @@ and handle the messages in the **update** function:
 
 ```ts
 ...
-case "LoadSettings":
+case "loadSettings":
     // Create a command out of the async function with the provided arguments
     // If loadSettings resolves it dispatches "SettingsLoaded"
     // If it fails it dispatches "Error"
     // The return type of loadSettings must fit Msg.settingsLoaded
     return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error, "firstArg", 123)];
 
-case "SettingsLoaded":
+case "settingsLoaded":
     return [{ settings: msg.settings }];
 
-case "Error":
-    return Elm.handleError(msg.error);
+case "error":
+    return handleError(msg.error);
 ...
 ```
 
@@ -448,34 +436,141 @@ In a functional component you can use the **useEffect** hook as normal.
 
 If you have some business logic that you want to reuse in other components, you can do this by using different sources for messages.
 
+### With an `UpdateMap`
+
 Let's say you want to load some settings, you can write a module like this:
 
 ```ts LoadSettings.ts
-import * as Elm from "react-elmish";
+import { createCmd, Cmd, ErrorMessage, UpdateMap, handleError } from "react-elmish";
+
+export interface Settings {
+    // ...
+}
+
+export type Message =
+    | { name: "loadSettings" }
+    | { name: "settingsLoaded", settings: Settings }
+    | ErrorMessage;
+
+export const Msg = {
+    loadSettings: (): Message => ({ name: "loadSettings" }),
+    settingsLoaded: (settings: Settings): Message => ({ name: "settingsLoaded", settings }),
+    error: (error: Error): Message => ({ name: "error", error }),
+};
+
+const cmd = createCmd<Message>();
+
+export interface Model {
+    settings: Settings | null,
+}
+
+export function init (): Model {
+    return {
+        settings: null
+    };
+}
+
+export const update: UpdateMap<Props, Model, Message> = {
+    loadSettings () {
+        return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error)];
+    }
+
+    settingsLoaded ({ settings }) {
+        return [{ settings }];
+    }
+
+    error ({ error }) {
+        return handleError(error);
+    }
+};
+
+async function loadSettings (): Promise<Settings> {
+    // Call some service (e.g. database or backend)
+    return {};
+}
+```
+
+> **Note**: This module has no **View**.
+
+Now let's integrate the **LoadSettings** module in our component:
+
+```ts Composition.ts
+// Import the LoadSettings module
+import * as LoadSettings from "./LoadSettings";
+import { createCmd, Cmd, } from "react-elmish";
+
+// Here we define our local messages
+type Message =
+    | { name: "myMessage" }
+    | LoadSettings.Message;
+
+// And spread the Msg of LoadSettings object
+export const Msg = {
+    myMessage: (): Message => ({ name: "myMessage" }),
+    ...LoadSettings.Msg,
+};
+
+const cmd = Elm.createCmd<Message>();
+
+interface Props {}
+
+// Extend the LoadSettings model
+interface Model extends LoadSettings.Model {
+    // ...
+}
+
+export const init = (): [Model, Cmd<Message>] => {
+    // Return the model and dispatch the LoadSettings message
+    return [
+        {
+            // Spread the initial model from LoadSettings
+            ...LoadSettings.init(),
+            // ...
+        },
+        cmd.ofMsg(Msg.loadSettings())
+    ];
+};
+
+// Spread the UpdateMap of LoadSettings into our update map
+const update: UpdateMap<Props, Model, Message> = {
+    myMessage () {
+        return [{}];
+    },
+
+    ...LoadSettings.update,
+};
+```
+
+## With an update function
+
+Let's say you want to load some settings, you can write a module like this:
+
+```ts LoadSettings.ts
+import { MsgSource, ErrorMessage, createCmd, UpdateReturnType, handleError } from "react-elmish";
 
 export type Settings = {
     // ...
 };
 
 // We use a MsgSource to differentiate between the messages
-type MessageSource = Elm.MsgSource<"LoadSettings">;
+type MessageSource = MsgSource<"LoadSettings">;
 
 // Add that MessageSource to all the messages
 export type Message =
-    | { name: "LoadSettings" } & MessageSource
-    | { name: "SettingsLoaded", settings: Settings } & MessageSource
-    | { name: "Error", error: Error } & MessageSource
+    | { name: "loadSettings" } & MessageSource
+    | { name: "settingsLoaded", settings: Settings } & MessageSource
+    | ErrorMessage & MessageSource
 
 // Do the same for the convenient functions
 const MsgSource: MessageSource = { source: "LoadSettings" };
 
 export const Msg = {
-    loadSettings: (): Message => ({ name: "LoadSettings", ...MsgSource }),
-    settingsLoaded: (settings: Settings): Message => ({ name: "SettingsLoaded", settings, ...MsgSource }),
-    error: (error: Error): Message => ({ name: "Error", error, ...MsgSource }),
+    loadSettings: (): Message => ({ name: "loadSettings", ...MsgSource }),
+    settingsLoaded: (settings: Settings): Message => ({ name: "settingsLoaded", settings, ...MsgSource }),
+    error: (error: Error): Message => ({ name: "error", error, ...MsgSource }),
 };
 
-const cmd = Elm.createCmd<Message>();
+const cmd = createCmd<Message>();
 
 export type Model = Readonly<{
     settings: Settings | null,
@@ -485,23 +580,23 @@ export const init = (): Model => ({
     settings: null,
 });
 
-export const update = (_model: Model, msg: Message): Elm.UpdateReturnType<Model, Message> => {
+export const update = (_model: Model, msg: Message): UpdateReturnType<Model, Message> => {
     switch (msg.name) {
-        case "LoadSettings":
+        case "loadSettings":
             return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error)];
 
-        case "SettingsLoaded":
+        case "settingsLoaded":
             return [{ settings: msg.settings }];
 
-        case "Error":
-            return Elm.handleError(msg.error);
+        case "error":
+            return handleError(msg.error);
     }
 };
 
-const loadSettings = async (): Promise<Settings> => {
+async function loadSettings (): Promise<Settings> {
     // Call some service (e.g. database or backend)
-    return Promise.resolve({});
-};
+    return {};
+}
 ```
 
 > **Note**: This module has no **View**.
@@ -509,51 +604,51 @@ const loadSettings = async (): Promise<Settings> => {
 In other components where we want to use this **LoadSettings** module, we also need a message source:
 
 ```ts Composition.ts
-import * as Elm from "react-elmish";
+import { createCmd, MsgSource, UpdateReturnType, Cmd } from "react-elmish";
 // Import the LoadSettings module
 import * as LoadSettings from "./LoadSettings";
 
 // Create a message source for this module
-type MessageSource = Elm.MsgSource<"Composition">;
+type MessageSource = MsgSource<"Composition">;
 
 // Here we define our local messages
 // We don't need to export them
 type CompositionMessage =
-    | { name: "MyMessage" } & MessageSource
-    ;
+    | { name: "myMessage" } & MessageSource;
 
 // Combine the local messages and the ones from LoadSettings
 export type Message =
     | CompositionMessage
-    | LoadSettings.Message
-    ;
+    | LoadSettings.Message;
 
 const MsgSource: MessageSource = { source: "Composition" };
 
 export const Msg = {
-    myMessage: (): Message => ({ name: "MyMessage", ...MsgSource }),
+    myMessage: (): Message => ({ name: "myMessage", ...MsgSource }),
+    ...LoadSettings.Msg,
 };
 
-const cmd = Elm.createCmd<Message>();
+const cmd = createCmd<Message>();
 
 // Include the LoadSettings Model
-export type Model = Readonly<{
+export interface Model extends LoadSettings.Model {
     // ...
-}> & LoadSettings.Model;
+}
 
-export const init = (): [Model, Elm.Cmd<Message>] => {
-    const model: Model = {
-        // Spread the initial model from LoadSettings
-        ...LoadSettings.init(),
-        // ...
-    };
-
+export const init = (): [Model, Cmd<Message>] => {
     // Return the model and dispatch the LoadSettings message
-    return [model, cmd.ofMsg(LoadSettings.Msg.loadSettings())];
+    return [
+        {
+            // Spread the initial model from LoadSettings
+            ...LoadSettings.init(),
+            // ...
+        },
+        cmd.ofMsg(Msg.loadSettings())
+    ];
 };
 
 // In our update function, we first distinguish between the sources of the messages
-export const update = (model: Model, msg: Message): Elm.UpdateReturnType<Model, Message> => {
+export function update (model: Model, msg: Message): UpdateReturnType<Model, Message> {
     switch (msg.source) {
         case "Composition":
             // Then call the update function for the local messages
@@ -568,7 +663,7 @@ export const update = (model: Model, msg: Message): Elm.UpdateReturnType<Model, 
 // For the msg parameter we use the local CompositionMessage type
 const updateComposition = (model: Model, msg: CompositionMessage): Elm.UpdateReturnType<Model, Message> => {
     switch (msg.name) {
-        case "MyMessage":
+        case "myMessage":
             return [{}];
     }
 }
@@ -585,12 +680,12 @@ To inform the parent component about some action, let's say to close a dialog fo
     ```ts Dialog.ts
     export type Message =
         ...
-        | { name: "Close" }
+        | { name: "close" }
         ...
 
     export const Msg = {
         ...
-        close: (): Message => ({ name: "Close" }),
+        close: (): Message => ({ name: "close" }),
         ...
     }
     ```
@@ -607,8 +702,9 @@ To inform the parent component about some action, let's say to close a dialog fo
 
     ```ts Dialog.ts
     ...
-    case "Close":
+    case "close":
         props.onClose();
+
         return [{}];
     ...
     ```
@@ -629,6 +725,7 @@ To test your **update** function you can use some helper functions in `react-elm
 | --- | --- |
 | `getOfMsgParams` | Extracts the messages out of a command |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
+| `getUpdateFn` | returns an `update` function for your update map object. |
 
 ### Testing the model and simple message commands
 
@@ -690,10 +787,10 @@ it("returns the correct cmd", () => {
 
 ### Testing with an UpdateMap
 
-To test your update map (when using `useElmishMap`), you can get your `update` function by calling `getUpdateFn`:
+To test your update map, you can get an `update` function by calling `getUpdateFn`:
 
 ```ts
-import * as Testing from "react-elmish/dist/Testing";
+import { getUpdateFn } from "react-elmish/dist/Testing";
 
 const update = getUpdateFn(updateMap);
 
@@ -701,7 +798,7 @@ const update = getUpdateFn(updateMap);
 const [model, cmd] = update(msg, model, props);
 ```
 
-## Migration from v1.x to 2.x
+## Migration from v1.x to v2.x
 
 * Use `Logger` and `Message` instead of `ILogger` and `IMessage`.
 * The global declaration of the `Nullable` type was removed, because it is unexpected for this library to declare such a type. You can declare this type for yourself if needed:
@@ -711,3 +808,16 @@ const [model, cmd] = update(msg, model, props);
         type Nullable<T> = T | null;
     }
     ```
+
+## Migration from v2.x to v3.x
+
+The signature of `useElmish` has changed. It takes an options object now. Thus there is no need for the `useElmishMap` function. Use the new `useElmish` hook with an `UpdateMap` instead.
+
+To use the old `useElmish` and `useElmishMap` functions, import them from the legacy namespace:
+
+```ts
+import { useElmish } from "react-elmish/dist/legacy/useElmish";
+import { useElmishMap } from "react-elmish/dist/legacy/useElmishMap";
+```
+
+**Notice**: These functions are marked as deprecated and will be removed in a later release.

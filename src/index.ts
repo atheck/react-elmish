@@ -3,7 +3,6 @@ import { ElmComponent, UpdateReturnType } from "./ElmComponent";
 import { ErrorMessage, handleError, MsgSource, UpdateMap } from "./ElmUtilities";
 import { init, Logger, Message } from "./Init";
 import { useElmish } from "./useElmish";
-import { useElmishMap } from "./useElmishMap";
 
 export type {
     Logger,
@@ -22,5 +21,4 @@ export {
     ElmComponent,
     handleError,
     useElmish,
-    useElmishMap,
 };

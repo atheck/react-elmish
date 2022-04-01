@@ -1,5 +1,5 @@
 import { MessageBase, Nullable, UpdateMap } from "../ElmUtilities";
-import { callUpdateMap } from "../useElmishMap";
+import { callUpdateMap } from "../useElmish";
 import { Cmd } from "../Cmd";
 import { UpdateReturnType } from "../ElmComponent";
 

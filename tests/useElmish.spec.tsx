@@ -132,7 +132,7 @@ describe("Hooks", () => {
 
 function TestComponent (props: Props): JSX.Element {
     const { init, update } = props;
-    const [model] = useElmish(props, init, update, "Test");
+    const [model] = useElmish({ props, init, update, name: "Test" });
 
     componentModel = model;
 
@@ -147,7 +147,7 @@ function renderComponent (props: Props): RenderResult {
 
 function TestComponentWithEffect (props: Props): JSX.Element {
     const { init, update } = props;
-    const [model, dispatch] = useElmish(props, init, update, "Test");
+    const [model, dispatch] = useElmish({ props, init, update, name: "Test" });
 
     if (model.value1 === "") {
         setTimeout(() => dispatch({ name: "First" }), 5);

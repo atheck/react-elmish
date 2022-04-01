@@ -1,32 +1,29 @@
-import { Cmd, Dispatch } from "./Cmd";
-import { dispatchMiddleware, LoggerService } from "./Init";
-import { MessageBase, Nullable, UpdateMap } from "./ElmUtilities";
-import { UpdateFunction, UpdateReturnType } from "./ElmComponent";
+import { Cmd, Dispatch } from "../Cmd";
+import { dispatchMiddleware, LoggerService } from "../Init";
+import { MessageBase, Nullable } from "../ElmUtilities";
 import { useCallback, useState } from "react";
-
-interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
-    props: TProps,
-    init: (props: TProps) => [TModel, Cmd<TMessage>],
-    update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>,
-    name: string,
-}
+import { UpdateFunction } from "../ElmComponent";
 
 /**
  * Hook to use the Elm architecture pattern in a function component.
- * @param {UseElmishOptions} options The options passed the the hook.
+ * @param props The props of the component.
+ * @param init Function to initialize the model.
+ * @param update The update function.
+ * @param name The name of the component.
  * @returns A tuple containing the current model and the dispatcher.
  * @example
- * const [model, dispatch] = useElmish({ props, init, update, name: "MyComponent" });
+ * const [model, dispatch] = useElmish(props, init, update, "MyComponent");
+ * @deprecated Use `useElmish` with an options object instead.
  */
-export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ props, init, update, name }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
+export function useElmish<TProps, TModel, TMsg extends MessageBase> (props: TProps, init: (props: TProps) => [TModel, Cmd<TMsg>], update: UpdateFunction<TProps, TModel, TMsg>, name: string): [TModel, Dispatch<TMsg>] {
     let reentered = false;
-    const buffer: TMessage [] = [];
+    const buffer: TMsg [] = [];
     let currentModel: Partial<TModel> = {};
 
     const [model, setModel] = useState<Nullable<TModel>>(null);
     let initializedModel = model;
 
-    const execCmd = useCallback((cmd: Cmd<TMessage>): void => {
+    const execCmd = useCallback((cmd: Cmd<TMsg>): void => {
         cmd.forEach(call => {
             try {
                 call(dispatch);
@@ -36,7 +33,7 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ props
         });
     }, []);
 
-    const dispatch = useCallback((msg: TMessage): void => {
+    const dispatch = useCallback((msg: TMsg): void => {
         if (!initializedModel) {
             return;
         }
@@ -52,7 +49,7 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ props
         } else {
             reentered = true;
 
-            let nextMsg: TMessage | undefined = msg;
+            let nextMsg: TMsg | undefined = msg;
             let modified = false;
 
             while (nextMsg) {
@@ -60,7 +57,7 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ props
                 LoggerService?.debug("Elm", "message from", name, nextMsg);
 
                 try {
-                    const [newModel, cmd] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, props);
+                    const [newModel, cmd] = update({ ...initializedModel, ...currentModel }, nextMsg, props);
 
                     if (modelHasChanged(newModel)) {
                         currentModel = { ...currentModel, ...newModel };
@@ -101,18 +98,4 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ props
     }
 
     return [initializedModel, dispatch];
-}
-
-export function callUpdate<TProps, TModel, TMessage extends MessageBase> (update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
-    if (typeof update === "function") {
-        return update(model, msg, props);
-    }
-
-    return callUpdateMap(update, msg, model, props);
-}
-
-export function callUpdateMap<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error -- We know that nextMsg fits
-    return updateMap[msg.name as TMessage["name"]](msg, model, props);
 }

@@ -1,6 +1,7 @@
-import { Cmd, createCmd, UpdateMap, useElmishMap } from "../src";
+import { Cmd, createCmd, UpdateMap } from "../src";
 import { render, RenderResult, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
+import { useElmishMap } from "../src/legacy/useElmishMap";
 
 type Message =
     | { name: "Test" }
