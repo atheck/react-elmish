@@ -146,7 +146,7 @@ describe("useElmish", () => {
         renderComponent(props);
 
         // assert
-        expect(mockSubscription).toHaveBeenCalledWith(initModel);
+        expect(mockSubscription).toHaveBeenCalledWith(initModel, props);
         expect(mockSub).toHaveBeenCalledWith(expect.anything());
     });
 

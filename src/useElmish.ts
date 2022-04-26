@@ -5,14 +5,14 @@ import { MessageBase, Nullable, UpdateMap } from "./ElmUtilities";
 import { useCallback, useEffect, useState } from "react";
 
 export type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];
-type Subscription<TModel, TMessage> = (model: TModel) => SubscriptionResult<TMessage>;
+type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionResult<TMessage>;
 
 interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
     name: string,
     props: TProps,
     init: InitFunction<TProps, TModel, TMessage>,
     update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>,
-    subscription?: Subscription<TModel, TMessage>,
+    subscription?: Subscription<TProps, TModel, TMessage>,
 }
 
 /**
@@ -108,7 +108,7 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name,
 
     useEffect(() => {
         if (subscription) {
-            const [subCmd, destructor] = subscription(initializedModel as TModel);
+            const [subCmd, destructor] = subscription(initializedModel as TModel, props);
 
             execCmd(subCmd);
 
