@@ -1,8 +1,8 @@
 import { init, Logger } from "../src/Init";
-import { handleError } from "../src/ElmUtilities";
+import { handleError } from "../src/ErrorHandling";
 import { UpdateReturnType } from "../src";
 
-describe("ElmUtilities", () => {
+describe("ErrorHandling", () => {
     describe("handleError", () => {
         it("returns empty new model", () => {
             // act

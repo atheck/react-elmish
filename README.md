@@ -485,30 +485,51 @@ You can handle errors easily with the following pattern.
 1. Add an error message:
 
     ```ts
-    import { ErrorMessage, errorMsg, handleError } from "react-elmish";
+    import { ErrorMessage, errorHandler, errorMsg, handleError } from "react-elmish";
 
     export type Message =
-        | ...
+        // | ...
         | ErrorMessage;
     ```
 
-1. Optionally add the convenient function to the **Msg** object:
+1. Optionally add the convenient function to the `Msg` object:
 
     ```ts
     export const Msg = {
-        ...
+        // ...
         ...errorMsg,
     }
     ```
 
-1. Handle the error message in the **update** function:
+1. Handle the error message
+    1. In the `update` function:
 
-    ```ts
-    ...
-    case "error":
-        return handleError(msg.error);
-    ...
-    ```
+        ```ts
+        // ...
+        case "error":
+            return handleError(msg.error);
+        // ...
+        ```
+
+    1. Or in the `UpdateMap`:
+
+        ```ts
+        const updateMap = {
+            // ...
+            error ({ error }) {
+                return handleError(error);
+            }
+        };
+        ```
+
+        Your can also use the `errorHandler` helper function:
+
+        ```ts
+        const updateMap = {
+            // ...
+            ...errorHandler()
+        };
+        ```
 
 The **handleError** function then calls your error handling middleware.
 
