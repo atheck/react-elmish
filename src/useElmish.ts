@@ -1,7 +1,6 @@
 import { Cmd, Dispatch } from "./Cmd";
 import { dispatchMiddleware, LoggerService } from "./Init";
-import { InitFunction, UpdateFunction, UpdateReturnType } from "./ElmComponent";
-import { MessageBase, Nullable, UpdateMap } from "./ElmUtilities";
+import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 import { useCallback, useEffect, useState } from "react";
 
 export type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];

@@ -1,7 +1,6 @@
-import { MessageBase, Nullable, UpdateMap } from "../ElmUtilities";
+import { MessageBase, Nullable, UpdateMap, UpdateReturnType } from "../Types";
 import { callUpdateMap } from "../useElmish";
 import { Cmd } from "../Cmd";
-import { UpdateReturnType } from "../ElmComponent";
 
 /**
  * Executes a single command created by one of the ofPromise functions.

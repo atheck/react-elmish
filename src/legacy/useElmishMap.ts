@@ -1,9 +1,8 @@
 import { Cmd, Dispatch } from "../Cmd";
 import { dispatchMiddleware, LoggerService } from "../Init";
-import { MessageBase, Nullable, UpdateMap } from "../ElmUtilities";
+import { InitFunction, MessageBase, Nullable, UpdateMap } from "../Types";
 import { useCallback, useState } from "react";
 import { callUpdateMap } from "../useElmish";
-import { InitFunction } from "../ElmComponent";
 
 /**
  * Hook to use the Elm architecture pattern in a function component.

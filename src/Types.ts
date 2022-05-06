@@ -1,4 +1,4 @@
-import { UpdateReturnType } from "./ElmComponent";
+import { Cmd } from "./Cmd";
 
 export type Nullable<T> = T | null;
 
@@ -12,6 +12,17 @@ export interface MessageBase {
 export interface MsgSource<T extends string> {
     source: T,
 }
+
+export type InitResult<TModel, TMessage> = [TModel, Cmd<TMessage>?];
+
+export type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TModel, TMessage>;
+
+/**
+ * Type for the return value of the update function.
+ */
+export type UpdateReturnType<TModel, TMsg> = [Partial<TModel>, Cmd<TMsg>?];
+
+export type UpdateFunction<TProps, TModel, TMsg> = (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>;
 
 /**
  * Type for mapping messages to functions.

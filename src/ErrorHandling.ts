@@ -1,5 +1,5 @@
 import { errorMiddleware, LoggerService } from "./Init";
-import { UpdateReturnType } from "./ElmComponent";
+import { UpdateReturnType } from "./Types";
 
 /**
  * Error message object.

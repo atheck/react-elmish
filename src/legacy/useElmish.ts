@@ -1,7 +1,6 @@
 import { Cmd, Dispatch } from "../Cmd";
 import { dispatchMiddleware, LoggerService } from "../Init";
-import { InitFunction, UpdateFunction } from "../ElmComponent";
-import { MessageBase, Nullable } from "../ElmUtilities";
+import { InitFunction, MessageBase, Nullable, UpdateFunction } from "../Types";
 import { useCallback, useState } from "react";
 
 /**
