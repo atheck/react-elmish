@@ -5,8 +5,7 @@ import { Nullable } from "../src/Types";
 type Message =
     | { name: "Msg1" }
     | { name: "Msg2" }
-    | { name: "Error" }
-    ;
+    | { name: "Error" };
 
 const cmd = createCmd<Message>();
 

@@ -3,24 +3,11 @@ import { callUpdateMap } from "../useElmish";
 import { Cmd } from "../Cmd";
 
 /**
- * Executes a single command created by one of the ofPromise functions.
- * @param cmd The command to process.
- * @deprecated Use execCmd instead.
- */
-export async function runSingleOfPromiseCmd<TMsg> (cmd: Cmd<TMsg>): Promise<void> {
-    return new Promise<void>(resolve => {
-        const dispatch = (): void => resolve();
-
-        cmd[0](dispatch);
-    });
-}
-
-/**
  * Extracts the messages out of a command.
  * @param cmd The command to process.
  * @returns The array of messages.
  */
-export function getOfMsgParams<TMsg> (cmd?: Cmd<TMsg>): TMsg [] {
+function getOfMsgParams<TMsg> (cmd?: Cmd<TMsg>): TMsg [] {
     const msgNames: TMsg [] = [];
 
     const dispatch = (msg: TMsg): void => {
@@ -37,7 +24,7 @@ export function getOfMsgParams<TMsg> (cmd?: Cmd<TMsg>): TMsg [] {
  * @param cmd The command to process.
  * @returns The array of processed messages.
  */
-export async function execCmd<TMsg> (cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []> {
+async function execCmd<TMsg> (cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []> {
     if (!cmd) {
         return [];
     }
@@ -59,8 +46,14 @@ export async function execCmd<TMsg> (cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []
     return results;
 }
 
-export function getUpdateFn<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>): (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage> {
+function getUpdateFn<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>): (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage> {
     return function (msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
         return callUpdateMap(updateMap, msg, model, props);
     };
 }
+
+export {
+    getOfMsgParams,
+    execCmd,
+    getUpdateFn,
+};

@@ -1,8 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Cmd, Dispatch } from "../Cmd";
-import { dispatchMiddleware, LoggerService } from "../Init";
 import { InitFunction, MessageBase, Nullable, UpdateMap } from "../Types";
 import { useCallback, useState } from "react";
 import { callUpdateMap } from "../useElmish";
+import { Services } from "../Init";
 
 /**
  * Hook to use the Elm architecture pattern in a function component.
@@ -28,7 +29,7 @@ export function useElmishMap<TProps, TModel, TMessage extends MessageBase> (prop
             try {
                 call(dispatch);
             } catch (ex: unknown) {
-                LoggerService?.error(ex);
+                Services.logger?.error(ex);
             }
         });
     }, []);
@@ -40,8 +41,8 @@ export function useElmishMap<TProps, TModel, TMessage extends MessageBase> (prop
 
         const modelHasChanged = (updatedModel: Partial<TModel>): boolean => updatedModel !== initializedModel && Object.getOwnPropertyNames(updatedModel).length > 0;
 
-        if (dispatchMiddleware) {
-            dispatchMiddleware(msg);
+        if (Services.dispatchMiddleware) {
+            Services.dispatchMiddleware(msg);
         }
 
         if (reentered) {
@@ -53,8 +54,8 @@ export function useElmishMap<TProps, TModel, TMessage extends MessageBase> (prop
             let modified = false;
 
             while (nextMsg) {
-                LoggerService?.info("Elm", "message from", name, nextMsg.name);
-                LoggerService?.debug("Elm", "message from", name, nextMsg);
+                Services.logger?.info("Elm", "message from", name, nextMsg.name);
+                Services.logger?.debug("Elm", "message from", name, nextMsg);
 
                 try {
                     const [newModel, cmd] = callUpdateMap(updateMap, nextMsg, { ...initializedModel, ...currentModel }, props);
@@ -69,7 +70,7 @@ export function useElmishMap<TProps, TModel, TMessage extends MessageBase> (prop
                         execCmd(cmd);
                     }
                 } catch (ex: unknown) {
-                    LoggerService?.error(ex);
+                    Services.logger?.error(ex);
                 }
 
                 nextMsg = buffer.shift();
@@ -80,7 +81,7 @@ export function useElmishMap<TProps, TModel, TMessage extends MessageBase> (prop
                 setModel(prevModel => {
                     const updatedModel = { ...prevModel as TModel, ...currentModel };
 
-                    LoggerService?.debug("Elm", "update model for", name, updatedModel);
+                    Services.logger?.debug("Elm", "update model for", name, updatedModel);
 
                     return updatedModel;
                 });

@@ -1,9 +1,10 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Cmd, Dispatch } from "./Cmd";
-import { dispatchMiddleware, LoggerService } from "./Init";
 import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 import { useCallback, useEffect, useState } from "react";
+import { Services } from "./Init";
 
-export type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];
+type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];
 type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionResult<TMessage>;
 
 interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
@@ -21,7 +22,7 @@ interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
  * @example
  * const [model, dispatch] = useElmish({ props, init, update, name: "MyComponent" });
  */
-export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props, init, update, subscription }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
+function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props, init, update, subscription }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
     let reentered = false;
     const buffer: TMessage [] = [];
     let currentModel: Partial<TModel> = {};
@@ -34,7 +35,7 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name,
             try {
                 call(dispatch);
             } catch (ex: unknown) {
-                LoggerService?.error(ex);
+                Services.logger?.error(ex);
             }
         });
     }, []);
@@ -46,8 +47,8 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name,
 
         const modelHasChanged = (updatedModel: Partial<TModel>): boolean => updatedModel !== initializedModel && Object.getOwnPropertyNames(updatedModel).length > 0;
 
-        if (dispatchMiddleware) {
-            dispatchMiddleware(msg);
+        if (Services.dispatchMiddleware) {
+            Services.dispatchMiddleware(msg);
         }
 
         if (reentered) {
@@ -59,8 +60,8 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name,
             let modified = false;
 
             while (nextMsg) {
-                LoggerService?.info("Elm", "message from", name, nextMsg.name);
-                LoggerService?.debug("Elm", "message from", name, nextMsg);
+                Services.logger?.info("Elm", "message from", name, nextMsg.name);
+                Services.logger?.debug("Elm", "message from", name, nextMsg);
 
                 try {
                     const [newModel, cmd] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, props);
@@ -75,7 +76,7 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name,
                         execCmd(cmd);
                     }
                 } catch (ex: unknown) {
-                    LoggerService?.error(ex);
+                    Services.logger?.error(ex);
                 }
 
                 nextMsg = buffer.shift();
@@ -86,7 +87,7 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name,
                 setModel(prevModel => {
                     const updatedModel = { ...prevModel as TModel, ...currentModel };
 
-                    LoggerService?.debug("Elm", "update model for", name, updatedModel);
+                    Services.logger?.debug("Elm", "update model for", name, updatedModel);
 
                     return updatedModel;
                 });
@@ -120,7 +121,7 @@ export function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name,
     return [initializedModel, dispatch];
 }
 
-export function callUpdate<TProps, TModel, TMessage extends MessageBase> (update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
+function callUpdate<TProps, TModel, TMessage extends MessageBase> (update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
     if (typeof update === "function") {
         return update(model, msg, props);
     }
@@ -128,8 +129,18 @@ export function callUpdate<TProps, TModel, TMessage extends MessageBase> (update
     return callUpdateMap(update, msg, model, props);
 }
 
-export function callUpdateMap<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
+function callUpdateMap<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error -- We know that nextMsg fits
     return updateMap[msg.name as TMessage["name"]](msg, model, props);
 }
+
+export type {
+    SubscriptionResult,
+};
+
+export {
+    useElmish,
+    callUpdate,
+    callUpdateMap,
+};

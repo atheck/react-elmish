@@ -1,30 +1,43 @@
-export interface Logger {
+interface Logger {
     debug: (...args: unknown []) => void,
     info: (...args: unknown []) => void,
     error: (...args: unknown []) => void,
 }
 
-export interface Message {
+interface Message {
     name: string | symbol,
 }
 
-export type ErrorMiddlewareFunc = (error: Error) => void;
-export type DispatchMiddlewareFunc = (msg: Message) => void;
+type ErrorMiddlewareFunc = (error: Error) => void;
+type DispatchMiddlewareFunc = (msg: Message) => void;
 
-export let LoggerService: Logger | null = null;
-export let errorMiddleware: ErrorMiddlewareFunc | null = null;
-export let dispatchMiddleware: DispatchMiddlewareFunc | null = null;
-
-export interface ElmOptions {
+interface ElmOptions {
     logger?: Logger,
     errorMiddleware?: ErrorMiddlewareFunc,
     dispatchMiddleware?: DispatchMiddlewareFunc,
 }
 
-const init = (options: ElmOptions): void => {
-    LoggerService = options.logger ?? null;
-    errorMiddleware = options.errorMiddleware ?? null;
-    dispatchMiddleware = options.dispatchMiddleware ?? null;
+const Services: ElmOptions = {
+    logger: undefined,
+    errorMiddleware: undefined,
+    dispatchMiddleware: undefined,
 };
 
-export { init };
+function init (options: ElmOptions): void {
+    Services.logger = options.logger;
+    Services.errorMiddleware = options.errorMiddleware;
+    Services.dispatchMiddleware = options.dispatchMiddleware;
+}
+
+export type {
+    Logger,
+    Message,
+    ErrorMiddlewareFunc,
+    DispatchMiddlewareFunc,
+    ElmOptions,
+};
+
+export {
+    Services,
+    init,
+};

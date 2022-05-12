@@ -1,4 +1,4 @@
-import { errorMiddleware, LoggerService } from "./Init";
+import { Services } from "./Init";
 import { UpdateReturnType } from "./Types";
 
 /**
@@ -38,10 +38,10 @@ function errorHandler<TModel, TMessage> (): { error: (msg: ErrorMessage) => Upda
  * @param {Error} error The error.
  */
 function handleError<TModel, TMsg> (error: Error): UpdateReturnType<TModel, TMsg> {
-    if (errorMiddleware) {
-        errorMiddleware(error);
+    if (Services.errorMiddleware) {
+        Services.errorMiddleware(error);
     }
-    LoggerService?.error(error);
+    Services.logger?.error(error);
 
     return [{}];
 }

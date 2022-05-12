@@ -1,7 +1,7 @@
 /**
  * Type of the dispatch function.
  */
-export type Dispatch<TMsg> = (msg: TMsg) => void;
+type Dispatch<TMsg> = (msg: TMsg) => void;
 
 type FallbackHandler = (error?: Error) => void;
 type Sub<TMsg> = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => void;
@@ -9,7 +9,7 @@ type Sub<TMsg> = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => void;
 /**
  * Type of a command.
  */
-export type Cmd<TMsg> = Sub<TMsg> [];
+type Cmd<TMsg> = Sub<TMsg> [];
 
 /**
  * Contains functions to create commands.
@@ -188,3 +188,8 @@ export function createCmd<TMsg> (): Command<TMsg> {
         },
     };
 }
+
+export type {
+    Dispatch,
+    Cmd,
+};

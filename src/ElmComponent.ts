@@ -1,5 +1,5 @@
-import { dispatchMiddleware, LoggerService, Message } from "./Init";
 import { InitFunction, Nullable, UpdateFunction } from "./Types";
+import { Message, Services } from "./Init";
 import { Cmd } from "./Cmd";
 import React from "react";
 
@@ -66,7 +66,7 @@ export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends
             try {
                 call(this.dispatch);
             } catch (ex: unknown) {
-                LoggerService?.error(ex);
+                Services.logger?.error(ex);
             }
         });
     }
@@ -89,8 +89,8 @@ export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends
     public readonly dispatch = (msg: TMsg): void => {
         const modelHasChanged = (model: Partial<TModel>): boolean => model !== this.currentModel && Object.getOwnPropertyNames(model).length > 0;
 
-        if (dispatchMiddleware) {
-            dispatchMiddleware(msg);
+        if (Services.dispatchMiddleware) {
+            Services.dispatchMiddleware(msg);
         }
 
         if (this.reentered) {
@@ -102,8 +102,8 @@ export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends
             let modified = false;
 
             while (nextMsg) {
-                LoggerService?.info("Elm", "message from", this.componentName, nextMsg.name);
-                LoggerService?.debug("Elm", "message from", this.componentName, nextMsg);
+                Services.logger?.info("Elm", "message from", this.componentName, nextMsg.name);
+                Services.logger?.debug("Elm", "message from", this.componentName, nextMsg);
 
                 try {
                     const [model, cmd] = this.update(this.currentModel, nextMsg, this.props);
@@ -117,7 +117,7 @@ export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends
                         this.execCmd(cmd);
                     }
                 } catch (ex: unknown) {
-                    LoggerService?.error(ex);
+                    Services.logger?.error(ex);
                 }
 
                 nextMsg = this.buffer.shift();
@@ -125,7 +125,7 @@ export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends
             this.reentered = false;
 
             if (this.mounted && modified) {
-                LoggerService?.debug("Elm", "update model for", this.componentName, this.currentModel);
+                Services.logger?.debug("Elm", "update model for", this.componentName, this.currentModel);
                 this.forceUpdate();
             }
         }
