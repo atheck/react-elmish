@@ -95,7 +95,7 @@ interface Command<TMsg> {
  * Creates a typed instance of the Command class.
  * @template TMsg The type of the Msg discriminated union.
  */
-export function createCmd<TMsg> (): Command<TMsg> {
+function createCmd<TMsg> (): Command<TMsg> {
     return {
         none: [],
         ofMsg (msg: TMsg): Cmd<TMsg> {
@@ -192,4 +192,8 @@ export function createCmd<TMsg> (): Command<TMsg> {
 export type {
     Dispatch,
     Cmd,
+};
+
+export {
+    createCmd,
 };

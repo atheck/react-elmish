@@ -13,7 +13,7 @@ import React from "react";
  * @template TMsg The type of the messages.
  * @template TProps The type of the props.
  */
-export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.Component<TProps> {
+abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.Component<TProps> {
     private initCmd: Nullable<Cmd<TMsg>> | undefined;
     private readonly componentName: string;
     private readonly buffer: TMsg [] = [];
@@ -142,3 +142,7 @@ export abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends
      */
     public abstract update: UpdateFunction<TProps, TModel, TMsg>;
 }
+
+export {
+    ElmComponent,
+};
