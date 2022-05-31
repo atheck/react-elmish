@@ -26,7 +26,7 @@ type UpdateFunction<TProps, TModel, TMsg> = (model: TModel, msg: TMsg, props: TP
 
 /**
  * Type for mapping messages to functions.
- * Use this type to create your update logic for the useElmishMap hook.
+ * Use this type to create your update logic for the useElmish hook.
  */
 type UpdateMap<TProps, TModel, TMsg extends MessageBase> = {
     [M in TMsg as M["name"]]: (msg: M, model: TModel, props: TProps) => UpdateReturnType<TModel, TMsg>;

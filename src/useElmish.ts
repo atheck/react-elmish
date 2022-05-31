@@ -131,8 +131,10 @@ function callUpdate<TProps, TModel, TMessage extends MessageBase> (update: Updat
 
 function callUpdateMap<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error -- We know that nextMsg fits
-    return updateMap[msg.name as TMessage["name"]](msg, model, props);
+    // @ts-expect-error -- We know that msg fits
+    const updateFn = updateMap[msg.name as TMessage["name"]] as (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMsg>;
+
+    return updateFn(msg, model, props);
 }
 
 export type {

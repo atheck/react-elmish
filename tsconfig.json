@@ -9,6 +9,7 @@
     "strict": true,
     "target": "esnext",
     "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
     "downlevelIteration": true,
     "importHelpers": true,
     "resolveJsonModule": true,
