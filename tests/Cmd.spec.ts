@@ -46,7 +46,7 @@ describe("Cmd", () => {
                 const result = cmd.ofFunc.either(task, successMsg, errorMsg);
 
                 // act
-                result[0](() => null);
+                result[0]?.(() => null);
 
                 // assert
                 expect(task).toHaveBeenCalledTimes(1);
@@ -60,7 +60,7 @@ describe("Cmd", () => {
                 // act
                 let message = "";
 
-                result[0](msg => {
+                result[0]?.(msg => {
                     message = msg;
                 });
 
@@ -78,7 +78,7 @@ describe("Cmd", () => {
                 // act
                 let message = "";
 
-                result[0](msg => {
+                result[0]?.(msg => {
                     message = msg;
                 });
 
@@ -103,7 +103,7 @@ describe("Cmd", () => {
                 const result = cmd.ofFunc.perform(task, successMsg);
 
                 // act
-                result[0](() => null);
+                result[0]?.(() => null);
 
                 // assert
                 expect(task).toHaveBeenCalledTimes(1);
@@ -117,7 +117,7 @@ describe("Cmd", () => {
                 // act
                 let message = "";
 
-                result[0](msg => {
+                result[0]?.(msg => {
                     message = msg;
                 });
 
@@ -135,7 +135,7 @@ describe("Cmd", () => {
                 // act
                 let message = "";
 
-                result[0](msg => {
+                result[0]?.(msg => {
                     message = msg;
                 });
 
@@ -160,7 +160,7 @@ describe("Cmd", () => {
                 const result = cmd.ofFunc.attempt(task, errorMsg);
 
                 // act
-                result[0](() => null);
+                result[0]?.(() => null);
 
                 // assert
                 expect(task).toHaveBeenCalledTimes(1);
@@ -174,7 +174,7 @@ describe("Cmd", () => {
                 // act
                 let message = "";
 
-                result[0](msg => {
+                result[0]?.(msg => {
                     message = msg;
                 });
 
@@ -192,7 +192,7 @@ describe("Cmd", () => {
                 // act
                 let message = "";
 
-                result[0](msg => {
+                result[0]?.(msg => {
                     message = msg;
                 });
 
@@ -219,7 +219,7 @@ describe("Cmd", () => {
                 const result = cmd.ofPromise.either(task, successMsg, errorMsg);
 
                 // act
-                result[0](() => null);
+                result[0]?.(() => null);
 
                 // assert
                 expect(task).toHaveBeenCalledTimes(1);
@@ -232,7 +232,7 @@ describe("Cmd", () => {
 
                 // act
                 const act = async (): Promise<unknown> => new Promise(resolve => {
-                    result[0](resolve);
+                    result[0]?.(resolve);
                 });
                 const message = await act();
 
@@ -249,7 +249,7 @@ describe("Cmd", () => {
 
                 // act
                 const act = async (): Promise<unknown> => new Promise(resolve => {
-                    result[0](resolve);
+                    result[0]?.(resolve);
                 });
                 const message = await act();
 
@@ -274,7 +274,7 @@ describe("Cmd", () => {
                 const result = cmd.ofPromise.perform(task, successMsg);
 
                 // act
-                result[0](() => null);
+                result[0]?.(() => null);
 
                 // assert
                 expect(task).toHaveBeenCalledTimes(1);
@@ -287,7 +287,7 @@ describe("Cmd", () => {
 
                 // act
                 const act = async (): Promise<unknown> => new Promise(resolve => {
-                    result[0](resolve);
+                    result[0]?.(resolve);
                 });
                 const message = await act();
 
@@ -303,7 +303,7 @@ describe("Cmd", () => {
                 const result = cmd.ofPromise.perform(task, successMsg);
 
                 // act
-                const succeeds = (): void => result[0](jest.fn());
+                const succeeds = (): void => result[0]?.(jest.fn());
 
                 // assert
                 expect(succeeds).not.toThrow();
@@ -326,7 +326,7 @@ describe("Cmd", () => {
                 const result = cmd.ofPromise.attempt(task, errorMsg);
 
                 // act
-                result[0](() => null);
+                result[0]?.(() => null);
 
                 // assert
                 expect(task).toHaveBeenCalledTimes(1);
@@ -338,7 +338,7 @@ describe("Cmd", () => {
                 const result = cmd.ofPromise.attempt(task, errorMsg);
 
                 // act
-                result[0](jest.fn());
+                result[0]?.(jest.fn());
 
                 // assert
                 expect(task).toHaveBeenCalledWith();
@@ -353,7 +353,7 @@ describe("Cmd", () => {
 
                 // act
                 const act = async (): Promise<unknown> => new Promise(resolve => {
-                    result[0](resolve);
+                    result[0]?.(resolve);
                 });
                 const message = await act();
 
