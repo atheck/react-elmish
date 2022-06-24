@@ -946,3 +946,7 @@ import { useElmishMap } from "react-elmish/dist/legacy/useElmishMap";
 ```
 
 **Notice**: These functions are marked as deprecated and will be removed in a later release.
+
+## Migration from v3.x to v4.x
+
+Because the legacy `useElmish` and `useElmishMap` have been removed, you have to convert all usages of `useElmish` to use the parameter object.
