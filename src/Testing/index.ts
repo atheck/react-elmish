@@ -46,14 +46,53 @@ async function execCmd<TMsg> (cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []> {
     return results;
 }
 
+/**
+ * Creates an update function out of an UpdateMap.
+ * @param {UpdateMap<TProps, TModel, TMessage>} updateMap The UpdateMap.
+ * @returns {(msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage>} The created update function which can be used in tests.
+ */
 function getUpdateFn<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>): (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage> {
     return function (msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
         return callUpdateMap(updateMap, msg, model, props);
     };
 }
 
+type UpdateArgsFactory<TProps, TModel, TMessage extends MessageBase> = (msg: TMessage, modelTemplate?: Partial<TModel>, propsTemplate?: Partial<TProps>) => [TMessage, TModel, TProps];
+
+/**
+ * Creates a factory function to create a message, a model, and props which can be passed to an update function in tests.
+ * @param {() => TModel} initModel A function to create an initial model.
+ * @param {() => TProps} initProps A function to create initial props.
+ * @returns {UpdateArgsFactory<TProps, TModel, TMessage>} A function to create a message, a model, and props.
+ * @example
+ * // one time
+ * const createUpdateArgs = createUpdateArgsFactory(() => ({ ... }), () => ({ ... }));
+ * // in tests
+ * const [msg, model, props] = createUpdateArgs(Msg.myMessage(), { ... }, , { ... });
+ */
+function createUpdateArgsFactory <TProps, TModel, TMessage extends MessageBase> (initModel: () => TModel, initProps: () => TProps): UpdateArgsFactory<TProps, TModel, TMessage> {
+    return function (msg: TMessage, modelTemplate?: Partial<TModel>, propsTemplate?: Partial<TProps>): [TMessage, TModel, TProps] {
+        return [
+            msg,
+            {
+                ...initModel(),
+                ...modelTemplate,
+            },
+            {
+                ...initProps(),
+                ...propsTemplate,
+            },
+        ];
+    };
+}
+
+export type {
+    UpdateArgsFactory,
+};
+
 export {
     getOfMsgParams,
     execCmd,
     getUpdateFn,
+    createUpdateArgsFactory,
 };

@@ -850,19 +850,20 @@ To test your **update** function you can use some helper functions in `react-elm
 | --- | --- |
 | `getOfMsgParams` | Extracts the messages out of a command |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
-| `getUpdateFn` | returns an `update` function for your update map object. |
+| `getUpdateFn` | Returns an `update` function for your update map object. |
+| `createUpdateArgsFactory` | Creates a factory function to create a message, a model, and props in a test. |
 
 ### Testing the model and simple message commands
 
 ```ts
 import * as Testing from "react-elmish/dist/Testing";
 
+const createUpdateArgs = Testing.createUpdateArgsFactory(() => ({ /* initial model */ }), () => ({ /* initial props */ }));
+
 ...
 it("returns the correct model and cmd", () => {
     // arrange
-    const model = // create model for test
-    const props = // create props for test
-    const msg = Shared.Msg.test();
+    const [msg, model, props] = createUpdateArgs(Shared.Msg.test(), { /* optionally override model here */ }, { /* optionally override props here */ });
 
     const expectedValue = // what you expect in the model
     const expectedCmds = [
@@ -892,9 +893,7 @@ import * as Testing from "react-elmish/dist/Testing";
 ...
 it("returns the correct cmd", () => {
     // arrange
-    const model = { /* create model */ };
-    const props = { /* create props */ };
-    const msg = Shared.Msg.asyncTest();
+    const [msg, model, props] = createUpdateArgs(Shared.Msg.asyncTest());
 
     // mock function which is called when the "AsyncTest" message is handled
     const functionMock = jest.fn();
