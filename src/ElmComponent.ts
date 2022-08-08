@@ -89,10 +89,6 @@ abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.
     public readonly dispatch = (msg: TMsg): void => {
         const modelHasChanged = (model: Partial<TModel>): boolean => model !== this.currentModel && Object.getOwnPropertyNames(model).length > 0;
 
-        if (Services.dispatchMiddleware) {
-            Services.dispatchMiddleware(msg);
-        }
-
         if (this.reentered) {
             this.buffer.push(msg);
         } else {
@@ -104,6 +100,10 @@ abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.
             while (nextMsg) {
                 Services.logger?.info("Elm", "message from", this.componentName, nextMsg.name);
                 Services.logger?.debug("Elm", "message from", this.componentName, nextMsg);
+
+                if (Services.dispatchMiddleware) {
+                    Services.dispatchMiddleware(nextMsg);
+                }
 
                 try {
                     const [model, cmd] = this.update(this.currentModel, nextMsg, this.props);

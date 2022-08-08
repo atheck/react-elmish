@@ -53,10 +53,6 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
 
         const modelHasChanged = (updatedModel: Partial<TModel>): boolean => updatedModel !== initializedModel && Object.getOwnPropertyNames(updatedModel).length > 0;
 
-        if (Services.dispatchMiddleware) {
-            Services.dispatchMiddleware(msg);
-        }
-
         if (reentered) {
             buffer.push(msg);
         } else {
@@ -68,6 +64,10 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
             while (nextMsg) {
                 Services.logger?.info("Elm", "message from", name, nextMsg.name);
                 Services.logger?.debug("Elm", "message from", name, nextMsg);
+
+                if (Services.dispatchMiddleware) {
+                    Services.dispatchMiddleware(nextMsg);
+                }
 
                 try {
                     const [newModel, cmd] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current);
