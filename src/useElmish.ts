@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Cmd, Dispatch } from "./Cmd";
 import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Services } from "./Init";
 
 type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];
@@ -29,6 +29,12 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
 
     const [model, setModel] = useState<Nullable<TModel>>(null);
     let initializedModel = model;
+
+    const propsRef = useRef(props);
+
+    if (propsRef.current !== props) {
+        propsRef.current = props;
+    }
 
     const execCmd = useCallback((cmd: Cmd<TMessage>): void => {
         cmd.forEach(call => {
@@ -64,7 +70,7 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
                 Services.logger?.debug("Elm", "message from", name, nextMsg);
 
                 try {
-                    const [newModel, cmd] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, props);
+                    const [newModel, cmd] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current);
 
                     if (modelHasChanged(newModel)) {
                         currentModel = { ...currentModel, ...newModel };
