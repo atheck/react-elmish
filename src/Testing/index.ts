@@ -1,7 +1,6 @@
 import { InitResult, MessageBase, Nullable, UpdateMap, UpdateReturnType } from "../Types";
 import { callUpdateMap } from "../useElmish";
 import { Cmd } from "../Cmd";
-import React from "react";
 import { setFakeInitResult } from "./fakeInitResult";
 
 /**
@@ -88,7 +87,7 @@ function createUpdateArgsFactory <TProps, TModel, TMessage extends MessageBase> 
     };
 }
 
-function renderWithFakeInit<TModel, TMessage extends MessageBase> (initResult: InitResult<TModel, TMessage>, render: () => React.ReactNode): void {
+function renderWithFakeInit<TModel, TMessage extends MessageBase, TResult = unknown> (initResult: InitResult<TModel, TMessage>, render: () => TResult): void {
     setFakeInitResult(initResult);
     render();
     setFakeInitResult(null);
