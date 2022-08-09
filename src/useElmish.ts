@@ -2,6 +2,7 @@
 import { Cmd, Dispatch } from "./Cmd";
 import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getFakeInitResultOnce } from "./Testing/fakeInitResult";
 import { Services } from "./Init";
 
 type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];
@@ -102,7 +103,7 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
     }, []);
 
     if (!initializedModel) {
-        const [initModel, initCmd] = init(props);
+        const [initModel, initCmd] = getFakeInitResultOnce<TModel, TMessage>() ?? init(props);
 
         initializedModel = initModel;
         setModel(initializedModel);

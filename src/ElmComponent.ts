@@ -1,6 +1,7 @@
 import { InitFunction, Nullable, UpdateFunction } from "./Types";
 import { Message, Services } from "./Init";
 import { Cmd } from "./Cmd";
+import { getFakeInitResultOnce } from "./Testing/fakeInitResult";
 import React from "react";
 
 /**
@@ -31,7 +32,7 @@ abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.
     public constructor (props: TProps, init: InitFunction<TProps, TModel, TMsg>, name: string) {
         super(props);
 
-        const [model, cmd] = init(this.props);
+        const [model, cmd] = getFakeInitResultOnce<TModel, TMsg>() ?? init(this.props);
 
         this.componentName = name;
         this.currentModel = model;
