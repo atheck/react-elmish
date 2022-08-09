@@ -87,10 +87,14 @@ function createUpdateArgsFactory <TProps, TModel, TMessage extends MessageBase> 
     };
 }
 
-function renderWithFakeInit<TModel, TMessage extends MessageBase, TResult = unknown> (initResult: InitResult<TModel, TMessage>, render: () => TResult): void {
+function renderWithFakeInit<TModel, TMessage extends MessageBase, TResult = unknown> (initResult: InitResult<TModel, TMessage>, render: () => TResult): TResult {
     setFakeInitResult(initResult);
-    render();
+
+    const result = render();
+
     setFakeInitResult(null);
+
+    return result;
 }
 
 export type {
