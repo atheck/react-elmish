@@ -1,7 +1,7 @@
+import { Cmd, Dispatch } from "../Cmd";
 import { InitResult, MessageBase, Nullable, UpdateMap, UpdateReturnType } from "../Types";
 import { callUpdateMap } from "../useElmish";
-import { Cmd } from "../Cmd";
-import { setFakeInitResult } from "./fakeInitResult";
+import { setFakes } from "./fakeInitResult";
 
 /**
  * Extracts the messages out of a command.
@@ -87,12 +87,12 @@ function createUpdateArgsFactory <TProps, TModel, TMessage extends MessageBase> 
     };
 }
 
-function renderWithFakeInit<TModel, TMessage extends MessageBase, TResult = unknown> (initResult: InitResult<TModel, TMessage>, render: () => TResult): TResult {
-    setFakeInitResult(initResult);
+function renderWithFake<TModel, TMessage extends MessageBase, TResult = unknown> (initResult: InitResult<TModel, TMessage>, render: () => TResult, fakeDispatch?: Dispatch<TMessage>): TResult {
+    setFakes(initResult, (fakeDispatch ?? null) as Nullable<Dispatch<unknown>>);
 
     const result = render();
 
-    setFakeInitResult(null);
+    setFakes(null, null);
 
     return result;
 }
@@ -106,5 +106,5 @@ export {
     execCmd,
     getUpdateFn,
     createUpdateArgsFactory,
-    renderWithFakeInit,
+    renderWithFake,
 };

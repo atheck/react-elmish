@@ -1,22 +1,34 @@
 import { InitResult, MessageBase, Nullable } from "../Types";
+import { Dispatch } from "../Cmd";
 
 type FakeInitResult = Nullable<[unknown, unknown?]>;
 
-let initResult: FakeInitResult;
+let currentFakeInitResult: FakeInitResult;
+let currentFakeDispatch: Nullable<Dispatch<MessageBase>>;
 
-function setFakeInitResult (model: FakeInitResult): void {
-    initResult = model;
+function setFakes (fakeInitResult: FakeInitResult, fakeDispatch?: Nullable<Dispatch<MessageBase>>): void {
+    currentFakeInitResult = fakeInitResult;
+    currentFakeDispatch = fakeDispatch ?? null;
 }
 
 function getFakeInitResultOnce<TModel, TMessage extends MessageBase> (): Nullable<InitResult<TModel, TMessage>> {
-    const temp = initResult as Nullable<InitResult<TModel, TMessage>>;
+    const temp = currentFakeInitResult as Nullable<InitResult<TModel, TMessage>>;
 
-    initResult = null;
+    currentFakeInitResult = null;
+
+    return temp;
+}
+
+function getFakeDispatchOnce<TMessage extends MessageBase> (): Nullable<Dispatch<TMessage>> {
+    const temp = currentFakeDispatch;
+
+    currentFakeDispatch = null;
 
     return temp;
 }
 
 export {
-    setFakeInitResult,
+    setFakes,
     getFakeInitResultOnce,
+    getFakeDispatchOnce,
 };
