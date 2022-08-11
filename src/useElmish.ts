@@ -1,8 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Cmd, Dispatch } from "./Cmd";
-import { getFakeDispatchOnce, getFakeInitResultOnce } from "./Testing/fakeInitResult";
 import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getFakeOptionsOnce } from "./Testing/fakeInitResult";
 import { Services } from "./Init";
 
 type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];
@@ -47,8 +47,8 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
         });
     }, []);
 
-    const fakeDispatch = getFakeDispatchOnce();
-    const dispatch = useCallback(fakeDispatch ?? ((msg: TMessage): void => {
+    const fakeOptions = getFakeOptionsOnce();
+    const dispatch = useCallback(fakeOptions?.dispatch ?? ((msg: TMessage): void => {
         if (!initializedModel) {
             return;
         }
@@ -104,7 +104,7 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
     }), []);
 
     if (!initializedModel) {
-        const [initModel, initCmd] = getFakeInitResultOnce<TModel, TMessage>() ?? init(props);
+        const [initModel, initCmd] = fakeOptions?.model ? [fakeOptions.model as TModel] : init(props);
 
         initializedModel = initModel;
         setModel(initializedModel);

@@ -1,34 +1,30 @@
-import { InitResult, MessageBase, Nullable } from "../Types";
+import { MessageBase, Nullable } from "../Types";
 import { Dispatch } from "../Cmd";
 
-type FakeInitResult = Nullable<[unknown, unknown?]>;
-
-let currentFakeInitResult: FakeInitResult;
-let currentFakeDispatch: Nullable<Dispatch<MessageBase>>;
-
-function setFakes (fakeInitResult: FakeInitResult, fakeDispatch?: Nullable<Dispatch<MessageBase>>): void {
-    currentFakeInitResult = fakeInitResult;
-    currentFakeDispatch = fakeDispatch ?? null;
+interface RenderWithModelOptions<TModel, TMessage extends MessageBase> {
+    model: TModel,
+    dispatch?: Dispatch<TMessage>,
 }
 
-function getFakeInitResultOnce<TModel, TMessage extends MessageBase> (): Nullable<InitResult<TModel, TMessage>> {
-    const temp = currentFakeInitResult as Nullable<InitResult<TModel, TMessage>>;
+let currentFakeOptions: Nullable<RenderWithModelOptions<unknown, MessageBase>>;
 
-    currentFakeInitResult = null;
-
-    return temp;
+function setFakeOptions (options: Nullable<RenderWithModelOptions<unknown, MessageBase>>): void {
+    currentFakeOptions = options;
 }
 
-function getFakeDispatchOnce<TMessage extends MessageBase> (): Nullable<Dispatch<TMessage>> {
-    const temp = currentFakeDispatch;
+function getFakeOptionsOnce<TModel, TMessage extends MessageBase> (): Nullable<RenderWithModelOptions<TModel, TMessage>> {
+    const temp = currentFakeOptions;
 
-    currentFakeDispatch = null;
+    currentFakeOptions = null;
 
-    return temp;
+    return temp as RenderWithModelOptions<TModel, TMessage>;
 }
+
+export type {
+    RenderWithModelOptions,
+};
 
 export {
-    setFakes,
-    getFakeInitResultOnce,
-    getFakeDispatchOnce,
+    setFakeOptions,
+    getFakeOptionsOnce,
 };
