@@ -1,5 +1,5 @@
 import { MessageBase, Nullable, UpdateMap, UpdateReturnType } from "../Types";
-import { RenderWithModelOptions, setFakeOptions } from "./fakeInitResult";
+import { RenderWithModelOptions, setFakeOptions } from "./fakeOptions";
 import { callUpdateMap } from "../useElmish";
 import { Cmd } from "../Cmd";
 

@@ -2,7 +2,7 @@
 import { Cmd, Dispatch } from "./Cmd";
 import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getFakeOptionsOnce } from "./Testing/fakeInitResult";
+import { getFakeOptionsOnce } from "./Testing/fakeOptions";
 import { Services } from "./Init";
 
 type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];

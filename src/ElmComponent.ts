@@ -1,7 +1,7 @@
 import { InitFunction, Nullable, UpdateFunction } from "./Types";
 import { Message, Services } from "./Init";
 import { Cmd } from "./Cmd";
-import { getFakeOptionsOnce } from "./Testing/fakeInitResult";
+import { getFakeOptionsOnce } from "./Testing/fakeOptions";
 import React from "react";
 
 /**
