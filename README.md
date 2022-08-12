@@ -922,6 +922,48 @@ const update = getUpdateFn(updateMap);
 const [model, cmd] = update(msg, model, props);
 ```
 
+### UI Tests
+
+To test UI components with a fake model you can use `renderWithModel` from the Testing namespace. The first parameter is a function to render your component (e.g. with **@testing-library/react**). The second parameter is the fake model or an options object, where you can also pass a fake `dispatch` function.
+
+```tsx
+import { renderWithModel } from "react-elmish/dist/Testing";
+import { fireEvent, render, screen } from "@testing-library/react";
+
+it("renders the correct value", () => {
+    // arrange
+    const model: Model = { value: "It works" };
+
+    // act
+    renderWithModel(() => render(<TestComponent />), model);
+
+    // assert
+    expect(screen.getByText("It works")).not.toBeNull();
+});
+
+it("dispatches the correct message", async () => {
+    // arrange
+    const model: Model = { value: "" };
+    const mockDispatch = jest.fn();
+
+    renderWithModel(
+        () => render(<TestComponent />),
+        {
+            model,
+            dispatch: mockDispatch
+        }
+    );
+
+    // act
+    fireEvent.click(screen.getByText("Click"));
+
+    // assert
+    expect(mockDispatch).toHaveBeenCalledWith({ name: "click" });
+});
+```
+
+This works for function components using the `useElmish` hook and class components.
+
 ## Migration from v1.x to v2.x
 
 * Use `Logger` and `Message` instead of `ILogger` and `IMessage`.
