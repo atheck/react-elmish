@@ -1,4 +1,5 @@
 import { MessageBase, Nullable, UpdateMap, UpdateReturnType } from "../Types";
+import { RenderWithModelOptions, setFakeOptions } from "./fakeOptions";
 import { callUpdateMap } from "../useElmish";
 import { Cmd } from "../Cmd";
 
@@ -86,8 +87,25 @@ function createUpdateArgsFactory <TProps, TModel, TMessage extends MessageBase> 
     };
 }
 
+function renderWithModel<TModel, TMessage extends MessageBase, TResult> (render: () => TResult, options: TModel | RenderWithModelOptions<TModel, TMessage>): TResult {
+    if ("model" in options && "dispatch" in options) {
+        setFakeOptions(options as RenderWithModelOptions<unknown, MessageBase>);
+    } else {
+        setFakeOptions({
+            model: options,
+        });
+    }
+
+    const result = render();
+
+    setFakeOptions(null);
+
+    return result;
+}
+
 export type {
     UpdateArgsFactory,
+    RenderWithModelOptions,
 };
 
 export {
@@ -95,4 +113,5 @@ export {
     execCmd,
     getUpdateFn,
     createUpdateArgsFactory,
+    renderWithModel,
 };
