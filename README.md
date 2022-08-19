@@ -468,7 +468,7 @@ function subscription (model: Model): SubscriptionResult<Message> {
     }
 
     const destructor = () => {
-        clearInterval(timer1);
+        clearInterval(timer);
     }
 
     return [cmd.ofSub(sub), destructor];
@@ -551,7 +551,7 @@ You can handle errors easily with the following pattern.
         };
         ```
 
-        Your can also use the `errorHandler` helper function:
+        You can also use the `errorHandler` helper function:
 
         ```ts
         const updateMap = {
@@ -857,9 +857,7 @@ To inform the parent component about some action, let's say to close a dialog fo
     ```ts Dialog.ts
     ...
     case "close":
-        props.onClose();
-
-        return [{}];
+        return [{}, cmd.ofFunc.attempt(props.onClose, Msg.error)];
     ...
     ```
 
