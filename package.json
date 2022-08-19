@@ -7,7 +7,7 @@
   "scripts": {
     "build": "npm run build:types && npm run build:js",
     "build:types": "tsc --emitDeclarationOnly --project ./src",
-    "build:js": "babel src --out-dir dist --extensions \".ts,.tsx\" --source-maps inline",
+    "build:js": "babel src --out-dir dist --extensions \".ts,.tsx\" --ignore \"./**/*.spec.ts\",\"./**/*.spec.tsx\" --source-maps inline",
     "test": "jest --coverage",
     "test:watch": "jest --watch --coverage",
     "lint": "npx eslint \"{src,tests}/**/*.ts[x]\"",
