@@ -37,7 +37,7 @@ function errorHandler<TModel, TMessage> (): { error: (msg: ErrorMessage) => Upda
  * Calls the error handling middleware if specified.
  * @param {Error} error The error.
  */
-function handleError<TModel, TMsg> (error: Error): UpdateReturnType<TModel, TMsg> {
+function handleError<TModel, TMessage> (error: Error): UpdateReturnType<TModel, TMessage> {
     if (Services.errorMiddleware) {
         Services.errorMiddleware(error);
     }

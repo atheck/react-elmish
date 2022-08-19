@@ -23,16 +23,16 @@ type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TMod
 /**
  * Type for the return value of the `update` function.
  */
-type UpdateReturnType<TModel, TMsg> = [Partial<TModel>, Cmd<TMsg>?];
+type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, Cmd<TMessage>?];
 
-type UpdateFunction<TProps, TModel, TMsg> = (model: TModel, msg: TMsg, props: TProps) => UpdateReturnType<TModel, TMsg>;
+type UpdateFunction<TProps, TModel, TMessage> = (model: TModel, msg: TMessage, props: TProps) => UpdateReturnType<TModel, TMessage>;
 
 /**
  * Type for mapping messages to functions.
  * Use this type to create your update logic for the useElmish hook.
  */
-type UpdateMap<TProps, TModel, TMsg extends MessageBase> = {
-    [M in TMsg as M["name"]]: (msg: M, model: TModel, props: TProps) => UpdateReturnType<TModel, TMsg>;
+type UpdateMap<TProps, TModel, TMessage extends MessageBase> = {
+    [M in TMessage as M["name"]]: (msg: M, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage>;
 };
 
 export type {

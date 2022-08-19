@@ -8,10 +8,10 @@ import { RenderWithModelOptions, setFakeOptions } from "./fakeOptions";
  * @param cmd The command to process.
  * @returns The array of messages.
  */
-function getOfMsgParams<TMsg> (cmd?: Cmd<TMsg>): TMsg [] {
-    const msgNames: TMsg [] = [];
+function getOfMsgParams<TMessage> (cmd?: Cmd<TMessage>): TMessage [] {
+    const msgNames: TMessage [] = [];
 
-    const dispatch = (msg: TMsg): void => {
+    const dispatch = (msg: TMessage): void => {
         msgNames.push(msg);
     };
 
@@ -25,13 +25,13 @@ function getOfMsgParams<TMsg> (cmd?: Cmd<TMsg>): TMsg [] {
  * @param cmd The command to process.
  * @returns The array of processed messages.
  */
-async function execCmd<TMsg> (cmd?: Cmd<TMsg>): Promise<Nullable<TMsg> []> {
+async function execCmd<TMessage> (cmd?: Cmd<TMessage>): Promise<Nullable<TMessage> []> {
     if (!cmd) {
         return [];
     }
 
-    const callers = cmd.map(async currentCmd => new Promise<Nullable<TMsg>>((resolve, reject) => {
-        const dispatch = (msg: TMsg): void => resolve(msg);
+    const callers = cmd.map(async currentCmd => new Promise<Nullable<TMessage>>((resolve, reject) => {
+        const dispatch = (msg: TMessage): void => resolve(msg);
 
         currentCmd(dispatch, error => {
             if (error) {

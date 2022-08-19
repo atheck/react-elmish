@@ -11,13 +11,13 @@ import { InitFunction, Nullable, UpdateFunction } from "./Types";
  * @class ElmComponent
  * @extends {Component<TProps, TModel>}
  * @template TModel The type of the model.
- * @template TMsg The type of the messages.
+ * @template TMessage The type of the messages.
  * @template TProps The type of the props.
  */
-abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.Component<TProps> {
-    private initCmd: Nullable<Cmd<TMsg>> | undefined;
+abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends React.Component<TProps> {
+    private initCmd: Nullable<Cmd<TMessage>> | undefined;
     private readonly componentName: string;
-    private readonly buffer: TMsg [] = [];
+    private readonly buffer: TMessage [] = [];
     private reentered = false;
     private mounted = false;
     private currentModel: TModel;
@@ -29,7 +29,7 @@ abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.
      * @param name The name of the component.
      * @memberof ElmComponent
      */
-    public constructor (props: TProps, init: InitFunction<TProps, TModel, TMsg>, name: string) {
+    public constructor (props: TProps, init: InitFunction<TProps, TModel, TMessage>, name: string) {
         super(props);
 
         const fakeOptions = getFakeOptionsOnce();
@@ -68,7 +68,7 @@ abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.
         this.mounted = false;
     }
 
-    private execCmd (cmd: Cmd<TMsg>): void {
+    private execCmd (cmd: Cmd<TMessage>): void {
         cmd.forEach(call => {
             try {
                 call(this.dispatch);
@@ -90,10 +90,10 @@ abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.
 
     /**
      * Dispatches a message.
-     * @param {TMsg} msg The message to dispatch.
+     * @param {TMessage} msg The message to dispatch.
      * @memberof ElmComponent
      */
-    public readonly dispatch = (msg: TMsg): void => {
+    public readonly dispatch = (msg: TMessage): void => {
         const modelHasChanged = (model: Partial<TModel>): boolean => model !== this.currentModel && Object.getOwnPropertyNames(model).length > 0;
 
         if (this.reentered) {
@@ -101,7 +101,7 @@ abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.
         } else {
             this.reentered = true;
 
-            let nextMsg: TMsg | undefined = msg;
+            let nextMsg: TMessage | undefined = msg;
             let modified = false;
 
             while (nextMsg) {
@@ -141,13 +141,13 @@ abstract class ElmComponent<TModel, TMsg extends Message, TProps> extends React.
     /**
      * Function to modify the model based on a message.
      * @param {TModel} model The current model.
-     * @param {TMsg} msg The message to process.
+     * @param {TMessage} msg The message to process.
      * @param {TProps} props The props of the component.
      * @returns The new model (can also be an empty object {}) and an optional new message to dispatch.
      * @abstract
      * @memberof ElmComponent
      */
-    public abstract update: UpdateFunction<TProps, TModel, TMsg>;
+    public abstract update: UpdateFunction<TProps, TModel, TMessage>;
 }
 
 export {
