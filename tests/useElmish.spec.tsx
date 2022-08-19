@@ -205,7 +205,7 @@ function TestComponentWithEffect (props: Props): JSX.Element {
         setTimeout(() => {
             dispatch({ name: "Third" });
         }, 20);
-    }, []);
+    }, [dispatch]);
 
     return (
         <div />

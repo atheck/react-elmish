@@ -71,7 +71,7 @@ type UpdateArgsFactory<TProps, TModel, TMessage extends MessageBase> = (msg: TMe
  * // in tests
  * const [msg, model, props] = createUpdateArgs(Msg.myMessage(), { ... }, , { ... });
  */
-function createUpdateArgsFactory <TProps, TModel, TMessage extends MessageBase> (initModel: () => TModel, initProps: () => TProps): UpdateArgsFactory<TProps, TModel, TMessage> {
+function createUpdateArgsFactory<TProps, TModel, TMessage extends MessageBase> (initModel: () => TModel, initProps: () => TProps): UpdateArgsFactory<TProps, TModel, TMessage> {
     return function (msg: TMessage, modelTemplate?: Partial<TModel>, propsTemplate?: Partial<TProps>): [TMessage, TModel, TProps] {
         return [
             msg,
