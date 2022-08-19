@@ -1,9 +1,9 @@
 /* eslint-disable testing-library/prefer-user-event */
-import { ElmComponent, useElmish } from "../../src";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { InitResult, UpdateReturnType } from "../../src/Types";
 import { ReactNode } from "react";
+import { ElmComponent, useElmish } from "../../src";
 import { renderWithModel } from "../../src/Testing";
+import { InitResult, UpdateReturnType } from "../../src/Types";
 
 type Message =
     | { name: "click" };

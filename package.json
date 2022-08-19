@@ -10,7 +10,7 @@
     "build:js": "babel src --out-dir dist --extensions \".ts,.tsx\" --source-maps inline",
     "test": "jest --coverage",
     "test:watch": "jest --watch --coverage",
-    "lint": "npx eslint --ext .ts,.tsx ./src",
+    "lint": "npx eslint \"{src,tests}/**/*.ts[x]\"",
     "update": "npx npm-check-updates -i",
     "semantic-release": "semantic-release"
   },

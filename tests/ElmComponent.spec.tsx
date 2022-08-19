@@ -1,5 +1,5 @@
-import { Cmd, createCmd, ElmComponent, UpdateReturnType } from "../src";
 import { render, RenderResult } from "@testing-library/react";
+import { Cmd, createCmd, ElmComponent, UpdateReturnType } from "../src";
 
 describe("ElmComponent", () => {
     it("calls the init function", () => {

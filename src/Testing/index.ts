@@ -1,7 +1,7 @@
-import { MessageBase, Nullable, UpdateMap, UpdateReturnType } from "../Types";
-import { RenderWithModelOptions, setFakeOptions } from "./fakeOptions";
-import { callUpdateMap } from "../useElmish";
 import { Cmd } from "../Cmd";
+import { MessageBase, Nullable, UpdateMap, UpdateReturnType } from "../Types";
+import { callUpdateMap } from "../useElmish";
+import { RenderWithModelOptions, setFakeOptions } from "./fakeOptions";
 
 /**
  * Extracts the messages out of a command.

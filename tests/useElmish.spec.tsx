@@ -1,6 +1,6 @@
-import { Cmd, createCmd, SubscriptionResult, UpdateReturnType, useElmish } from "../src";
 import { render, RenderResult, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
+import { Cmd, createCmd, SubscriptionResult, UpdateReturnType, useElmish } from "../src";
 
 type Message =
     | { name: "Test" }

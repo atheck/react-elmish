@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Cmd, Dispatch } from "./Cmd";
-import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getFakeOptionsOnce } from "./Testing/fakeOptions";
+import { Cmd, Dispatch } from "./Cmd";
 import { Services } from "./Init";
+import { getFakeOptionsOnce } from "./Testing/fakeOptions";
+import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 
 type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];
 type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionResult<TMessage>;

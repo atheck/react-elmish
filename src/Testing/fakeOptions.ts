@@ -1,5 +1,5 @@
-import { MessageBase, Nullable } from "../Types";
 import { Dispatch } from "../Cmd";
+import { MessageBase, Nullable } from "../Types";
 
 interface RenderWithModelOptions<TModel, TMessage extends MessageBase> {
     model: TModel,
