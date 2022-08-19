@@ -1,6 +1,6 @@
 import { render, RenderResult, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
-import { Cmd, createCmd, InitResult, SubscriptionResult, UpdateReturnType, useElmish } from "../src";
+import { Cmd, createCmd, InitResult, SubscriptionResult, UpdateReturnType, useElmish } from ".";
 
 type Message =
     | { name: "Test" }

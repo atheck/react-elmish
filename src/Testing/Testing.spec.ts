@@ -1,6 +1,6 @@
-import { createCmd } from "../../src/Cmd";
-import { execCmd } from "../../src/Testing";
-import { Nullable } from "../../src/Types";
+import { createCmd } from "../Cmd";
+import { Nullable } from "../Types";
+import { execCmd } from ".";
 
 type Message =
     | { name: "Msg1" }
