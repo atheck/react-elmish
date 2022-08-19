@@ -5,7 +5,7 @@ import { getFakeOptionsOnce } from "./Testing/fakeOptions";
 import { InitFunction, Nullable, UpdateFunction } from "./Types";
 
 /**
- * Abstract class for a react class component using the elmish pattern.
+ * Abstract class for a react class component using the Elmish pattern.
  * @export
  * @abstract
  * @class ElmComponent

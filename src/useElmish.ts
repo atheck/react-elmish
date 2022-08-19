@@ -5,14 +5,45 @@ import { Services } from "./Init";
 import { getFakeOptionsOnce } from "./Testing/fakeOptions";
 import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 
+/**
+ * The return type of the `subscription` function.
+ * @template TMessage The type of the messages discriminated union.
+ */
 type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?];
 type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionResult<TMessage>;
 
+/**
+ * Options for the `useElmish` hook.
+ * @interface UseElmishOptions
+ * @template TProps The type of the props.
+ * @template TModel The type of the model.
+ * @template TMessage The type of the messages discriminated union.
+ */
 interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
+    /**
+     * The name of the component. This is used for logging only.
+     * @type {string}
+     */
     name: string,
+    /**
+     * The props passed to the component.
+     * @type {TProps}
+     */
     props: TProps,
+    /**
+     * The function to initialize the components model. This function is only called once.
+     * @type {InitFunction<TProps, TModel, TMessage>}
+     */
     init: InitFunction<TProps, TModel, TMessage>,
+    /**
+     * The `update` function or update map object.
+     * @type {(UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>)}
+     */
     update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>,
+    /**
+     * The optional `subscription` function. This function is only called once.
+     * @type {(UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>)}
+     */
     subscription?: Subscription<TProps, TModel, TMessage>,
 }
 
