@@ -5,6 +5,35 @@
 
 This library brings the elmish pattern to react.
 
+- [Installation](#installation)
+- [Basic Usage](#basic-usage)
+- [More on messages](#more-on-messages)
+  - [Message arguments](#message-arguments)
+  - [Symbols instead of strings](#symbols-instead-of-strings)
+- [Dispatch commands in the update map or update function](#dispatch-commands-in-the-update-map-or-update-function)
+  - [Dispatch a message](#dispatch-a-message)
+  - [Call an async function](#call-an-async-function)
+  - [Dispatch a command from `init`](#dispatch-a-command-from-init)
+- [Subscriptions](#subscriptions)
+  - [Working with external sources of events](#working-with-external-sources-of-events)
+  - [Cleanup subscriptions](#cleanup-subscriptions)
+- [Setup](#setup)
+- [Error handling](#error-handling)
+- [React life cycle management](#react-life-cycle-management)
+- [Composition](#composition)
+  - [With an `UpdateMap`](#with-an-updatemap)
+- [With an update function](#with-an-update-function)
+- [Call back parent components](#call-back-parent-components)
+- [Testing](#testing)
+  - [Testing the model and simple message commands](#testing-the-model-and-simple-message-commands)
+  - [Testing all (async) messages](#testing-all-async-messages)
+  - [Testing with an UpdateMap](#testing-with-an-updatemap)
+  - [UI Tests](#ui-tests)
+- [Migrations](#migrations)
+  - [From v1.x to v2.x](#from-v1x-to-v2x)
+  - [From v2.x to v3.x](#from-v2x-to-v3x)
+  - [From v3.x to v4.x](#from-v3x-to-v4x)
+
 ## Installation
 
 `npm install react-elmish`
@@ -13,14 +42,14 @@ This library brings the elmish pattern to react.
 
 An elmish component basically consists of the following parts:
 
-* The **Model** holding the state of the component.
-* The **Props** for the component.
-* The **Init** function to create the initial model based on the props.
-* The **Messages** to dispatch which modify the model.
-* The **Update** function to modify the model based on a specific message.
-* The **View** which renders the component based on the current model.
+- The **Model** holding the state of the component.
+- The **Props** for the component.
+- The **Init** function to create the initial model based on the props.
+- The **Messages** to dispatch which modify the model.
+- The **Update** function to modify the model based on a specific message.
+- The **View** which renders the component based on the current model.
 
-### App.ts
+**App.ts:**
 
 First import everything from `react-elmish` and declare the **Message** discriminated union type:
 
@@ -101,7 +130,7 @@ export const update = (model: Model, msg: Msg, props: Props): UpdateReturnType<M
 
 > **Note:** If you are using **typescript** and **typescript-eslint** you should enable the [switch-exhaustive-check](https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/switch-exhaustiveness-check.md) rule.
 
-### App.tsx
+**App.tsx:**
 
 To put all this together and to render our component, we need a React component.
 
@@ -964,10 +993,12 @@ it("dispatches the correct message", async () => {
 
 This works for function components using the `useElmish` hook and class components.
 
-## Migration from v1.x to v2.x
+## Migrations
 
-* Use `Logger` and `Message` instead of `ILogger` and `IMessage`.
-* The global declaration of the `Nullable` type was removed, because it is unexpected for this library to declare such a type. You can declare this type for yourself if needed:
+### From v1.x to v2.x
+
+- Use `Logger` and `Message` instead of `ILogger` and `IMessage`.
+- The global declaration of the `Nullable` type was removed, because it is unexpected for this library to declare such a type. You can declare this type for yourself if needed:
 
     ```ts
     declare global {
@@ -975,7 +1006,7 @@ This works for function components using the `useElmish` hook and class componen
     }
     ```
 
-## Migration from v2.x to v3.x
+### From v2.x to v3.x
 
 The signature of `useElmish` has changed. It takes an options object now. Thus there is no need for the `useElmishMap` function. Use the new `useElmish` hook with an `UpdateMap` instead.
 
@@ -988,6 +1019,6 @@ import { useElmishMap } from "react-elmish/dist/legacy/useElmishMap";
 
 **Notice**: These functions are marked as deprecated and will be removed in a later release.
 
-## Migration from v3.x to v4.x
+### From v3.x to v4.x
 
 Because the legacy `useElmish` and `useElmishMap` have been removed, you have to convert all usages of `useElmish` to use the parameter object.
