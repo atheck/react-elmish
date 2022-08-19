@@ -18,6 +18,7 @@ type Cmd<TMessage> = Sub<TMessage> [];
 interface Command<TMessage> {
     /**
      * Represents an empty command.
+     * @deprecated Do return nothing (`undefined`) instead.
      */
     none: [],
     /**

@@ -1,6 +1,6 @@
 import { render, RenderResult, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
-import { Cmd, createCmd, SubscriptionResult, UpdateReturnType, useElmish } from "../src";
+import { Cmd, createCmd, InitResult, SubscriptionResult, UpdateReturnType, useElmish } from "../src";
 
 type Message =
     | { name: "Test" }
@@ -14,12 +14,12 @@ interface Model {
 }
 
 interface Props {
-    init: () => [Model, Cmd<Message>],
+    init: () => InitResult<Model, Message>,
     update: (model: Model, msg: Message, props: Props) => UpdateReturnType<Model, Message>,
     subscription?: (model: Model) => SubscriptionResult<Message>,
 }
 
-function defaultInit (msg: Cmd<Message>): [Model, Cmd<Message>] {
+function defaultInit (msg?: Cmd<Message>): InitResult<Model, Message> {
     return [
         {
             value1: "",
@@ -100,7 +100,7 @@ describe("useElmish", () => {
     it("updates the model correctly with multiple commands delayed", async () => {
         // arrange
         const props: Props = {
-            init: () => defaultInit(cmd.none),
+            init: () => defaultInit(),
             update (_model: Model, msg: Message): UpdateReturnType<Model, Message> {
                 // eslint-disable-next-line jest/no-conditional-in-test
                 switch (msg.name) {
@@ -134,7 +134,7 @@ describe("useElmish", () => {
         // arrange
         const mockSub = jest.fn();
         const mockSubscription = jest.fn().mockReturnValue([cmd.ofSub(mockSub)]);
-        const [initModel, initCmd] = defaultInit(cmd.none);
+        const [initModel, initCmd] = defaultInit();
         const props: Props = {
             init: () => [initModel, initCmd],
             update: defaultUpdate,
@@ -153,8 +153,8 @@ describe("useElmish", () => {
     it("calls the subscriptions destructor if provided", () => {
         // arrange
         const mockDestructor = jest.fn();
-        const mockSubscription = jest.fn().mockReturnValue([cmd.none, mockDestructor]);
-        const [initModel, initCmd] = defaultInit(cmd.none);
+        const mockSubscription = jest.fn().mockReturnValue([[], mockDestructor]);
+        const [initModel, initCmd] = defaultInit();
         const props: Props = {
             init: () => [initModel, initCmd],
             update: defaultUpdate,
