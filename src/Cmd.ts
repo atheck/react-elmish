@@ -30,7 +30,7 @@ interface Command<TMessage> {
      * Aggregates multiple commands.
      * @param {Cmd<TMessage> []} commands Array of commands.
      */
-    batch: (...commands: Cmd<TMessage> []) => Cmd<TMessage>,
+    batch: (...commands: (Cmd<TMessage> | undefined | null) []) => Cmd<TMessage>,
     /**
      * Command to call the subscriber.
      * @param {Sub<TMessage>} sub The subscriber function.
@@ -102,8 +102,8 @@ function createCmd<TMessage> (): Command<TMessage> {
         ofMsg (msg: TMessage): Cmd<TMessage> {
             return [dispatch => dispatch(msg)];
         },
-        batch (...commands: Cmd<TMessage> []): Cmd<TMessage> {
-            return commands.flat();
+        batch (...commands: (Cmd<TMessage> | undefined | null) []): Cmd<TMessage> {
+            return (commands.filter(Boolean) as Cmd<TMessage> []).flat();
         },
         ofSub (sub: Sub<TMessage>): Cmd<TMessage> {
             return [sub];

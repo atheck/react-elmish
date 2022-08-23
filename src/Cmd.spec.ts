@@ -17,8 +17,24 @@ describe("Cmd", () => {
         it("keeps the order", () => {
             // arrange
             const dispatch = jest.fn();
+
             // act
             const batchedCommands = cmd.batch(cmd.ofMsg(successMsg()), cmd.ofMsg(errorMsg()));
+
+            batchedCommands.forEach(command => command(dispatch));
+
+            // assert
+            expect(batchedCommands).toHaveLength(2);
+            expect(dispatch).toHaveBeenNthCalledWith(1, "success");
+            expect(dispatch).toHaveBeenNthCalledWith(2, "error");
+        });
+
+        it("supports nullish values", () => {
+            // arrange
+            const dispatch = jest.fn();
+
+            // act
+            const batchedCommands = cmd.batch(undefined, cmd.ofMsg(successMsg()), null, cmd.ofMsg(errorMsg()));
 
             batchedCommands.forEach(command => command(dispatch));
 
