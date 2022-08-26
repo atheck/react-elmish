@@ -61,9 +61,14 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
     let currentModel: Partial<TModel> = {};
 
     const [model, setModel] = useState<Nullable<TModel>>(null);
-    let initializedModel = model;
-
     const propsRef = useRef(props);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => () => {
+        isMountedRef.current = false;
+    }, []);
+
+    let initializedModel = model;
 
     if (propsRef.current !== props) {
         propsRef.current = props;
@@ -106,7 +111,7 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
             }
             reentered = false;
 
-            if (modified) {
+            if (isMountedRef.current && modified) {
                 setModel(prevModel => {
                     const updatedModel = { ...prevModel as TModel, ...currentModel };
 
