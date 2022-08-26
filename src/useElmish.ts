@@ -91,20 +91,16 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
             while (nextMsg) {
                 logMessage(name, nextMsg);
 
-                try {
-                    const [newModel, cmd] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current);
+                const [newModel, cmd] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current);
 
-                    if (modelHasChanged(currentModel, newModel)) {
-                        currentModel = { ...currentModel, ...newModel };
+                if (modelHasChanged(currentModel, newModel)) {
+                    currentModel = { ...currentModel, ...newModel };
 
-                        modified = true;
-                    }
+                    modified = true;
+                }
 
-                    if (cmd) {
-                        execCmd(cmd, dispatch);
-                    }
-                } catch (ex: unknown) {
-                    Services.logger?.error(ex);
+                if (cmd) {
+                    execCmd(cmd, dispatch);
                 }
 
                 nextMsg = buffer.shift();
