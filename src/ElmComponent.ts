@@ -96,19 +96,15 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
             while (nextMsg) {
                 logMessage(this.componentName, nextMsg);
 
-                try {
-                    const [model, cmd] = this.update(this.currentModel, nextMsg, this.props);
+                const [model, cmd] = this.update(this.currentModel, nextMsg, this.props);
 
-                    if (modelHasChanged(this.currentModel, model)) {
-                        this.currentModel = { ...this.currentModel, ...model };
-                        modified = true;
-                    }
+                if (modelHasChanged(this.currentModel, model)) {
+                    this.currentModel = { ...this.currentModel, ...model };
+                    modified = true;
+                }
 
-                    if (cmd) {
-                        execCmd(cmd, this.dispatch);
-                    }
-                } catch (ex: unknown) {
-                    Services.logger?.error(ex);
+                if (cmd) {
+                    execCmd(cmd, this.dispatch);
                 }
 
                 nextMsg = this.buffer.shift();

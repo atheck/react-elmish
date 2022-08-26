@@ -14,13 +14,7 @@ function modelHasChanged<TModel> (currentModel: TModel, model: Partial<TModel>):
 }
 
 function execCmd<TMessage> (cmd: Cmd<TMessage>, dispatch: Dispatch<TMessage>): void {
-    cmd.forEach(call => {
-        try {
-            call(dispatch);
-        } catch (ex: unknown) {
-            Services.logger?.error(ex);
-        }
-    });
+    cmd.forEach(call => call(dispatch));
 }
 
 export {
