@@ -1,5 +1,6 @@
 import React from "react";
 import { Cmd } from "./Cmd";
+import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Message, Services } from "./Init";
 import { getFakeOptionsOnce } from "./Testing/fakeOptions";
 import { InitFunction, Nullable, UpdateFunction } from "./Types";
@@ -54,7 +55,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
         this.mounted = true;
 
         if (this.initCmd) {
-            this.execCmd(this.initCmd);
+            execCmd(this.initCmd, this.dispatch);
             this.initCmd = null;
         }
     }
@@ -66,16 +67,6 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
      */
     public componentWillUnmount (): void {
         this.mounted = false;
-    }
-
-    private execCmd (cmd: Cmd<TMessage>): void {
-        cmd.forEach(call => {
-            try {
-                call(this.dispatch);
-            } catch (ex: unknown) {
-                Services.logger?.error(ex);
-            }
-        });
     }
 
     /**
@@ -94,8 +85,6 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
      * @memberof ElmComponent
      */
     public readonly dispatch = (msg: TMessage): void => {
-        const modelHasChanged = (model: Partial<TModel>): boolean => model !== this.currentModel && Object.getOwnPropertyNames(model).length > 0;
-
         if (this.reentered) {
             this.buffer.push(msg);
         } else {
@@ -105,23 +94,18 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
             let modified = false;
 
             while (nextMsg) {
-                Services.logger?.info("Elm", "message from", this.componentName, nextMsg.name);
-                Services.logger?.debug("Elm", "message from", this.componentName, nextMsg);
-
-                if (Services.dispatchMiddleware) {
-                    Services.dispatchMiddleware(nextMsg);
-                }
+                logMessage(this.componentName, nextMsg);
 
                 try {
                     const [model, cmd] = this.update(this.currentModel, nextMsg, this.props);
 
-                    if (modelHasChanged(model)) {
+                    if (modelHasChanged(this.currentModel, model)) {
                         this.currentModel = { ...this.currentModel, ...model };
                         modified = true;
                     }
 
                     if (cmd) {
-                        this.execCmd(cmd);
+                        execCmd(cmd, this.dispatch);
                     }
                 } catch (ex: unknown) {
                     Services.logger?.error(ex);

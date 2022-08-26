@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Cmd, Dispatch } from "./Cmd";
+import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
 import { getFakeOptionsOnce } from "./Testing/fakeOptions";
 import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
@@ -68,23 +69,11 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
         propsRef.current = props;
     }
 
-    const execCmd = useCallback((cmd: Cmd<TMessage>): void => {
-        cmd.forEach(call => {
-            try {
-                call(dispatch);
-            } catch (ex: unknown) {
-                Services.logger?.error(ex);
-            }
-        });
-    }, []);
-
     const fakeOptions = getFakeOptionsOnce();
     const dispatch = useCallback(fakeOptions?.dispatch ?? ((msg: TMessage): void => {
         if (!initializedModel) {
             return;
         }
-
-        const modelHasChanged = (updatedModel: Partial<TModel>): boolean => updatedModel !== initializedModel && Object.getOwnPropertyNames(updatedModel).length > 0;
 
         if (reentered) {
             buffer.push(msg);
@@ -95,24 +84,19 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
             let modified = false;
 
             while (nextMsg) {
-                Services.logger?.info("Elm", "message from", name, nextMsg.name);
-                Services.logger?.debug("Elm", "message from", name, nextMsg);
-
-                if (Services.dispatchMiddleware) {
-                    Services.dispatchMiddleware(nextMsg);
-                }
+                logMessage(name, nextMsg);
 
                 try {
                     const [newModel, cmd] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current);
 
-                    if (modelHasChanged(newModel)) {
+                    if (modelHasChanged(currentModel, newModel)) {
                         currentModel = { ...currentModel, ...newModel };
 
                         modified = true;
                     }
 
                     if (cmd) {
-                        execCmd(cmd);
+                        execCmd(cmd, dispatch);
                     }
                 } catch (ex: unknown) {
                     Services.logger?.error(ex);
@@ -141,7 +125,7 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
         setModel(initializedModel);
 
         if (initCmd) {
-            execCmd(initCmd);
+            execCmd(initCmd, dispatch);
         }
     }
 
@@ -149,7 +133,7 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
         if (subscription) {
             const [subCmd, destructor] = subscription(initializedModel as TModel, props);
 
-            execCmd(subCmd);
+            execCmd(subCmd, dispatch);
 
             if (destructor) {
                 return destructor;
