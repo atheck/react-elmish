@@ -64,8 +64,12 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
     const propsRef = useRef(props);
     const isMountedRef = useRef(true);
 
-    useEffect(() => () => {
-        isMountedRef.current = false;
+    useEffect(() => {
+        isMountedRef.current = true;
+
+        return () => {
+            isMountedRef.current = false;
+        };
     }, []);
 
     let initializedModel = model;
