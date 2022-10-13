@@ -129,6 +129,8 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
         initializedModel = initModel;
         setModel(initializedModel);
 
+        Services.logger?.debug("Elm", "initial model for", name, initializedModel);
+
         if (initCmd) {
             execCmd(initCmd, dispatch);
         }

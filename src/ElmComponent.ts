@@ -41,6 +41,8 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
         const [model, cmd] = fakeOptions?.model ? [fakeOptions.model as TModel] : init(this.props);
 
+        Services.logger?.debug("Elm", "initial model for", name, model);
+
         this.componentName = name;
         this.currentModel = model;
         this.initCmd = cmd;
