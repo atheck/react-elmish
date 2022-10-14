@@ -7,8 +7,8 @@ This library brings the elmish pattern to react.
 
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
-- [More on messages](#more-on-messages)
-  - [Message arguments](#message-arguments)
+- [More about messages](#more-about-messages)
+  - [Message parameters](#message-parameters)
   - [Symbols instead of strings](#symbols-instead-of-strings)
 - [Dispatch commands in the update map or update function](#dispatch-commands-in-the-update-map-or-update-function)
   - [Dispatch a message](#dispatch-a-message)
@@ -25,9 +25,8 @@ This library brings the elmish pattern to react.
 - [With an update function](#with-an-update-function)
 - [Call back parent components](#call-back-parent-components)
 - [Testing](#testing)
-  - [Testing the model and simple message commands](#testing-the-model-and-simple-message-commands)
+  - [Testing the update handler](#testing-the-update-handler)
   - [Testing all (async) messages](#testing-all-async-messages)
-  - [Testing with an UpdateMap](#testing-with-an-updatemap)
   - [UI Tests](#ui-tests)
 - [Migrations](#migrations)
   - [From v1.x to v2.x](#from-v1x-to-v2x)
@@ -112,9 +111,9 @@ export const update: UpdateMap<Props, Model, Message> = {
 };
 ```
 
-**Note:** When using an `UpdateMap` it is recommended to use camelCase for message names ("increment" instead of "Increment").
+**Note:** When using an `UpdateMap` it is recommended to use camelCase for message names (e.g. "increment" instead of "Increment").
 
-Alternatively we can use an **update** function:
+Alternatively we can use an `update` function:
 
 ```ts
 export const update = (model: Model, msg: Msg, props: Props): UpdateReturnType<Model, Message> => {
@@ -159,12 +158,12 @@ function App (props: Props): JSX.Element {
 }
 ```
 
-As a **class component**:
+You can also write the component as a **class component**:
 
 ```tsx
 // Import everything from the App.ts
 import { Model, Message, Props, init, update, Msg } as Shared from "../App";
-// Import the ElmComponent which extends the React.Component
+// Import the ElmComponent which extends React.Component
 import { ElmComponent } from "react-elmish";
 import React from "react";
 
@@ -195,17 +194,19 @@ class App extends ElmComponent<Model, Message, Props> {
     }
 ```
 
+> **Note**: When using a class component, you can only use an `update` function. Class components do not support `UpdateMap`s.
+
 You can use these components like any other React component.
 
 > **Note**: It is recommended to separate business logic and the view into separate modules. Here we put the `Messages`, `Model`, `Props`, `init`, and `update` functions into **App.ts**. The elmish React Component resides in a **Components** subfolder and is named **App.tsx**.
 >
 > You can even split the contents of the **App.ts** into two files: **Types.ts** (`Message`, `Model`, and `Props`) and **State.ts** (`init` and `update`).
 
-## More on messages
+## More about messages
 
-### Message arguments
+### Message parameters
 
-Messages can also have arguments. You can modify the example above and pass an optional step value to the **Increment** message:
+Messages can also have parameters. You can modify the example above and pass an optional step value to the **Increment** message:
 
 ```ts
 export type Message =
@@ -218,13 +219,17 @@ export const Msg = {
 }
 ```
 
-Then use this argument in the **update** function:
+Then use this parameter in the update handler:
 
 ```ts
-...
-case "increment":
-    return [{ value: model.value + (msg.step ?? 1)}]
-...
+{
+    // ...
+    // We destructure the message parameter here
+    increment ({ step }) {
+        return [{ value: model.value + (step ?? 1)}]
+    }
+    // ...
+};
 ```
 
 In the **render** method you can add another button to increment the value by 10:
@@ -264,7 +269,7 @@ You can also use **Symbols** for the message type instead of strings:
     }
     ```
 
-1. Handle the new message in the **update** function:
+1. Handle the new message in the `update` function:
 
     ```ts
     ...
@@ -319,14 +324,17 @@ export const Msg = {
 const cmd = createCmd<Message>();
 ```
 
-In the **update** function you can dispatch that message like this:
+In the **update map** or **update** function you can dispatch that message like this:
 
 ```ts
-case "increment":
-    return [{ value: model.value + 1 }, cmd.ofMsg(Msg.printLastMessage("Incremented by one"))];
+{
+    increment () {
+        return [{ value: model.value + 1 }, cmd.ofMsg(Msg.printLastMessage("Incremented by one"))];
+    }
+}
 ```
 
-This new message will immediately be dispatched after returning from the **update**.
+This new message will immediately be dispatched after returning from the **update** handler.
 
 ### Call an async function
 
@@ -361,20 +369,25 @@ export const Msg = {
 and handle the messages in the **update** function:
 
 ```ts
-...
-case "loadSettings":
-    // Create a command out of the async function with the provided arguments
-    // If loadSettings resolves it dispatches "SettingsLoaded"
-    // If it fails it dispatches "Error"
-    // The return type of loadSettings must fit Msg.settingsLoaded
-    return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error, "firstArg", 123)];
+{
+    // ...
+    loadSettings () {
+        // Create a command out of the async function with the provided arguments
+        // If loadSettings resolves it dispatches "SettingsLoaded"
+        // If it fails it dispatches "Error"
+        // The return type of loadSettings must fit Msg.settingsLoaded
+        return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error, "firstArg", 123)];
+    },
 
-case "settingsLoaded":
-    return [{ settings: msg.settings }];
+    settingsLoaded () {
+        return [{ settings: msg.settings }];
+    },
 
-case "error":
-    return handleError(msg.error);
-...
+    error () {
+        return handleError(msg.error);
+    },
+    // ...
+};
 ```
 
 ### Dispatch a command from `init`
@@ -855,10 +868,13 @@ To inform the parent component about some action, let's say to close a dialog fo
 1. Handle the message and call the callback function:
 
     ```ts Dialog.ts
-    ...
-    case "close":
-        return [{}, cmd.ofFunc.attempt(props.onClose, Msg.error)];
-    ...
+    {
+        // ...
+        close () {
+            return [{}, cmd.ofFunc.attempt(props.onClose, Msg.error)];
+        }
+        // ...
+    };
     ```
 
 1. In the **render** method of the parent component pass the callback as prop
@@ -871,7 +887,7 @@ To inform the parent component about some action, let's say to close a dialog fo
 
 ## Testing
 
-To test your **update** function you can use some helper functions in `react-elmish/dist/Testing`:
+To test your **update** handler you can use some helper functions in `react-elmish/dist/Testing`:
 
 | Function | Description |
 | --- | --- |
@@ -880,7 +896,20 @@ To test your **update** function you can use some helper functions in `react-elm
 | `getUpdateFn` | Returns an `update` function for your update map object. |
 | `createUpdateArgsFactory` | Creates a factory function to create a message, a model, and props in a test. |
 
-### Testing the model and simple message commands
+### Testing the update handler
+
+**Note**: When using an `UpdateMap`, you can get an `update` function by calling `getUpdateFn`:
+
+```ts
+import { getUpdateFn } from "react-elmish/dist/Testing";
+
+const update = getUpdateFn(updateMap);
+
+// Call the update function in the test
+const [model, cmd] = update(msg, model, props);
+```
+
+A simple test:
 
 ```ts
 import * as Testing from "react-elmish/dist/Testing";
@@ -890,20 +919,18 @@ const createUpdateArgs = Testing.createUpdateArgsFactory(() => ({ /* initial mod
 ...
 it("returns the correct model and cmd", () => {
     // arrange
-    const [msg, model, props] = createUpdateArgs(Shared.Msg.test(), { /* optionally override model here */ }, { /* optionally override props here */ });
-
-    const expectedValue = // what you expect in the model
-    const expectedCmds = [
-        Shared.Msg.expectedMsg1("arg"),
-        Shared.Msg.expectedMsg2(),
-    ];
+    const args = createUpdateArgs(Msg.test(), { /* optionally override model here */ }, { /* optionally override props here */ });
 
     // act
-    const [newModel, cmd] = Shared.update(model, msg, props);
+    // Call the update handler
+    const [newModel, cmd] = update(..args);
 
     // assert
-    expect(newModel.value).toEqual(expectedValue);
-    expect(Testing.getOfMsgParams(cmd)).toEqual(expectedCmds);
+    expect(newModel).toStrictEqual({ /* what you expect in the model */ });
+    expect(Testing.getOfMsgParams(cmd)).toEqual([
+        Msg.expectedMsg1("arg"),
+        Msg.expectedMsg2(),
+    ]);
 });
 ...
 ```
@@ -920,33 +947,20 @@ import * as Testing from "react-elmish/dist/Testing";
 ...
 it("returns the correct cmd", () => {
     // arrange
-    const [msg, model, props] = createUpdateArgs(Shared.Msg.asyncTest());
+    const args = createUpdateArgs(Msg.asyncTest());
 
     // mock function which is called when the "AsyncTest" message is handled
     const functionMock = jest.fn();
 
     // act
-    const [, cmd] = Shared.update(model, msg, props);
+    const [, cmd] = update(...args);
     const messages = await Testing.execCmd(cmd);
 
     // assert
     expect(functionMock).toBeCalled();
-    expect(messages).toEqual([Shared.Msg.asyncTestSuccess()])
+    expect(messages).toEqual([Msg.asyncTestSuccess()])
 });
 ...
-```
-
-### Testing with an UpdateMap
-
-To test your update map, you can get an `update` function by calling `getUpdateFn`:
-
-```ts
-import { getUpdateFn } from "react-elmish/dist/Testing";
-
-const update = getUpdateFn(updateMap);
-
-// in your test call update as usual
-const [model, cmd] = update(msg, model, props);
 ```
 
 ### UI Tests
