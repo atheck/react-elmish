@@ -9,7 +9,6 @@ This library brings the elmish pattern to react.
 - [Basic Usage](#basic-usage)
 - [More about messages](#more-about-messages)
   - [Message parameters](#message-parameters)
-  - [Symbols instead of strings](#symbols-instead-of-strings)
 - [Dispatch commands in the update map or update function](#dispatch-commands-in-the-update-map-or-update-function)
   - [Dispatch a message](#dispatch-a-message)
   - [Call an async function](#call-an-async-function)
@@ -239,44 +238,6 @@ In the **render** method you can add another button to increment the value by 10
 <button onClick={() => this.dispatch(Shared.Msg.increment(10))}>Increment by 10</button>
 ...
 ```
-
-### Symbols instead of strings
-
-You can also use **Symbols** for the message type instead of strings:
-
-1. Declare a Symbol for the message:
-
-    ```ts
-    const ResetMsg = Symbol("reset");
-    ```
-
-1. Use this Symbol as message name:
-
-    ```ts
-    export type Message =
-        ...
-        | { name: typeof ResetMsg }
-        ...
-    ```
-
-1. Create the convenient function
-
-    ```ts
-    export const Msg = {
-        ...
-        reset: (): Message => ({ name: ResetMsg }),
-        ...
-    }
-    ```
-
-1. Handle the new message in the `update` function:
-
-    ```ts
-    ...
-    case ResetMsg:
-        return [{ value: 0 }];
-    ...
-    ```
 
 ## Dispatch commands in the update map or update function
 
