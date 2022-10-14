@@ -5,7 +5,7 @@
   "author": "atheck",
   "license": "MIT",
   "scripts": {
-    "install": "node installScript.js",
+    "postinstall": "node installScript.js",
     "build": "npm run build:types && npm run build:js",
     "build:types": "tsc --emitDeclarationOnly --project ./src",
     "build:js": "babel src --out-dir dist --extensions \".ts,.tsx\" --ignore \"./**/*.spec.ts\",\"./**/*.spec.tsx\" --source-maps inline",
