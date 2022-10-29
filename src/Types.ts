@@ -2,8 +2,8 @@ import { Cmd } from "./Cmd";
 
 type Nullable<T> = T | null;
 
-interface MessageBase {
-    name: string | symbol,
+interface Message {
+    name: string,
 }
 
 /**
@@ -31,13 +31,13 @@ type UpdateFunction<TProps, TModel, TMessage> = (model: TModel, msg: TMessage, p
  * Type for mapping messages to functions.
  * Use this type to create your update logic for the useElmish hook.
  */
-type UpdateMap<TProps, TModel, TMessage extends MessageBase> = {
+type UpdateMap<TProps, TModel, TMessage extends Message> = {
     [M in TMessage as M["name"]]: (msg: M, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage>;
 };
 
 export type {
     Nullable,
-    MessageBase,
+    Message,
     MsgSource,
     InitResult,
     InitFunction,

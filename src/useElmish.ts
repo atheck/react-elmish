@@ -4,7 +4,7 @@ import { Cmd, Dispatch } from "./Cmd";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
 import { getFakeOptionsOnce } from "./Testing/fakeOptions";
-import { InitFunction, MessageBase, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
+import { InitFunction, Message, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 
 /**
  * The return type of the `subscription` function.
@@ -20,7 +20,7 @@ type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => 
  * @template TModel The type of the model.
  * @template TMessage The type of the messages discriminated union.
  */
-interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
+interface UseElmishOptions<TProps, TModel, TMessage extends Message> {
     /**
      * The name of the component. This is used for logging only.
      * @type {string}
@@ -55,7 +55,7 @@ interface UseElmishOptions<TProps, TModel, TMessage extends MessageBase> {
  * @example
  * const [model, dispatch] = useElmish({ props, init, update, name: "MyComponent" });
  */
-function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props, init, update, subscription }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
+function useElmish<TProps, TModel, TMessage extends Message> ({ name, props, init, update, subscription }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
     let reentered = false;
     const buffer: TMessage [] = [];
     let currentModel: Partial<TModel> = {};
@@ -151,7 +151,7 @@ function useElmish<TProps, TModel, TMessage extends MessageBase> ({ name, props,
     return [initializedModel, dispatch];
 }
 
-function callUpdate<TProps, TModel, TMessage extends MessageBase> (update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
+function callUpdate<TProps, TModel, TMessage extends Message> (update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
     if (typeof update === "function") {
         return update(model, msg, props);
     }
@@ -159,7 +159,7 @@ function callUpdate<TProps, TModel, TMessage extends MessageBase> (update: Updat
     return callUpdateMap(update, msg, model, props);
 }
 
-function callUpdateMap<TProps, TModel, TMessage extends MessageBase> (updateMap: UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
+function callUpdateMap<TProps, TModel, TMessage extends Message> (updateMap: UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error -- We know that msg fits
     const updateFn = updateMap[msg.name as TMessage["name"]] as (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMsg>;

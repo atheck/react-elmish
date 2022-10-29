@@ -1,9 +1,9 @@
 import React from "react";
 import { Cmd } from "./Cmd";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
-import { Message, Services } from "./Init";
+import { Services } from "./Init";
 import { getFakeOptionsOnce } from "./Testing/fakeOptions";
-import { InitFunction, Nullable, UpdateFunction } from "./Types";
+import { InitFunction, Message, Nullable, UpdateFunction } from "./Types";
 
 /**
  * Abstract class for a react class component using the Elmish pattern.

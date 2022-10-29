@@ -1,11 +1,9 @@
+import { Message } from "./Types";
+
 interface Logger {
     debug: (...args: unknown []) => void,
     info: (...args: unknown []) => void,
     error: (...args: unknown []) => void,
-}
-
-interface Message {
-    name: string | symbol,
 }
 
 type ErrorMiddlewareFunc = (error: Error) => void;
@@ -50,7 +48,6 @@ function init (options: ElmOptions): void {
 
 export type {
     Logger,
-    Message,
     ErrorMiddlewareFunc,
     DispatchMiddlewareFunc,
     ElmOptions,

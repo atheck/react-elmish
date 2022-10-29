@@ -1,5 +1,5 @@
 import { Dispatch } from "../Cmd";
-import { MessageBase, Nullable } from "../Types";
+import { Message, Nullable } from "../Types";
 
 /**
  * Options for the `renderWithModel` function.
@@ -7,7 +7,7 @@ import { MessageBase, Nullable } from "../Types";
  * @template TModel The type of the model.
  * @template TMessage The type of the messages discriminated union.
  */
-interface RenderWithModelOptions<TModel, TMessage extends MessageBase> {
+interface RenderWithModelOptions<TModel, TMessage extends Message> {
     /**
      * The model to use when rendering the component.
      * @type {TModel}
@@ -21,13 +21,13 @@ interface RenderWithModelOptions<TModel, TMessage extends MessageBase> {
     dispatch?: Dispatch<TMessage>,
 }
 
-let currentFakeOptions: Nullable<RenderWithModelOptions<unknown, MessageBase>>;
+let currentFakeOptions: Nullable<RenderWithModelOptions<unknown, Message>>;
 
-function setFakeOptions (options: Nullable<RenderWithModelOptions<unknown, MessageBase>>): void {
+function setFakeOptions (options: Nullable<RenderWithModelOptions<unknown, Message>>): void {
     currentFakeOptions = options;
 }
 
-function getFakeOptionsOnce<TModel, TMessage extends MessageBase> (): Nullable<RenderWithModelOptions<TModel, TMessage>> {
+function getFakeOptionsOnce<TModel, TMessage extends Message> (): Nullable<RenderWithModelOptions<TModel, TMessage>> {
     const temp = currentFakeOptions;
 
     currentFakeOptions = null;

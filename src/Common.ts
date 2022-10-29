@@ -1,8 +1,8 @@
 import { Cmd, Dispatch } from "./Cmd";
 import { Services } from "./Init";
-import { MessageBase } from "./Types";
+import { Message } from "./Types";
 
-function logMessage<TMessage extends MessageBase> (name: string, msg: TMessage): void {
+function logMessage<TMessage extends Message> (name: string, msg: TMessage): void {
     Services.logger?.info("Elm", "message from", name, msg.name);
     Services.logger?.debug("Elm", "message from", name, msg);
 
