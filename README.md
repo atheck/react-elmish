@@ -25,7 +25,7 @@ This library brings the elmish pattern to react.
 - [Call back parent components](#call-back-parent-components)
 - [Testing](#testing)
   - [Testing the update handler](#testing-the-update-handler)
-  - [Testing all (async) messages](#testing-all-async-messages)
+  - [Combine update and execCmd](#combine-update-and-execcmd)
   - [UI Tests](#ui-tests)
 - [Migrations](#migrations)
   - [From v1.x to v2.x](#from-v1x-to-v2x)
@@ -852,10 +852,11 @@ To test your **update** handler you can use some helper functions in `react-elmi
 
 | Function | Description |
 | --- | --- |
-| `getOfMsgParams` | Extracts the messages out of a command |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
 | `getUpdateFn` | Returns an `update` function for your update map object. |
+| `getUpdateAndExecCmdFn` | Returns an `update` function for your update map object, which immediately executes the command. |
 | `createUpdateArgsFactory` | Creates a factory function to create a message, a model, and props in a test. |
+| `getOfMsgParams` | Extracts the messages out of a command. You should not use this function, because its likely to be deprecated in near future. Use `execCmd` instead. |
 
 ### Testing the update handler
 
@@ -864,31 +865,32 @@ To test your **update** handler you can use some helper functions in `react-elmi
 ```ts
 import { getUpdateFn } from "react-elmish/dist/Testing";
 
-const update = getUpdateFn(updateMap);
+const updateFn = getUpdateFn(updateMap);
 
 // Call the update function in the test
-const [model, cmd] = update(msg, model, props);
+const [model, cmd] = updateFn(msg, model, props);
 ```
 
 A simple test:
 
 ```ts
-import * as Testing from "react-elmish/dist/Testing";
+import { createUpdateArgsFactory, execCmd } from "react-elmish/dist/Testing";
 
-const createUpdateArgs = Testing.createUpdateArgsFactory(() => ({ /* initial model */ }), () => ({ /* initial props */ }));
+const createUpdateArgs = createUpdateArgsFactory(() => ({ /* initial model */ }), () => ({ /* initial props */ }));
 
 ...
-it("returns the correct model and cmd", () => {
+it("returns the correct model and cmd", async () => {
     // arrange
     const args = createUpdateArgs(Msg.test(), { /* optionally override model here */ }, { /* optionally override props here */ });
 
     // act
     // Call the update handler
-    const [newModel, cmd] = update(..args);
+    const [newModel, cmd] = updateFn(...args);
+    const messages = await execCmd(cmd);
 
     // assert
     expect(newModel).toStrictEqual({ /* what you expect in the model */ });
-    expect(Testing.getOfMsgParams(cmd)).toEqual([
+    expect(messages).toEqual([
         Msg.expectedMsg1("arg"),
         Msg.expectedMsg2(),
     ]);
@@ -896,17 +898,21 @@ it("returns the correct model and cmd", () => {
 ...
 ```
 
-### Testing all (async) messages
-
 With `execCmd` you can execute all commands in a test scenario. All functions are called and awaited. The function returns all new messages (success or error messages).
 
 It also resolves for `attempt` functions if the called functions succeed. And it rejects for `perform` functions if the called functions fail.
 
+### Combine update and execCmd
+
+There is an alternative function `getUpdateAndExecCmdFn` to get the `update` function for an update map, which immediately invokes the command and returns the messages.
+
 ```ts
-import * as Testing from "react-elmish/dist/Testing";
+import { createUpdateArgs, getUpdateAndExecCmdFn } from "react-elmish/dist/Testing";
+
+const updateAndExecCmdFn = getUpdateAndExecCmdFn(updateMap);
 
 ...
-it("returns the correct cmd", () => {
+it("returns the correct cmd", async () => {
     // arrange
     const args = createUpdateArgs(Msg.asyncTest());
 
@@ -914,8 +920,7 @@ it("returns the correct cmd", () => {
     const functionMock = jest.fn();
 
     // act
-    const [, cmd] = update(...args);
-    const messages = await Testing.execCmd(cmd);
+    const [, messages] = await updateAndExecCmdFn(...args);
 
     // assert
     expect(functionMock).toBeCalled();
