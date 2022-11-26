@@ -1,6 +1,5 @@
-import { Cmd, Dispatch } from "./Cmd";
 import { Services } from "./Init";
-import { Message } from "./Types";
+import { Cmd, Dispatch, Message } from "./Types";
 
 function logMessage<TMessage extends Message> (name: string, msg: TMessage): void {
     Services.logger?.info("Elm", "message from", name, msg.name);

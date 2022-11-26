@@ -1,6 +1,6 @@
-import { createCmd } from "../Cmd";
 import { Nullable } from "../Types";
 import { execCmd } from ".";
+import { createCmd } from "../createCmd";
 
 type Message =
     | { name: "Msg1" }

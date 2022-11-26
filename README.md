@@ -52,7 +52,7 @@ An elmish component basically consists of the following parts:
 First import everything from `react-elmish` and declare the **Message** discriminated union type:
 
 ```ts
-import { Cmd, createCmd, InitResult, UpdateReturnType, UpdateMap } from "react-elmish";
+import { Cmd, InitResult, UpdateReturnType, UpdateMap } from "react-elmish";
 
 export type Message =
     | { name: "increment" }
@@ -243,19 +243,16 @@ In the **render** method you can add another button to increment the value by 10
 
 In addition to modifying the model, you can dispatch new commands here.
 
-To do so, you have to create a `cmd` object:
+To do so, you can use the `cmd` object:
 
 ```ts
-import { createCmd } from "react-elmish";
-
-const cmd = createCmd<Message>();
+import { cmd } from "react-elmish";
 ```
 
-Then you can call one of the functions of that object:
+You can call one of the functions of that object:
 
 | Function | Description |
 |---|---|
-| `cmd.none` | Does nothing. Equivalent to omit the second value. |
 | `cmd.ofMsg` | Dispatches a new message. |
 | `cmd.batch` | Aggregates an array of messages. |
 | `cmd.ofFunc.either` | Calls a synchronous function and maps the result into a message. |
@@ -281,8 +278,6 @@ export const Msg = {
     printLastMessage: (message: string): Message => ({ name: "printLastMessage", message }),
     ...
 }
-
-const cmd = createCmd<Message>();
 ```
 
 In the **update map** or **update** function you can dispatch that message like this:
@@ -390,8 +385,6 @@ const Msg = {
 Now we define the `init` function and the `update` object:
 
 ```ts
-const cmd = createCmd<Message>();
-
 function init (props: Props): InitResult<Model, Message> {
     return [{
         date: new Date(),
@@ -569,7 +562,7 @@ If you have some business logic that you want to reuse in other components, you 
 Let's say you want to load some settings, you can write a module like this:
 
 ```ts LoadSettings.ts
-import { createCmd, Cmd, ErrorMessage, UpdateMap, handleError } from "react-elmish";
+import { cmd, ErrorMessage, UpdateMap, handleError } from "react-elmish";
 
 export interface Settings {
     // ...
@@ -585,8 +578,6 @@ export const Msg = {
     settingsLoaded: (settings: Settings): Message => ({ name: "settingsLoaded", settings }),
     error: (error: Error): Message => ({ name: "error", error }),
 };
-
-const cmd = createCmd<Message>();
 
 export interface Model {
     settings: Settings | null,
@@ -625,7 +616,7 @@ Now let's integrate the **LoadSettings** module in our component:
 ```ts Composition.ts
 // Import the LoadSettings module
 import * as LoadSettings from "./LoadSettings";
-import { createCmd, Cmd, } from "react-elmish";
+import { cmd, InitResult, UpdateMap } from "react-elmish";
 
 // Here we define our local messages
 type Message =
@@ -638,8 +629,6 @@ export const Msg = {
     ...LoadSettings.Msg,
 };
 
-const cmd = Elm.createCmd<Message>();
-
 interface Props {}
 
 // Extend the LoadSettings model
@@ -647,7 +636,7 @@ interface Model extends LoadSettings.Model {
     // ...
 }
 
-export const init = (): [Model, Cmd<Message>] => {
+function init (): InitResult<Model, Message> {
     // Return the model and dispatch the LoadSettings message
     return [
         {
@@ -674,7 +663,7 @@ const update: UpdateMap<Props, Model, Message> = {
 Let's say you want to load some settings, you can write a module like this:
 
 ```ts LoadSettings.ts
-import { MsgSource, ErrorMessage, createCmd, UpdateReturnType, handleError } from "react-elmish";
+import { cmd, InitResult, MsgSource, ErrorMessage, UpdateReturnType, handleError } from "react-elmish";
 
 export type Settings = {
     // ...
@@ -698,17 +687,15 @@ export const Msg = {
     error: (error: Error): Message => ({ name: "error", error, ...MsgSource }),
 };
 
-const cmd = createCmd<Message>();
-
-export type Model = Readonly<{
+export interface Model {
     settings: Settings | null,
-}>;
+}
 
-export const init = (): Model => ({
-    settings: null,
-});
+export function init (): InitResult<Model, Message> {
+    return [{ settings: null }];
+}
 
-export const update = (_model: Model, msg: Message): UpdateReturnType<Model, Message> => {
+export function update (_model: Model, msg: Message): UpdateReturnType<Model, Message> {
     switch (msg.name) {
         case "loadSettings":
             return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error)];
@@ -719,7 +706,7 @@ export const update = (_model: Model, msg: Message): UpdateReturnType<Model, Mes
         case "error":
             return handleError(msg.error);
     }
-};
+}
 
 async function loadSettings (): Promise<Settings> {
     // Call some service (e.g. database or backend)
@@ -732,7 +719,7 @@ async function loadSettings (): Promise<Settings> {
 In other components where we want to use this **LoadSettings** module, we also need a message source:
 
 ```ts Composition.ts
-import { createCmd, MsgSource, UpdateReturnType, Cmd } from "react-elmish";
+import { cmd, InitResult, MsgSource, UpdateReturnType } from "react-elmish";
 // Import the LoadSettings module
 import * as LoadSettings from "./LoadSettings";
 
@@ -756,14 +743,12 @@ export const Msg = {
     ...LoadSettings.Msg,
 };
 
-const cmd = createCmd<Message>();
-
 // Include the LoadSettings Model
 export interface Model extends LoadSettings.Model {
     // ...
 }
 
-export const init = (): [Model, Cmd<Message>] => {
+export function init (): InitResult<Model, Message> {
     // Return the model and dispatch the LoadSettings message
     return [
         {
@@ -773,7 +758,7 @@ export const init = (): [Model, Cmd<Message>] => {
         },
         cmd.ofMsg(Msg.loadSettings())
     ];
-};
+}
 
 // In our update function, we first distinguish between the sources of the messages
 export function update (model: Model, msg: Message): UpdateReturnType<Model, Message> {

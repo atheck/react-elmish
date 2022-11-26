@@ -1,15 +1,5 @@
-/**
- * Type of the dispatch function.
- */
-type Dispatch<TMessage> = (msg: TMessage) => void;
-
-type FallbackHandler = (error?: Error) => void;
-type Sub<TMsg> = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => void;
-
-/**
- * Type of a command.
- */
-type Cmd<TMessage> = Sub<TMessage> [];
+import { cmd } from "./cmd";
+import { Cmd, Message, Sub } from "./Types";
 
 /**
  * Contains functions to create commands.
@@ -96,104 +86,42 @@ interface Command<TMessage> {
  * Creates a typed instance of the Command class.
  * @template TMessage The type of the Msg discriminated union.
  */
-function createCmd<TMessage> (): Command<TMessage> {
+function createCmd<TMessage extends Message> (): Command<TMessage> {
     return {
         none: [],
         ofMsg (msg: TMessage): Cmd<TMessage> {
-            return [dispatch => dispatch(msg)];
+            return cmd.ofMsg(msg);
         },
         batch (...commands: (Cmd<TMessage> | undefined | null) []): Cmd<TMessage> {
-            return (commands.filter(Boolean) as Cmd<TMessage> []).flat();
+            return cmd.batch(...commands);
         },
         ofSub (sub: Sub<TMessage>): Cmd<TMessage> {
-            return [sub];
+            return cmd.ofSub(sub);
         },
         ofFunc: {
             either<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofSuccess: (result: TReturn) => TMessage, ofError: (error: Error) => TMessage, ...args: TArgs): Cmd<TMessage> {
-                const bind = (dispatch: Dispatch<TMessage>): void => {
-                    try {
-                        const result = task(...args);
-
-                        dispatch(ofSuccess(result));
-                    } catch (ex: unknown) {
-                        dispatch(ofError(ex as Error));
-                    }
-                };
-
-                return [bind];
+                return cmd.ofFunc.either(task, ofSuccess, ofError, ...args);
             },
             perform<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofSuccess: (result: TReturn) => TMessage, ...args: TArgs): Cmd<TMessage> {
-                const bind = (dispatch: Dispatch<TMessage>, fallback?: FallbackHandler): void => {
-                    try {
-                        const result = task(...args);
-
-                        dispatch(ofSuccess(result));
-                    } catch (ex: unknown) {
-                        if (fallback) {
-                            fallback(ex as Error);
-                        }
-                    }
-                };
-
-                return [bind];
+                return cmd.ofFunc.perform(task, ofSuccess, ...args);
             },
             attempt<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofError: (error: Error) => TMessage, ...args: TArgs): Cmd<TMessage> {
-                const bind = (dispatch: Dispatch<TMessage>, fallback?: FallbackHandler): void => {
-                    try {
-                        task(...args);
-
-                        if (fallback) {
-                            fallback();
-                        }
-                    } catch (ex: unknown) {
-                        dispatch(ofError(ex as Error));
-                    }
-                };
-
-                return [bind];
+                return cmd.ofFunc.attempt(task, ofError, ...args);
             },
         },
         ofPromise: {
             either<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => Promise<TReturn>, ofSuccess: (result: TReturn) => TMessage, ofError: (error: Error) => TMessage, ...args: TArgs): Cmd<TMessage> {
-                const bind = (dispatch: Dispatch<TMessage>): void => {
-                    task(...args).then(result => dispatch(ofSuccess(result)))
-                        .catch((ex: Error) => dispatch(ofError(ex)));
-                };
-
-                return [bind];
+                return cmd.ofPromise.either(task, ofSuccess, ofError, ...args);
             },
             perform<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => Promise<TReturn>, ofSuccess: (result: TReturn) => TMessage, ...args: TArgs): Cmd<TMessage> {
-                const defaultFallbackHandler = (): void => {
-                    // blank
-                };
-
-                const bind = (dispatch: Dispatch<TMessage>, fallback: FallbackHandler = defaultFallbackHandler): void => {
-                    task(...args).then(result => dispatch(ofSuccess(result)))
-                        .catch(fallback);
-                };
-
-                return [bind];
+                return cmd.ofPromise.perform(task, ofSuccess, ...args);
             },
             attempt<TArgs extends unknown [], TReturn>(task: (...args: TArgs) => Promise<TReturn>, ofError: (error: Error) => TMessage, ...args: TArgs): Cmd<TMessage> {
-                const bind = (dispatch: Dispatch<TMessage>, fallback?: FallbackHandler): void => {
-                    task(...args).then(() => {
-                        if (fallback) {
-                            fallback();
-                        }
-                    })
-                        .catch((ex: Error) => dispatch(ofError(ex)));
-                };
-
-                return [bind];
+                return cmd.ofPromise.attempt(task, ofError, ...args);
             },
         },
     };
 }
-
-export type {
-    Dispatch,
-    Cmd,
-};
 
 export {
     createCmd,

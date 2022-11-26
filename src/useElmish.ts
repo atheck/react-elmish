@@ -1,10 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Cmd, Dispatch } from "./Cmd";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
 import { getFakeOptionsOnce } from "./Testing/fakeOptions";
-import { InitFunction, Message, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
+import { Cmd, Dispatch, InitFunction, Message, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 
 /**
  * The return type of the `subscription` function.

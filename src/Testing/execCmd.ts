@@ -1,5 +1,4 @@
-import { Cmd } from "../Cmd";
-import { Nullable } from "../Types";
+import { Cmd, Nullable } from "../Types";
 
 /**
  * Executes all commands and resolves the messages.

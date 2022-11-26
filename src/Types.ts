@@ -1,10 +1,21 @@
-import { Cmd } from "./Cmd";
-
 type Nullable<T> = T | null;
 
 interface Message {
     name: string,
 }
+
+/**
+ * Type of the dispatch function.
+ */
+type Dispatch<TMessage> = (msg: TMessage) => void;
+
+type FallbackHandler = (error?: Error) => void;
+type Sub<TMsg> = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => void;
+
+/**
+  * Type of a command.
+  */
+type Cmd<TMessage> = Sub<TMessage> [];
 
 /**
  * Creates a MsgSource type.
@@ -38,6 +49,10 @@ type UpdateMap<TProps, TModel, TMessage extends Message> = {
 export type {
     Nullable,
     Message,
+    Dispatch,
+    FallbackHandler,
+    Sub,
+    Cmd,
     MsgSource,
     InitResult,
     InitFunction,

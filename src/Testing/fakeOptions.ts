@@ -1,5 +1,4 @@
-import { Dispatch } from "../Cmd";
-import { Message, Nullable } from "../Types";
+import { Dispatch, Message, Nullable } from "../Types";
 
 /**
  * Options for the `renderWithModel` function.

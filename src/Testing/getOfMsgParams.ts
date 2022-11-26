@@ -1,4 +1,4 @@
-import { Cmd } from "../Cmd";
+import { Cmd } from "../Types";
 
 /**
  * Extracts the messages out of a command.
