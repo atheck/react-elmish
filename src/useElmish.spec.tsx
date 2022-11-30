@@ -196,7 +196,7 @@ function TestComponentWithEffect (props: Props): JSX.Element {
     }
 
     if (model.value1 === "First" && model.value2 === "") {
-        setTimeout(() => dispatch({ name: "Second" }), 10);
+        setTimeout(() => dispatch({ name: "Second" }), 5);
     }
 
     componentModel = model;
