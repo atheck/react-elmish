@@ -4,6 +4,7 @@ import { Cmd } from "../Types";
  * Extracts the messages out of a command.
  * @param cmd The command to process.
  * @returns The array of messages.
+ * @deprecated Use `execCmd` instead or create an update function by using `getUpdateAndExecCmdFn`.
  */
 function getOfMsgParams<TMessage> (cmd?: Cmd<TMessage>): TMessage [] {
     const msgNames: TMessage [] = [];
