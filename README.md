@@ -13,6 +13,7 @@ This library brings the elmish pattern to react.
   - [Dispatch a message](#dispatch-a-message)
   - [Call an async function](#call-an-async-function)
   - [Dispatch a command from `init`](#dispatch-a-command-from-init)
+  - [Dispatching multiple commands](#dispatching-multiple-commands)
 - [Subscriptions](#subscriptions)
   - [Working with external sources of events](#working-with-external-sources-of-events)
   - [Cleanup subscriptions](#cleanup-subscriptions)
@@ -360,6 +361,14 @@ export function init (props: Props): InitResult {
         cmd.ofMsg(Msg.loadData())
     ];
 };
+```
+
+### Dispatching multiple commands
+
+To dispatch more than one command from `init` or `update` you can either use the `cmd.batch` function or simply return multiple commands:
+
+```ts
+return [{}, cmd.ofMsg(Msg.loadData()), cmd.ofPromise.either(doStuff, Msg.success, Msg.error)];
 ```
 
 ## Subscriptions

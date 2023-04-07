@@ -12,8 +12,8 @@ function modelHasChanged<TModel> (currentModel: TModel, model: Partial<TModel>):
     return !Object.is(model, currentModel) && Object.getOwnPropertyNames(model).length > 0;
 }
 
-function execCmd<TMessage> (cmd: Cmd<TMessage>, dispatch: Dispatch<TMessage>): void {
-    cmd.forEach(call => call(dispatch));
+function execCmd<TMessage> (dispatch: Dispatch<TMessage>, ...commands: (Cmd<TMessage> | undefined) []): void {
+    commands.forEach(cmd => cmd?.forEach(call => call(dispatch)));
 }
 
 export {

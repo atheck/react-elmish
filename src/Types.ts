@@ -27,14 +27,14 @@ interface MsgSource<T extends string> {
 /**
  * The return type of the `init` function.
  */
-type InitResult<TModel, TMessage> = [TModel, Cmd<TMessage>?];
+type InitResult<TModel, TMessage> = [TModel, ...(Cmd<TMessage> | undefined) []];
 
 type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TModel, TMessage>;
 
 /**
  * Type for the return value of the `update` function.
  */
-type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, Cmd<TMessage>?];
+type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | undefined) []];
 
 type UpdateFunction<TProps, TModel, TMessage> = (model: TModel, msg: TMessage, props: TProps) => UpdateReturnType<TModel, TMessage>;
 

@@ -15,7 +15,7 @@ import { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
  * @template TProps The type of the props.
  */
 abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends React.Component<TProps> {
-    private initCmd: Nullable<Cmd<TMessage>> | undefined;
+    private initCommands: Nullable<(Cmd<TMessage> | undefined) []> | undefined;
     private readonly componentName: string;
     private readonly buffer: TMessage [] = [];
     private reentered = false;
@@ -38,13 +38,13 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
             this.dispatch = fakeOptions.dispatch;
         }
 
-        const [model, cmd] = fakeOptions?.model ? [fakeOptions.model as TModel] : init(this.props);
+        const [model, ...commands] = fakeOptions?.model ? [fakeOptions.model as TModel] : init(this.props);
 
         Services.logger?.debug("Elm", "initial model for", name, model);
 
         this.componentName = name;
         this.currentModel = model;
-        this.initCmd = cmd;
+        this.initCommands = commands;
     }
 
     /**
@@ -55,9 +55,9 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
     public componentDidMount (): void {
         this.mounted = true;
 
-        if (this.initCmd) {
-            execCmd(this.initCmd, this.dispatch);
-            this.initCmd = null;
+        if (this.initCommands) {
+            execCmd(this.dispatch, ...this.initCommands);
+            this.initCommands = null;
         }
     }
 
@@ -97,16 +97,14 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
             while (nextMsg) {
                 logMessage(this.componentName, nextMsg);
 
-                const [model, cmd] = this.update(this.currentModel, nextMsg, this.props);
+                const [model, ...commands] = this.update(this.currentModel, nextMsg, this.props);
 
                 if (modelHasChanged(this.currentModel, model)) {
                     this.currentModel = { ...this.currentModel, ...model };
                     modified = true;
                 }
 
-                if (cmd) {
-                    execCmd(cmd, this.dispatch);
-                }
+                execCmd(this.dispatch, ...commands);
 
                 nextMsg = this.buffer.shift();
             }

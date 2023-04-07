@@ -94,7 +94,7 @@ function useElmish<TProps, TModel, TMessage extends Message> ({ name, props, ini
             while (nextMsg) {
                 logMessage(name, nextMsg);
 
-                const [newModel, cmd] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current);
+                const [newModel, ...commands] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current);
 
                 if (modelHasChanged(currentModel, newModel)) {
                     currentModel = { ...currentModel, ...newModel };
@@ -102,9 +102,7 @@ function useElmish<TProps, TModel, TMessage extends Message> ({ name, props, ini
                     modified = true;
                 }
 
-                if (cmd) {
-                    execCmd(cmd, dispatch);
-                }
+                execCmd(dispatch, ...commands);
 
                 nextMsg = buffer.shift();
             }
@@ -123,23 +121,21 @@ function useElmish<TProps, TModel, TMessage extends Message> ({ name, props, ini
     }), []);
 
     if (!initializedModel) {
-        const [initModel, initCmd] = fakeOptions?.model ? [fakeOptions.model as TModel] : init(props);
+        const [initModel, ...initCommands] = fakeOptions?.model ? [fakeOptions.model as TModel] : init(props);
 
         initializedModel = initModel;
         setModel(initializedModel);
 
         Services.logger?.debug("Elm", "initial model for", name, initializedModel);
 
-        if (initCmd) {
-            execCmd(initCmd, dispatch);
-        }
+        execCmd(dispatch, ...initCommands);
     }
 
     useEffect(() => {
         if (subscription) {
             const [subCmd, destructor] = subscription(initializedModel as TModel, props);
 
-            execCmd(subCmd, dispatch);
+            execCmd(dispatch, subCmd);
 
             if (destructor) {
                 return destructor;
