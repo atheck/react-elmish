@@ -40,7 +40,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
         const [model, ...commands] = fakeOptions?.model ? [fakeOptions.model as TModel] : init(this.props);
 
-        Services.logger?.debug("Elm", "initial model for", name, model);
+        Services.logger?.debug("Initial model for", name, model);
 
         this.componentName = name;
         this.currentModel = model;
@@ -111,7 +111,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
             this.reentered = false;
 
             if (this.mounted && modified) {
-                Services.logger?.debug("Elm", "update model for", this.componentName, this.currentModel);
+                Services.logger?.debug("Update model for", this.componentName, this.currentModel);
                 this.forceUpdate();
             }
         }

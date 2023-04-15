@@ -112,7 +112,7 @@ function useElmish<TProps, TModel, TMessage extends Message> ({ name, props, ini
                 setModel(prevModel => {
                     const updatedModel = { ...prevModel as TModel, ...currentModel };
 
-                    Services.logger?.debug("Elm", "update model for", name, updatedModel);
+                    Services.logger?.debug("Update model for", name, updatedModel);
 
                     return updatedModel;
                 });
@@ -126,7 +126,7 @@ function useElmish<TProps, TModel, TMessage extends Message> ({ name, props, ini
         initializedModel = initModel;
         setModel(initializedModel);
 
-        Services.logger?.debug("Elm", "initial model for", name, initializedModel);
+        Services.logger?.debug("Initial model for", name, initializedModel);
 
         execCmd(dispatch, ...initCommands);
     }
