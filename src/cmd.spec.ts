@@ -1,4 +1,5 @@
 import { cmd } from "./cmd";
+import { Cmd } from "./Types";
 
 type Message =
     | { name: "none" }
@@ -7,7 +8,31 @@ type Message =
 
 const successMsg = (): Message => ({ name: "success" });
 const errorMsg = (): Message => ({ name: "error" });
-const resolveTask = async (): Promise<unknown> => undefined;
+
+async function asyncResolve (): Promise<void> {
+    // Does nothing
+}
+
+async function asyncReject (): Promise<void> {
+    throw new Error("error");
+}
+
+function syncSuccess (): void {
+    // Does nothing
+}
+
+function syncError (): void {
+    throw new Error("error");
+}
+
+async function callAsync (result: Cmd<Message>): Promise<Message> {
+    const act = async (): Promise<Message> => new Promise(resolve => {
+        result[0]?.(resolve);
+    });
+    const message = await act();
+
+    return message;
+}
 
 describe("cmd", () => {
     describe("batch", () => {
@@ -39,6 +64,221 @@ describe("cmd", () => {
             expect(batchedCommands).toHaveLength(2);
             expect(dispatch).toHaveBeenNthCalledWith(1, { name: "success" });
             expect(dispatch).toHaveBeenNthCalledWith(2, { name: "error" });
+        });
+    });
+
+    describe("either", () => {
+        it("returns one function", () => {
+            // arrange
+            const result = cmd.either(jest.fn(), successMsg, errorMsg);
+
+            // assert
+            expect(result).toHaveLength(1);
+            expect(result[0]).toBeInstanceOf(Function);
+        });
+
+        it("runs a sync task", () => {
+            // arrange
+            const task = jest.fn();
+            const result = cmd.either(task, successMsg, errorMsg);
+
+            // act
+            result[0]?.(() => null);
+
+            // assert
+            expect(task).toHaveBeenCalledTimes(1);
+        });
+
+        it("runs an async task", () => {
+            // arrange
+            const task = jest.fn(asyncResolve);
+            const result = cmd.either(task, successMsg, errorMsg);
+
+            // act
+            result[0]?.(() => null);
+
+            // assert
+            expect(task).toHaveBeenCalledTimes(1);
+        });
+
+        it("dispatches the success message for a sync task", async () => {
+            // arrange
+            const result = cmd.either(syncSuccess, successMsg, errorMsg);
+
+            // act
+            const message = await callAsync(result);
+
+            // assert
+            expect(message.name).toBe("success");
+        });
+
+        it("dispatches the success message for an async task", async () => {
+            // arrange
+            const result = cmd.either(asyncResolve, successMsg, errorMsg);
+
+            // act
+            const message = await callAsync(result);
+
+            // assert
+            expect(message.name).toBe("success");
+        });
+
+        it("dispatches the error message for a sync task", async () => {
+            // arrange
+            const result = cmd.either(syncError, successMsg, errorMsg);
+
+            // act
+            const message = await callAsync(result);
+
+            // assert
+            expect(message.name).toBe("error");
+        });
+
+        it("dispatches the error message for an async task", async () => {
+            // arrange
+            const result = cmd.either(asyncReject, successMsg, errorMsg);
+
+            // act
+            const message = await callAsync(result);
+
+            // assert
+            expect(message.name).toBe("error");
+        });
+    });
+
+    describe("perform", () => {
+        it("returns one function", () => {
+            // arrange
+            const result = cmd.perform(jest.fn(), successMsg);
+
+            // assert
+            expect(result).toHaveLength(1);
+            expect(result[0]).toBeInstanceOf(Function);
+        });
+
+        it("runs a sync task", () => {
+            // arrange
+            const task = jest.fn();
+            const result = cmd.perform(task, successMsg);
+
+            // act
+            result[0]?.(() => null);
+
+            // assert
+            expect(task).toHaveBeenCalledTimes(1);
+        });
+
+        it("runs an async task", () => {
+            // arrange
+            const task = jest.fn(asyncResolve);
+            const result = cmd.perform(task, successMsg);
+
+            // act
+            result[0]?.(() => null);
+
+            // assert
+            expect(task).toHaveBeenCalledTimes(1);
+        });
+
+        it("dispatches the success message for a sync task", async () => {
+            // arrange
+            const result = cmd.perform(syncSuccess, successMsg);
+
+            // act
+            const message = await callAsync(result);
+
+            // assert
+            expect(message.name).toBe("success");
+        });
+
+        it("dispatches the success message for an async task", async () => {
+            // arrange
+            const result = cmd.perform(asyncResolve, successMsg);
+
+            // act
+            const message = await callAsync(result);
+
+            // assert
+            expect(message.name).toBe("success");
+        });
+
+        it("ignores the error for a sync task", async () => {
+            // arrange
+            const result = cmd.perform(syncError, successMsg);
+
+            // act
+            const succeeds = (): void => result[0]?.(jest.fn());
+
+            // assert
+            expect(succeeds).not.toThrow();
+        });
+
+        it("ignores the error for an async task", async () => {
+            // arrange
+            const result = cmd.perform(asyncReject, successMsg);
+
+            // act
+            const succeeds = (): void => result[0]?.(jest.fn());
+
+            // assert
+            expect(succeeds).not.toThrow();
+        });
+    });
+
+    describe("attempt", () => {
+        it("returns one function", () => {
+            // arrange
+            const result = cmd.attempt(jest.fn(), errorMsg);
+
+            // assert
+            expect(result).toHaveLength(1);
+            expect(result[0]).toBeInstanceOf(Function);
+        });
+
+        it("runs a sync task", () => {
+            // arrange
+            const task = jest.fn();
+            const result = cmd.attempt(task, errorMsg);
+
+            // act
+            result[0]?.(() => null);
+
+            // assert
+            expect(task).toHaveBeenCalledTimes(1);
+        });
+
+        it("runs an async task", () => {
+            // arrange
+            const task = jest.fn(asyncResolve);
+            const result = cmd.attempt(task, errorMsg);
+
+            // act
+            result[0]?.(() => null);
+
+            // assert
+            expect(task).toHaveBeenCalledTimes(1);
+        });
+
+        it("dispatches the error message for a sync task", async () => {
+            // arrange
+            const result = cmd.attempt(syncError, errorMsg);
+
+            // act
+            const message = await callAsync(result);
+
+            // assert
+            expect(message.name).toBe("error");
+        });
+
+        it("dispatches the error message for an async task", async () => {
+            // arrange
+            const result = cmd.attempt(asyncReject, errorMsg);
+
+            // act
+            const message = await callAsync(result);
+
+            // assert
+            expect(message.name).toBe("error");
         });
     });
 
@@ -219,7 +459,7 @@ describe("cmd", () => {
         describe("either", () => {
             it("returns one function", () => {
                 // arrange
-                const result = cmd.ofPromise.either(resolveTask, successMsg, errorMsg);
+                const result = cmd.ofPromise.either(asyncResolve, successMsg, errorMsg);
 
                 // assert
                 expect(result).toHaveLength(1);
@@ -228,7 +468,7 @@ describe("cmd", () => {
 
             it("runs the task", () => {
                 // arrange
-                const task = jest.fn(resolveTask);
+                const task = jest.fn(asyncResolve);
                 const result = cmd.ofPromise.either(task, successMsg, errorMsg);
 
                 // act
@@ -240,7 +480,7 @@ describe("cmd", () => {
 
             it("dispatches the success message", async () => {
                 // arrange
-                const task = jest.fn(resolveTask);
+                const task = jest.fn(asyncResolve);
                 const result = cmd.ofPromise.either(task, successMsg, errorMsg);
 
                 // act
@@ -274,7 +514,7 @@ describe("cmd", () => {
         describe("perform", () => {
             it("returns one function", () => {
                 // arrange
-                const result = cmd.ofPromise.perform(resolveTask, successMsg);
+                const result = cmd.ofPromise.perform(asyncResolve, successMsg);
 
                 // assert
                 expect(result).toHaveLength(1);
@@ -283,7 +523,7 @@ describe("cmd", () => {
 
             it("runs the task", () => {
                 // arrange
-                const task = jest.fn(resolveTask);
+                const task = jest.fn(asyncResolve);
                 const result = cmd.ofPromise.perform(task, successMsg);
 
                 // act
@@ -295,7 +535,7 @@ describe("cmd", () => {
 
             it("dispatches the success message", async () => {
                 // arrange
-                const task = jest.fn(resolveTask);
+                const task = jest.fn(asyncResolve);
                 const result = cmd.ofPromise.perform(task, successMsg);
 
                 // act
@@ -326,7 +566,7 @@ describe("cmd", () => {
         describe("attempt", () => {
             it("returns one function", () => {
                 // arrange
-                const result = cmd.ofPromise.attempt(resolveTask, errorMsg);
+                const result = cmd.ofPromise.attempt(asyncResolve, errorMsg);
 
                 // assert
                 expect(result).toHaveLength(1);
@@ -335,7 +575,7 @@ describe("cmd", () => {
 
             it("runs the task", () => {
                 // arrange
-                const task = jest.fn(resolveTask);
+                const task = jest.fn(asyncResolve);
                 const result = cmd.ofPromise.attempt(task, errorMsg);
 
                 // act
@@ -347,7 +587,7 @@ describe("cmd", () => {
 
             it("ignores the success", async () => {
                 // arrange
-                const task = jest.fn(resolveTask);
+                const task = jest.fn(asyncResolve);
                 const result = cmd.ofPromise.attempt(task, errorMsg);
 
                 // act
