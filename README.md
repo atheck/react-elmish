@@ -257,12 +257,15 @@ You can call one of the functions of that object:
 |---|---|
 | `cmd.ofMsg` | Dispatches a new message. |
 | `cmd.batch` | Aggregates an array of messages. |
+| `cmd.ofEither` | Calls a function (sync or async) and maps the result into a message. |
+| `cmd.ofSuccess` | Same as `ofEither` but ignores the error case. |
+| `cmd.ofError` | Same as `ofEither` but ignores the success case. |
 | `cmd.ofFunc.either` | Calls a synchronous function and maps the result into a message. |
-| `cmd.ofFunc.attempt` | Like `either` but ignores the success case.  |
-| `cmd.ofFunc.perform` | Like `either` but ignores the error case.  |
+| `cmd.ofFunc.perform` | Same as `either` but ignores the error case.  |
+| `cmd.ofFunc.attempt` | Same as `either` but ignores the success case.  |
 | `cmd.ofPromise.either` | Calls an async function and maps the result into a message. |
-| `cmd.ofPromise.attempt` | Like `either` but ignores the success case. |
-| `cmd.ofPromise.perform` | Like `either` but ignores the error case. |
+| `cmd.ofPromise.perform` | Same as `either` but ignores the error case. |
+| `cmd.ofPromise.attempt` | Same as `either` but ignores the success case. |
 | `cmd.ofSub` | Use this function to trigger a command in a subscription. |
 
 ### Dispatch a message
@@ -334,7 +337,7 @@ and handle the messages in the **update** function:
         // If loadSettings resolves it dispatches "SettingsLoaded"
         // If it fails it dispatches "Error"
         // The return type of loadSettings must fit Msg.settingsLoaded
-        return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error, "firstArg", 123)];
+        return [{}, cmd.ofEither(loadSettings, Msg.settingsLoaded, Msg.error, "firstArg", 123)];
     },
 
     settingsLoaded () {
@@ -368,7 +371,7 @@ export function init (props: Props): InitResult {
 To dispatch more than one command from `init` or `update` you can either use the `cmd.batch` function or simply return multiple commands:
 
 ```ts
-return [{}, cmd.ofMsg(Msg.loadData()), cmd.ofPromise.either(doStuff, Msg.success, Msg.error)];
+return [{}, cmd.ofMsg(Msg.loadData()), cmd.ofEither(doStuff, Msg.success, Msg.error)];
 ```
 
 ## Subscriptions
@@ -601,7 +604,7 @@ export function init (): Model {
 
 export const update: UpdateMap<Props, Model, Message> = {
     loadSettings () {
-        return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error)];
+        return [{}, cmd.ofEither(loadSettings, Msg.settingsLoaded, Msg.error)];
     }
 
     settingsLoaded ({ settings }) {
@@ -708,7 +711,7 @@ export function init (): InitResult<Model, Message> {
 export function update (_model: Model, msg: Message): UpdateReturnType<Model, Message> {
     switch (msg.name) {
         case "loadSettings":
-            return [{}, cmd.ofPromise.either(loadSettings, Msg.settingsLoaded, Msg.error)];
+            return [{}, cmd.ofEither(loadSettings, Msg.settingsLoaded, Msg.error)];
 
         case "settingsLoaded":
             return [{ settings: msg.settings }];
@@ -827,7 +830,7 @@ To inform the parent component about some action, let's say to close a dialog fo
     {
         // ...
         close () {
-            return [{}, cmd.ofFunc.attempt(props.onClose, Msg.error)];
+            return [{}, cmd.ofError(props.onClose, Msg.error)];
         }
         // ...
     };
