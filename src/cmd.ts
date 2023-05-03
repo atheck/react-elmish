@@ -55,10 +55,6 @@ const cmd = {
     * @param args The parameters of the task.
     */
     ofSuccess<TMessage extends Message, TArgs extends unknown [], TReturn>(task: (...args: TArgs) => TReturn, ofSuccess: (result: Awaited<TReturn>) => TMessage, ...args: TArgs): Cmd<TMessage> {
-        const defaultFallbackHandler = (): void => {
-            // blank
-        };
-
         const bind = (dispatch: Dispatch<TMessage>, fallback: FallbackHandler = defaultFallbackHandler): void => {
             try {
                 const taskResult = task(...args);
@@ -179,7 +175,8 @@ const cmd = {
         */
         either<TMessage extends Message, TArgs extends unknown [], TReturn>(task: (...args: TArgs) => Promise<TReturn>, ofSuccess: (result: TReturn) => TMessage, ofError: (error: Error) => TMessage, ...args: TArgs): Cmd<TMessage> {
             const bind = (dispatch: Dispatch<TMessage>): void => {
-                task(...args).then(result => dispatch(ofSuccess(result)))
+                task(...args)
+                    .then(result => dispatch(ofSuccess(result)))
                     .catch((ex: Error) => dispatch(ofError(ex)));
             };
 
@@ -193,12 +190,9 @@ const cmd = {
         * @param args The parameters of the task.
         */
         perform<TMessage extends Message, TArgs extends unknown [], TReturn>(task: (...args: TArgs) => Promise<TReturn>, ofSuccess: (result: TReturn) => TMessage, ...args: TArgs): Cmd<TMessage> {
-            const defaultFallbackHandler = (): void => {
-                // blank
-            };
-
             const bind = (dispatch: Dispatch<TMessage>, fallback: FallbackHandler = defaultFallbackHandler): void => {
-                task(...args).then(result => dispatch(ofSuccess(result)))
+                task(...args)
+                    .then(result => dispatch(ofSuccess(result)))
                     .catch(fallback);
             };
 
@@ -225,6 +219,10 @@ const cmd = {
         },
     },
 };
+
+function defaultFallbackHandler (): void {
+    // blank
+}
 
 export {
     cmd,
