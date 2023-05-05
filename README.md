@@ -25,6 +25,7 @@ This library brings the elmish pattern to react.
 - [With an update function](#with-an-update-function)
 - [Call back parent components](#call-back-parent-components)
 - [Testing](#testing)
+  - [Testing the init function](#testing-the-init-function)
   - [Testing the update handler](#testing-the-update-handler)
   - [Combine update and execCmd](#combine-update-and-execcmd)
   - [UI Tests](#ui-tests)
@@ -851,10 +852,29 @@ To test your **update** handler you can use some helper functions in `react-elmi
 | Function | Description |
 | --- | --- |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
+| `initAndExecCmd` | Calls the `init` function with the provided props and executes the returned commands. |
 | `getUpdateFn` | Returns an `update` function for your update map object. |
 | `getUpdateAndExecCmdFn` | Returns an `update` function for your update map object, which immediately executes the command. |
 | `createUpdateArgsFactory` | Creates a factory function to create a message, a model, and props in a test. |
 | `getOfMsgParams` | Extracts the messages out of a command. You should not use this function, because its likely to be deprecated in near future. Use `execCmd` instead. |
+
+### Testing the init function
+
+```ts
+import { initAndExecCmd } from "react-elmish/dist/Testing";
+
+it("initializes the model correctly", async () => {
+    // arrange
+    const props = { /* Create initial props */ };
+
+    // act
+    const [model, messages] = await initAndExecCmd(init, props);
+
+    // assert
+    expect(model).toStrictEqual({ /* what you expect in the model */ });
+    expect(messages).toEqual([Msg.loadData()]);
+});
+```
 
 ### Testing the update handler
 
