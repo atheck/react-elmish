@@ -85,6 +85,7 @@ interface Command<TMessage> {
 /**
  * Creates a typed instance of the Command class.
  * @template TMessage The type of the Msg discriminated union.
+ * @deprecated Import the `cmd` object and use this instead.
  */
 function createCmd<TMessage extends Message> (): Command<TMessage> {
     return {
