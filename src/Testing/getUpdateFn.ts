@@ -30,9 +30,9 @@ function getUpdateFn<TProps, TModel, TMessage extends Message> (updateMap: Updat
 */
 function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message> (updateMap: UpdateMap<TProps, TModel, TMessage>): (msg: TMessage, model: TModel, props: TProps) => Promise<[Partial<TModel>, Nullable<TMessage> []]> {
     return async function (msg: TMessage, model: TModel, props: TProps): Promise<[Partial<TModel>, Nullable<TMessage> []]> {
-        const [updatedModel, cmd] = callUpdateMap(updateMap, msg, model, props);
+        const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props);
 
-        const messages = await execCmd(cmd);
+        const messages = await execCmd(...commands);
 
         return [updatedModel, messages];
     };

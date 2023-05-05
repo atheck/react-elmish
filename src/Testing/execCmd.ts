@@ -5,12 +5,9 @@ import { Cmd, Nullable } from "../Types";
  * @param cmd The command to process.
  * @returns The array of processed messages.
  */
-async function execCmd<TMessage> (cmd?: Cmd<TMessage>): Promise<Nullable<TMessage> []> {
-    if (!cmd) {
-        return [];
-    }
-
-    const callers = cmd.map(async currentCmd => new Promise<Nullable<TMessage>>((resolve, reject) => {
+async function execCmd<TMessage> (...commands: (Cmd<TMessage> | undefined) []): Promise<Nullable<TMessage> []> {
+    const definedCommands = commands.filter(cmd => cmd !== undefined) as Cmd<TMessage> [];
+    const callers = definedCommands.flatMap(cmd => cmd.map(async currentCmd => new Promise<Nullable<TMessage>>((resolve, reject) => {
         const dispatch = (msg: TMessage): void => resolve(msg);
 
         currentCmd(dispatch, error => {
@@ -20,7 +17,7 @@ async function execCmd<TMessage> (cmd?: Cmd<TMessage>): Promise<Nullable<TMessag
                 resolve(null);
             }
         });
-    }));
+    })));
 
     const results = await Promise.all(callers);
 
