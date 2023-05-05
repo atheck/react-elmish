@@ -1,13 +1,6 @@
-import { InitResult, Message, Nullable, UpdateMap, UpdateReturnType } from "../Types";
+import { Message, Nullable, UpdateMap, UpdateReturnType } from "../Types";
 import { callUpdateMap } from "../useElmish";
 import { execCmd } from "./execCmd";
-
-async function initAndExecCmd<TProps, TModel, TMessage extends Message> (init: (props?: TProps) => InitResult<TModel, TMessage>, props?: TProps): Promise<[TModel, Nullable<TMessage> []]> {
-    const [model, ...commands] = init(props);
-    const messages = await execCmd(...commands);
-
-    return [model, messages];
-}
 
 /**
  * Creates an update function out of an UpdateMap.
@@ -46,7 +39,6 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message> (update
 }
 
 export {
-    initAndExecCmd,
     getUpdateFn,
     getUpdateAndExecCmdFn,
 };
