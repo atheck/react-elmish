@@ -2,7 +2,7 @@ import { createUpdateArgsFactory, UpdateArgsFactory } from "./createUpdateArgsFa
 import { execCmd } from "./execCmd";
 import { RenderWithModelOptions } from "./fakeOptions";
 import { getOfMsgParams } from "./getOfMsgParams";
-import { getUpdateAndExecCmdFn, getUpdateFn } from "./getUpdateFn";
+import { getUpdateAndExecCmdFn, getUpdateFn, initAndExecCmd } from "./getUpdateFn";
 import { renderWithModel } from "./renderWithModel";
 
 export type {
@@ -13,6 +13,7 @@ export type {
 export {
     getOfMsgParams,
     execCmd,
+    initAndExecCmd,
     getUpdateFn,
     getUpdateAndExecCmdFn,
     createUpdateArgsFactory,
