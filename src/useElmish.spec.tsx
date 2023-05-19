@@ -1,6 +1,6 @@
 import { render, RenderResult, waitFor } from "@testing-library/react";
 import React, { useEffect } from "react";
-import { Cmd, createCmd, InitResult, SubscriptionResult, UpdateReturnType, useElmish } from ".";
+import { cmd, Cmd, InitResult, SubscriptionResult, UpdateReturnType, useElmish } from ".";
 
 type Message =
     | { name: "Test" }
@@ -46,7 +46,6 @@ function defaultUpdate (_model: Model, msg: Message): UpdateReturnType<Model, Me
 }
 
 let componentModel: Model | undefined;
-const cmd = createCmd<Message>();
 
 describe("useElmish", () => {
     it("calls the init function", () => {

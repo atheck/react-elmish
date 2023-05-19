@@ -83,7 +83,7 @@ describe("renderWithModel", () => {
         const model: Model = { value: "" };
         const mockDispatch = jest.fn();
 
-        renderWithModel(() => render(<TestComponent />), { model, dispatch: mockDispatch });
+        renderWithModel(() => render(<TestComponent />), model, { dispatch: mockDispatch });
 
         // act
         fireEvent.click(screen.getByText("Click"));
@@ -108,7 +108,7 @@ describe("renderWithModel", () => {
         const model: Model = { value: "" };
         const mockDispatch = jest.fn();
 
-        renderWithModel(() => render(<TestClassComponent />), { model, dispatch: mockDispatch });
+        renderWithModel(() => render(<TestClassComponent />), model, { dispatch: mockDispatch });
 
         // act
         fireEvent.click(screen.getByText("Click"));

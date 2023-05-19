@@ -90,7 +90,7 @@ export interface Props {
 To create the initial model we need an **init** function:
 
 ```ts
-export function init (props: Props): InitResult {
+export function init (props: Props): InitResult<Model, Message> {
     return [
         {
             value: props.initialValue,
@@ -949,7 +949,7 @@ it("returns the correct cmd", async () => {
 
 ### UI Tests
 
-To test UI components with a fake model you can use `renderWithModel` from the Testing namespace. The first parameter is a function to render your component (e.g. with **@testing-library/react**). The second parameter is the fake model or an options object, where you can also pass a fake `dispatch` function.
+To test UI components with a fake model you can use `renderWithModel` from the Testing namespace. The first parameter is a function to render your component (e.g. with **@testing-library/react**). The second parameter is the fake model. The third parameter is an optional options object, where you can also pass a fake `dispatch` function.
 
 ```tsx
 import { renderWithModel } from "react-elmish/dist/Testing";
@@ -971,13 +971,7 @@ it("dispatches the correct message", async () => {
     const model: Model = { value: "" };
     const mockDispatch = jest.fn();
 
-    renderWithModel(
-        () => render(<TestComponent />),
-        {
-            model,
-            dispatch: mockDispatch
-        }
-    );
+    renderWithModel(() => render(<TestComponent />), model, { dispatch: mockDispatch });
 
     // act
     fireEvent.click(screen.getByText("Click"));

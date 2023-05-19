@@ -1,5 +1,5 @@
 import { render, RenderResult } from "@testing-library/react";
-import { Cmd, createCmd, ElmComponent, UpdateReturnType } from ".";
+import { cmd, Cmd, ElmComponent, UpdateReturnType } from ".";
 
 describe("ElmComponent", () => {
     it("calls the init function", () => {
@@ -20,7 +20,6 @@ describe("ElmComponent", () => {
 
     it("calls the initial command", () => {
         // arrange
-        const cmd = createCmd<Message>();
         const message: Message = { name: "Test" };
         const init = jest.fn().mockReturnValue([{}, cmd.ofMsg(message)]);
         const update = jest.fn((): UpdateReturnType<Model, Message> => [{}]);

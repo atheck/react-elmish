@@ -6,13 +6,7 @@ import { Dispatch, Message, Nullable } from "../Types";
  * @template TModel The type of the model.
  * @template TMessage The type of the messages discriminated union.
  */
-interface RenderWithModelOptions<TModel, TMessage extends Message> {
-    /**
-     * The model to use when rendering the component.
-     * @type {TModel}
-     */
-    model: TModel,
-
+interface RenderWithModelOptions<TMessage extends Message> {
     /**
      * A fake dispatch function to use when processing messages.
      * @type {Dispatch<TMessage>}
@@ -20,18 +14,32 @@ interface RenderWithModelOptions<TModel, TMessage extends Message> {
     dispatch?: Dispatch<TMessage>,
 }
 
-let currentFakeOptions: Nullable<RenderWithModelOptions<unknown, Message>>;
-
-function setFakeOptions (options: Nullable<RenderWithModelOptions<unknown, Message>>): void {
-    currentFakeOptions = options;
+/**
+ * Options for the `renderWithModel` function.
+ * @interface RenderWithModelOptions
+ * @template TModel The type of the model.
+ * @template TMessage The type of the messages discriminated union.
+ */
+interface RenderWithModelConfig<TModel, TMessage extends Message> extends RenderWithModelOptions<TMessage> {
+    /**
+     * The model to use when rendering the component.
+     * @type {TModel}
+     */
+    model: TModel,
 }
 
-function getFakeOptionsOnce<TModel, TMessage extends Message> (): Nullable<RenderWithModelOptions<TModel, TMessage>> {
+let currentFakeOptions: Nullable<RenderWithModelConfig<unknown, Message>>;
+
+function setFakeOptions<TModel extends object, TMessage extends Message> (options: Nullable<RenderWithModelConfig<TModel, TMessage>>): void {
+    currentFakeOptions = options as RenderWithModelConfig<unknown, Message>;
+}
+
+function getFakeOptionsOnce<TModel, TMessage extends Message> (): Nullable<RenderWithModelConfig<TModel, TMessage>> {
     const temp = currentFakeOptions;
 
     currentFakeOptions = null;
 
-    return temp as RenderWithModelOptions<TModel, TMessage>;
+    return temp as RenderWithModelConfig<TModel, TMessage>;
 }
 
 export type {
