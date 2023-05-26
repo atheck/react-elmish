@@ -33,6 +33,7 @@ This library brings the elmish pattern to react.
   - [From v1.x to v2.x](#from-v1x-to-v2x)
   - [From v2.x to v3.x](#from-v2x-to-v3x)
   - [From v3.x to v4.x](#from-v3x-to-v4x)
+  - [From v6.x to v7.x](#from-v6x-to-v7x)
 - [VS Code Snippets Extension](#vs-code-snippets-extension)
 
 ## Installation
@@ -857,7 +858,6 @@ To test your **update** handler you can use some helper functions in `react-elmi
 | `getCreateUpdateArgs` | Creates a factory function to create a message, a model, and props in a test. |
 | `createUpdateArgsFactory` | This is an alternative for `getCreateUpdateArgs`. Creates a factory function to create a message, a model, and props in a test. |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
-| `getOfMsgParams` | Extracts the messages out of a command. You should not use this function, because its likely to be deprecated in near future. Use `execCmd` instead. |
 
 ### Testing the init function
 
@@ -1015,6 +1015,12 @@ import { useElmishMap } from "react-elmish/dist/legacy/useElmishMap";
 ### From v3.x to v4.x
 
 Because the legacy `useElmish` and `useElmishMap` have been removed, you have to convert all usages of `useElmish` to use the parameter object.
+
+### From v6.x to v7.x
+
+The function `createCmd` has been removed. Instead, import the `cmd` object.
+
+The test function `getOfMsgParams` has been removed. Use `execCmd` instead, or use the `getUpdateAndExecCmdFn` function and use the returned `update` function. To test the `init` function, use `initAndExecCmd`.
 
 ## VS Code Snippets Extension
 

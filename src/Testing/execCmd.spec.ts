@@ -1,13 +1,11 @@
+import { cmd } from "../cmd";
 import { Nullable } from "../Types";
 import { execCmd } from ".";
-import { createCmd } from "../createCmd";
 
 type Message =
     | { name: "Msg1" }
     | { name: "Msg2" }
     | { name: "Error" };
-
-const cmd = createCmd<Message>();
 
 describe("execCmd", () => {
     it("returns an empty array without a cmd", async () => {
@@ -134,7 +132,7 @@ describe("execCmd", () => {
             throw new Error("fail");
         };
 
-        const commands = cmd.ofPromise.perform(asyncFunc, () => ({ name: "Msg1" }));
+        const commands = cmd.ofPromise.perform(asyncFunc, (): Message => ({ name: "Msg1" }));
 
         // act
         const fail = async (): Promise<Nullable<Message> []> => await execCmd(commands);
@@ -194,7 +192,7 @@ describe("execCmd", () => {
             throw new Error("fail");
         };
 
-        const commands = cmd.ofFunc.perform(func, () => ({ name: "Msg1" }));
+        const commands = cmd.ofFunc.perform(func, (): Message => ({ name: "Msg1" }));
 
         // act
         const fail = async (): Promise<Nullable<Message> []> => await execCmd(commands);

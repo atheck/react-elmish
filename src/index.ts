@@ -1,5 +1,4 @@
 import { cmd } from "./cmd";
-import { createCmd } from "./createCmd";
 import { ElmComponent } from "./ElmComponent";
 import { errorHandler, ErrorMessage, errorMsg, handleError } from "./ErrorHandling";
 import { init, Logger } from "./Init";
@@ -21,7 +20,6 @@ export type {
 
 export {
     init,
-    createCmd,
     cmd,
     ElmComponent,
     errorMsg,
