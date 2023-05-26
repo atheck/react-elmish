@@ -851,17 +851,19 @@ To test your **update** handler you can use some helper functions in `react-elmi
 
 | Function | Description |
 | --- | --- |
-| `execCmd` | Executes the provided command and returns an array of all messages. |
 | `initAndExecCmd` | Calls the `init` function with the provided props and executes the returned commands. |
 | `getUpdateFn` | Returns an `update` function for your update map object. |
 | `getUpdateAndExecCmdFn` | Returns an `update` function for your update map object, which immediately executes the command. |
-| `createUpdateArgsFactory` | Creates a factory function to create a message, a model, and props in a test. |
+| `getCreateUpdateArgs` | Creates a factory function to create a message, a model, and props in a test. |
+| `createUpdateArgsFactory` | This is an alternative for `getCreateUpdateArgs`. Creates a factory function to create a message, a model, and props in a test. |
+| `execCmd` | Executes the provided command and returns an array of all messages. |
 | `getOfMsgParams` | Extracts the messages out of a command. You should not use this function, because its likely to be deprecated in near future. Use `execCmd` instead. |
 
 ### Testing the init function
 
 ```ts
 import { initAndExecCmd } from "react-elmish/dist/Testing";
+import { init, Msg } from "./MyComponent";
 
 it("initializes the model correctly", async () => {
     // arrange
@@ -882,6 +884,7 @@ it("initializes the model correctly", async () => {
 
 ```ts
 import { getUpdateFn } from "react-elmish/dist/Testing";
+import { updateMap } from "./MyComponent";
 
 const updateFn = getUpdateFn(updateMap);
 
@@ -892,11 +895,12 @@ const [model, cmd] = updateFn(msg, model, props);
 A simple test:
 
 ```ts
-import { createUpdateArgsFactory, execCmd } from "react-elmish/dist/Testing";
+import { getCreateUpdateArgs, createUpdateArgsFactory, execCmd } from "react-elmish/dist/Testing";
+import { init, Msg } from "./MyComponent";
 
-const createUpdateArgs = createUpdateArgsFactory(() => ({ /* initial model */ }), () => ({ /* initial props */ }));
+const createUpdateArgs = getCreateUpdateArgs(init, () => ({ /* initial props */ }));
+// Or: const createUpdateArgs = createUpdateArgsFactory(() => ({ /* initial model */ }), () => ({ /* initial props */ }));
 
-...
 it("returns the correct model and cmd", async () => {
     // arrange
     const args = createUpdateArgs(Msg.test(), { /* optionally override model here */ }, { /* optionally override props here */ });
@@ -913,7 +917,6 @@ it("returns the correct model and cmd", async () => {
         Msg.expectedMsg2(),
     ]);
 });
-...
 ```
 
 With `execCmd` you can execute all commands in a test scenario. All functions are called and awaited. The function returns all new messages (success or error messages).
