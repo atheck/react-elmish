@@ -46,6 +46,7 @@
     "elmish",
     "state management"
   ],
+  "files": ["dist/**/*"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts"
 }
