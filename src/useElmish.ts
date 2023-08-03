@@ -137,9 +137,7 @@ function useElmish<TProps, TModel, TMessage extends Message> ({ name, props, ini
 
             execCmd(dispatch, subCmd);
 
-            if (destructor) {
-                return destructor;
-            }
+            return destructor;
         }
     }, []);
 
@@ -156,9 +154,8 @@ function callUpdate<TProps, TModel, TMessage extends Message> (update: UpdateFun
 
 function callUpdateMap<TProps, TModel, TMessage extends Message> (updateMap: UpdateMap<TProps, TModel, TMessage>, msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
     const msgName: TMessage["name"] = msg.name;
-    const updateFn = updateMap[msgName] as (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage>;
 
-    return updateFn(msg, model, props);
+    return updateMap[msgName](msg, model, props);
 }
 
 export type {
