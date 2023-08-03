@@ -43,7 +43,7 @@ type UpdateFunction<TProps, TModel, TMessage> = (model: TModel, msg: TMessage, p
  * Use this type to create your update logic for the useElmish hook.
  */
 type UpdateMap<TProps, TModel, TMessage extends Message> = {
-    [M in TMessage as M["name"]]: (msg: M, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage>;
+    [M in TMessage["name"]]: (msg: TMessage & { name: M }, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage>;
 };
 
 export type {
