@@ -1,4 +1,5 @@
 import { render, RenderResult } from "@testing-library/react";
+import React, { JSX } from "react";
 import { cmd, Cmd, ElmComponent, UpdateReturnType } from ".";
 
 describe("ElmComponent", () => {
@@ -53,7 +54,7 @@ class TestComponent extends ElmComponent<Model, Message, Props> {
 
     public update = this.props.update;
 
-    // eslint-disable-next-line class-methods-use-this
+    // eslint-disable-next-line @typescript-eslint/class-methods-use-this
     public override render (): JSX.Element {
         return <div />;
     }
