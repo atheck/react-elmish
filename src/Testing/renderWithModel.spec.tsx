@@ -1,6 +1,6 @@
 /* eslint-disable testing-library/prefer-user-event */
 import { fireEvent, render, screen } from "@testing-library/react";
-import { ReactNode } from "react";
+import { JSX, ReactNode } from "react";
 import { ElmComponent, useElmish } from "..";
 import { InitResult, UpdateReturnType } from "../Types";
 import { renderWithModel } from ".";
