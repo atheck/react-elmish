@@ -47,5 +47,6 @@
     "state management"
   ],
   "main": "dist/index.js",
+  "files": ["dist/**/*"],
   "types": "dist/index.d.ts"
 }

@@ -1,5 +1,0 @@
-src/
-tests/
-.babelrc
-jest.config.js
-tsconfig.json
