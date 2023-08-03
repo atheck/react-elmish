@@ -9,7 +9,7 @@ import { execCmd } from "./execCmd";
  * @example
  * const updateFn = getUpdateFn(update);
  *
- * // in your test:
+ * // in your tests:
  * const [model, cmd] = updateFn(...args);
  */
 function getUpdateFn<TProps, TModel, TMessage extends Message> (updateMap: UpdateMap<TProps, TModel, TMessage>): (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage> {
@@ -23,7 +23,7 @@ function getUpdateFn<TProps, TModel, TMessage extends Message> (updateMap: Updat
  * @param {UpdateMap<TProps, TModel, TMessage>} updateMap The UpdateMap.
  * @returns {(msg: TMessage, model: TModel, props: TProps) => Promise<[Partial<TModel>, Nullable<TMessage> []]>} The created update function which can be used in tests.
  * @example
- * const updateAndExecCmd = getUpdateFnWithExecCmd(update);
+ * const updateAndExecCmd = getUpdateAndExecCmdFn(update);
  *
  * // in your test:
  * const [model, messages] = await updateAndExecCmd(...args);

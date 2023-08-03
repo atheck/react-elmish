@@ -13,6 +13,13 @@ interface ErrorMessage {
 /**
  * This object contains the function to create an error message.
  * Spread this into your Msg object.
+ * @example
+ * ```ts
+ * const Msg = {
+ *     // ...
+ *     ...errorMsg,
+ * };
+ * ```
  */
 const errorMsg = {
     error: (error: Error): ErrorMessage => ({ name: "error", error }),
@@ -20,8 +27,15 @@ const errorMsg = {
 
 /**
  * Creates an object to handle error messages in an update map.
- * Spread this into your `UpdateMap`.
+ * Spread the object returned by this function into your `UpdateMap`.
  * @returns An object containing an error handler function.
+ * @example
+ * ```ts
+ * const update: UpdateMap<Props, Model, Message> = {
+ *     // ...
+ *     ...errorHandler(),
+ * };
+ * ```
  */
 function errorHandler<TModel, TMessage> (): { error: (msg: ErrorMessage) => UpdateReturnType<TModel, TMessage> } {
     return {
