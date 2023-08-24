@@ -12,25 +12,30 @@ import { UpdateArgsFactory } from "./createUpdateArgsFactory";
  * // in tests
  * const [msg, model, props] = createUpdateArgs(Msg.myMessage(), { ... }, , { ... });
  */
-function getCreateUpdateArgs<TProps, TModel, TMessage extends Message> (init: InitFunction<TProps, TModel, TMessage>, initProps: () => TProps): UpdateArgsFactory<TProps, TModel, TMessage> {
-    return function (msg: TMessage, modelTemplate?: Partial<TModel>, propsTemplate?: Partial<TProps>): [TMessage, TModel, TProps] {
-        const props = {
-            ...initProps(),
-            ...propsTemplate,
-        };
-        const [model] = init(props);
+function getCreateUpdateArgs<TProps, TModel, TMessage extends Message>(
+	init: InitFunction<TProps, TModel, TMessage>,
+	initProps: () => TProps,
+): UpdateArgsFactory<TProps, TModel, TMessage> {
+	return function (
+		msg: TMessage,
+		modelTemplate?: Partial<TModel>,
+		propsTemplate?: Partial<TProps>,
+	): [TMessage, TModel, TProps] {
+		const props = {
+			...initProps(),
+			...propsTemplate,
+		};
+		const [model] = init(props);
 
-        return [
-            msg,
-            {
-                ...model,
-                ...modelTemplate,
-            },
-            props,
-        ];
-    };
+		return [
+			msg,
+			{
+				...model,
+				...modelTemplate,
+			},
+			props,
+		];
+	};
 }
 
-export {
-    getCreateUpdateArgs,
-};
+export { getCreateUpdateArgs };

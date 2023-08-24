@@ -1,65 +1,66 @@
-import { render, RenderResult } from "@testing-library/react";
+import { RenderResult, render } from "@testing-library/react";
 import React, { JSX } from "react";
-import { cmd, Cmd, ElmComponent, UpdateReturnType } from ".";
+import { Cmd, ElmComponent, UpdateReturnType, cmd } from ".";
 
 describe("ElmComponent", () => {
-    it("calls the init function", () => {
-        // arrange
-        const init = jest.fn().mockReturnValue([{}, []]);
-        const update = jest.fn();
-        const props: Props = {
-            init,
-            update,
-        };
+	it("calls the init function", () => {
+		// arrange
+		const init = jest.fn().mockReturnValue([{}, []]);
+		const update = jest.fn();
+		const props: Props = {
+			init,
+			update,
+		};
 
-        // act
-        renderComponent(props);
+		// act
+		renderComponent(props);
 
-        // assert
-        expect(init).toHaveBeenCalledWith(props);
-    });
+		// assert
+		expect(init).toHaveBeenCalledWith(props);
+	});
 
-    it("calls the initial command", () => {
-        // arrange
-        const message: Message = { name: "Test" };
-        const init = jest.fn().mockReturnValue([{}, cmd.ofMsg(message)]);
-        const update = jest.fn((): UpdateReturnType<Model, Message> => [{}]);
-        const props: Props = {
-            init,
-            update,
-        };
+	it("calls the initial command", () => {
+		// arrange
+		const message: Message = { name: "Test" };
+		const init = jest.fn().mockReturnValue([{}, cmd.ofMsg(message)]);
+		const update = jest.fn((): UpdateReturnType<Model, Message> => [{}]);
+		const props: Props = {
+			init,
+			update,
+		};
 
-        // act
-        renderComponent(props);
+		// act
+		renderComponent(props);
 
-        // assert
-        expect(update).toHaveBeenCalledWith({}, message, props);
-    });
+		// assert
+		expect(update).toHaveBeenCalledWith({}, message, props);
+	});
 });
 
-type Message =
-    | { name: "Test" };
+interface Message {
+	name: "Test";
+}
 
 interface Model {}
 
 interface Props {
-    init: () => [Model, Cmd<Message>],
-    update: (model: Model, msg: Message, props: Props) => UpdateReturnType<Model, Message>,
+	init: () => [Model, Cmd<Message>];
+	update: (model: Model, msg: Message, props: Props) => UpdateReturnType<Model, Message>;
 }
 
 class TestComponent extends ElmComponent<Model, Message, Props> {
-    public constructor (props: Props) {
-        super(props, props.init, "Test");
-    }
+	public constructor(props: Props) {
+		super(props, props.init, "Test");
+	}
 
-    public update = this.props.update;
+	public update = this.props.update;
 
-    // eslint-disable-next-line @typescript-eslint/class-methods-use-this
-    public override render (): JSX.Element {
-        return <div />;
-    }
+	// eslint-disable-next-line @typescript-eslint/class-methods-use-this
+	public override render(): JSX.Element {
+		return <div />;
+	}
 }
 
-function renderComponent (props: Props): RenderResult {
-    return render(<TestComponent {...props} />);
+function renderComponent(props: Props): RenderResult {
+	return render(<TestComponent {...props} />);
 }

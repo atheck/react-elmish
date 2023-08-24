@@ -6,8 +6,8 @@ import { UpdateReturnType } from "./Types";
  * Add this to your Message type.
  */
 interface ErrorMessage {
-    name: "error",
-    error: Error,
+	name: "error";
+	error: Error;
 }
 
 /**
@@ -22,7 +22,7 @@ interface ErrorMessage {
  * ```
  */
 const errorMsg = {
-    error: (error: Error): ErrorMessage => ({ name: "error", error }),
+	error: (error: Error): ErrorMessage => ({ name: "error", error }),
 };
 
 /**
@@ -37,12 +37,14 @@ const errorMsg = {
  * };
  * ```
  */
-function errorHandler<TModel, TMessage> (): { error: (msg: ErrorMessage) => UpdateReturnType<TModel, TMessage> } {
-    return {
-        error ({ error }) {
-            return handleError(error);
-        },
-    };
+function errorHandler<TModel, TMessage>(): {
+	error: (msg: ErrorMessage) => UpdateReturnType<TModel, TMessage>;
+} {
+	return {
+		error({ error }) {
+			return handleError(error);
+		},
+	};
 }
 
 /**
@@ -51,19 +53,17 @@ function errorHandler<TModel, TMessage> (): { error: (msg: ErrorMessage) => Upda
  * Calls the error handling middleware if specified.
  * @param {Error} error The error.
  */
-function handleError<TModel, TMessage> (error: Error): UpdateReturnType<TModel, TMessage> {
-    if (Services.errorMiddleware) {
-        Services.errorMiddleware(error);
-    }
-    Services.logger?.error(error);
+function handleError<TModel, TMessage>(
+	error: Error,
+): UpdateReturnType<TModel, TMessage> {
+	if (Services.errorMiddleware) {
+		Services.errorMiddleware(error);
+	}
+	Services.logger?.error(error);
 
-    return [{}];
+	return [{}];
 }
 
 export type { ErrorMessage };
 
-export {
-    errorMsg,
-    errorHandler,
-    handleError,
-};
+export { errorHandler, errorMsg, handleError };

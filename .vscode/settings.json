@@ -1,3 +1,10 @@
 {
-    "typescript.tsdk": "node_modules/typescript/lib"
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "editor.codeActionsOnSave": {
+		"source.organizeImports": true
+	},
+	"[javascript][javascriptreact][typescript][typescriptreact]": {
+		"editor.defaultFormatter": "rome.rome"
+	},
+	"editor.formatOnSave": true,
 }

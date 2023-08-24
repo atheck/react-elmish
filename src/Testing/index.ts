@@ -1,4 +1,7 @@
-import { createUpdateArgsFactory, UpdateArgsFactory } from "./createUpdateArgsFactory";
+import {
+	UpdateArgsFactory,
+	createUpdateArgsFactory,
+} from "./createUpdateArgsFactory";
 import { execCmd } from "./execCmd";
 import { RenderWithModelOptions } from "./fakeOptions";
 import { getCreateUpdateArgs } from "./getCreateUpdateArgs";
@@ -6,17 +9,14 @@ import { getUpdateAndExecCmdFn, getUpdateFn } from "./getUpdateFn";
 import { initAndExecCmd } from "./initAndExecCmd";
 import { renderWithModel } from "./renderWithModel";
 
-export type {
-    UpdateArgsFactory,
-    RenderWithModelOptions,
-};
+export type { RenderWithModelOptions, UpdateArgsFactory };
 
 export {
-    execCmd,
-    initAndExecCmd,
-    getUpdateFn,
-    getUpdateAndExecCmdFn,
-    createUpdateArgsFactory,
-    getCreateUpdateArgs,
-    renderWithModel,
+	createUpdateArgsFactory,
+	execCmd,
+	getCreateUpdateArgs,
+	getUpdateAndExecCmdFn,
+	getUpdateFn,
+	initAndExecCmd,
+	renderWithModel,
 };

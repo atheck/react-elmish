@@ -7,11 +7,11 @@ import { Dispatch, Message, Nullable } from "../Types";
  * @template TMessage The type of the messages discriminated union.
  */
 interface RenderWithModelOptions<TMessage extends Message> {
-    /**
-     * A fake dispatch function to use when processing messages.
-     * @type {Dispatch<TMessage>}
-     */
-    dispatch?: Dispatch<TMessage>,
+	/**
+	 * A fake dispatch function to use when processing messages.
+	 * @type {Dispatch<TMessage>}
+	 */
+	dispatch?: Dispatch<TMessage>;
 }
 
 /**
@@ -20,33 +20,33 @@ interface RenderWithModelOptions<TMessage extends Message> {
  * @template TModel The type of the model.
  * @template TMessage The type of the messages discriminated union.
  */
-interface RenderWithModelConfig<TModel, TMessage extends Message> extends RenderWithModelOptions<TMessage> {
-    /**
-     * The model to use when rendering the component.
-     * @type {TModel}
-     */
-    model: TModel,
+interface RenderWithModelConfig<TModel, TMessage extends Message>
+	extends RenderWithModelOptions<TMessage> {
+	/**
+	 * The model to use when rendering the component.
+	 * @type {TModel}
+	 */
+	model: TModel;
 }
 
 let currentFakeOptions: Nullable<RenderWithModelConfig<unknown, Message>>;
 
-function setFakeOptions<TModel extends object, TMessage extends Message> (options: Nullable<RenderWithModelConfig<TModel, TMessage>>): void {
-    currentFakeOptions = options as RenderWithModelConfig<unknown, Message>;
+function setFakeOptions<TModel extends object, TMessage extends Message>(
+	options: Nullable<RenderWithModelConfig<TModel, TMessage>>,
+): void {
+	currentFakeOptions = options as RenderWithModelConfig<unknown, Message>;
 }
 
-function getFakeOptionsOnce<TModel, TMessage extends Message> (): Nullable<RenderWithModelConfig<TModel, TMessage>> {
-    const temp = currentFakeOptions;
+function getFakeOptionsOnce<TModel, TMessage extends Message>(): Nullable<
+	RenderWithModelConfig<TModel, TMessage>
+> {
+	const temp = currentFakeOptions;
 
-    currentFakeOptions = null;
+	currentFakeOptions = null;
 
-    return temp as RenderWithModelConfig<TModel, TMessage>;
+	return temp as RenderWithModelConfig<TModel, TMessage>;
 }
 
-export type {
-    RenderWithModelOptions,
-};
+export type { RenderWithModelOptions };
 
-export {
-    setFakeOptions,
-    getFakeOptionsOnce,
-};
+export { getFakeOptionsOnce, setFakeOptions };
