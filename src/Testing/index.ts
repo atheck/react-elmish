@@ -1,6 +1,6 @@
+import { RenderWithModelOptions } from "../fakeOptions";
 import { UpdateArgsFactory, createUpdateArgsFactory } from "./createUpdateArgsFactory";
 import { execCmd } from "./execCmd";
-import { RenderWithModelOptions } from "./fakeOptions";
 import { getCreateUpdateArgs } from "./getCreateUpdateArgs";
 import { getUpdateAndExecCmdFn, getUpdateFn } from "./getUpdateFn";
 import { initAndExecCmd } from "./initAndExecCmd";

@@ -1,5 +1,5 @@
 import { Message } from "../Types";
-import { RenderWithModelOptions, setFakeOptions } from "./fakeOptions";
+import { RenderWithModelOptions, setFakeOptions } from "../fakeOptions";
 
 /**
  * Renders a component with a provided model.

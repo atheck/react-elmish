@@ -2,8 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
-import { getFakeOptionsOnce } from "./Testing/fakeOptions";
 import { Cmd, Dispatch, InitFunction, Message, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
+import { getFakeOptionsOnce } from "./fakeOptions";
 
 /**
  * The return type of the `subscription` function.

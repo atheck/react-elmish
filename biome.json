@@ -170,7 +170,7 @@
         "useGetterReturn": "error",
         "useGroupedTypeImport": "error",
         "useHookAtTopLevel": "error",
-        "useImportRestrictions": "off",
+        "useImportRestrictions": "error",
         "useIsArray": "error",
         "useLiteralEnumMembers": "error",
         "useNamingConvention": "off"
