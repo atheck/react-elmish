@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/rome/configuration_schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "linter": {
     "enabled": true,
     "rules": {
@@ -17,6 +17,7 @@
         "useAnchorContent": "error",
         "useAriaPropsForRole": "error",
         "useButtonType": "error",
+        "useHeadingContent": "error",
         "useHtmlLang": "error",
         "useIframeTitle": "error",
         "useKeyWithClickEvents": "error",
@@ -28,7 +29,7 @@
       },
       "complexity": {
         "noExtraBooleanCast": "error",
-        "noExtraSemicolon": "error",
+        "noForEach": "error",
         "noMultipleSpacesInRegularExpressionLiterals": "error",
         "noUselessCatch": "error",
         "noUselessConstructor": "error",
@@ -36,9 +37,12 @@
         "noUselessLabel": "error",
         "noUselessRename": "error",
         "noUselessSwitchCase": "error",
+        "noUselessTypeConstraint": "error",
         "noWith": "error",
         "useFlatMap": "error",
+        "useLiteralKeys": "error",
         "useOptionalChain": "error",
+        "useSimpleNumberKeys": "error",
         "useSimplifiedLogicExpression": "off"
       },
       "correctness": {
@@ -65,6 +69,7 @@
         "noUnusedVariables": "error",
         "noVoidElementsWithChildren": "error",
         "noVoidTypeReturn": "error",
+        "useIsNan": "error",
         "useValidForDirection": "error",
         "useYield": "error"
       },
@@ -112,11 +117,13 @@
         "noCommentText": "error",
         "noCompareNegZero": "error",
         "noConfusingLabels": "error",
+        "noConsoleLog": "error",
         "noConstEnum": "error",
         "noDebugger": "error",
         "noDoubleEquals": "error",
         "noDuplicateCase": "error",
         "noDuplicateClassMembers": "error",
+        "noDuplicateJsxProps": "error",
         "noDuplicateObjectKeys": "error",
         "noDuplicateParameters": "error",
         "noEmptyInterface": "off",
@@ -141,23 +148,32 @@
         "noAriaUnsupportedElements": "error",
         "noBannedTypes": "error",
         "noConfusingArrow": "off",
-        "noConsoleLog": "error",
         "noConstantCondition": "error",
-        "noDuplicateJsxProps": "off",
-        "noForEach": "error",
+        "noControlCharactersInRegex": "error",
+        "noExcessiveComplexity": "warn",
+        "noFallthroughSwitchClause": "error",
+        "noGlobalIsFinite": "error",
+        "noGlobalIsNan": "error",
         "noNoninteractiveTabindex": "error",
+        "noNonoctalDecimalEscape": "error",
         "noRedundantRoles": "error",
         "noSelfAssign": "error",
+        "noStaticOnlyClass": "error",
+        "noUnsafeDeclarationMerging": "error",
+        "noUselessEmptyExport": "error",
+        "noUselessThisAlias": "error",
+        "noVoid": "error",
         "useAriaPropTypes": "error",
-        "useCamelCase": "off",
+        "useArrowFunction": "error",
+        "useCollapsedElseIf": "error",
         "useExhaustiveDependencies": "error",
+        "useGetterReturn": "error",
         "useGroupedTypeImport": "error",
-        "useHeadingContent": "error",
         "useHookAtTopLevel": "error",
-        "useIsNan": "error",
+        "useImportRestrictions": "off",
+        "useIsArray": "error",
         "useLiteralEnumMembers": "error",
-        "useLiteralKeys": "error",
-        "useSimpleNumberKeys": "error"
+        "useNamingConvention": "off"
       }
     }
   },
@@ -166,5 +182,10 @@
   },
   "formatter": {
     "lineWidth": 130
+  },
+  "json": {
+    "parser": {
+      "allowComments": true
+    }
   }
 }
