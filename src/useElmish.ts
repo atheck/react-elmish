@@ -61,7 +61,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	update,
 	subscription,
 }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
-	let reentered = false;
+	let running = false;
 	const buffer: TMessage[] = [];
 	let currentModel: Partial<TModel> = {};
 
@@ -87,52 +87,33 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	const dispatch = useCallback(
 		fakeOptions?.dispatch ??
 			((msg: TMessage): void => {
-				if (!initializedModel) {
+				if (running) {
+					buffer.push(msg);
+
 					return;
 				}
 
-				if (reentered) {
-					buffer.push(msg);
-				} else {
-					reentered = true;
+				running = true;
 
-					let nextMsg: TMessage | undefined = msg;
-					let modified = false;
+				let nextMsg: TMessage | undefined = msg;
+				let modified = false;
 
-					while (nextMsg) {
-						logMessage(name, nextMsg);
+				do {
+					modified = handleMessage(nextMsg);
 
-						const [newModel, ...commands] = callUpdate(
-							update,
-							nextMsg,
-							{ ...initializedModel, ...currentModel },
-							propsRef.current,
-						);
+					nextMsg = buffer.shift();
+				} while (nextMsg);
 
-						if (modelHasChanged(currentModel, newModel)) {
-							currentModel = { ...currentModel, ...newModel };
+				running = false;
 
-							modified = true;
-						}
+				if (isMountedRef.current && modified) {
+					setModel((prevModel) => {
+						const updatedModel = { ...(prevModel as TModel), ...currentModel };
 
-						execCmd(dispatch, ...commands);
+						Services.logger?.debug("Update model for", name, updatedModel);
 
-						nextMsg = buffer.shift();
-					}
-					reentered = false;
-
-					if (isMountedRef.current && modified) {
-						setModel((prevModel) => {
-							const updatedModel = {
-								...(prevModel as TModel),
-								...currentModel,
-							};
-
-							Services.logger?.debug("Update model for", name, updatedModel);
-
-							return updatedModel;
-						});
-					}
+						return updatedModel;
+					});
 				}
 			}),
 		[],
@@ -161,6 +142,28 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	}, []);
 
 	return [initializedModel, dispatch];
+
+	function handleMessage(nextMsg: TMessage): boolean {
+		if (!initializedModel) {
+			return false;
+		}
+
+		let modified = false;
+
+		logMessage(name, nextMsg);
+
+		const [newModel, ...commands] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current);
+
+		if (modelHasChanged(currentModel, newModel)) {
+			currentModel = { ...currentModel, ...newModel };
+
+			modified = true;
+		}
+
+		execCmd(dispatch, ...commands);
+
+		return modified;
+	}
 }
 
 function callUpdate<TProps, TModel, TMessage extends Message>(

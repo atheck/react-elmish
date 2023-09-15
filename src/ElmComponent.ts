@@ -18,7 +18,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	private initCommands: Nullable<(Cmd<TMessage> | undefined)[]> | undefined;
 	private readonly componentName: string;
 	private readonly buffer: TMessage[] = [];
-	private reentered = false;
+	private running = false;
 	private mounted = false;
 	private currentModel: TModel;
 
@@ -86,34 +86,37 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	 * @memberof ElmComponent
 	 */
 	public readonly dispatch = (msg: TMessage): void => {
-		if (this.reentered) {
+		if (this.running) {
 			this.buffer.push(msg);
-		} else {
-			this.reentered = true;
 
-			let nextMsg: TMessage | undefined = msg;
-			let modified = false;
+			return;
+		}
 
-			while (nextMsg) {
-				logMessage(this.componentName, nextMsg);
+		this.running = true;
 
-				const [model, ...commands] = this.update(this.currentModel, nextMsg, this.props);
+		let nextMsg: TMessage | undefined = msg;
+		let modified = false;
 
-				if (modelHasChanged(this.currentModel, model)) {
-					this.currentModel = { ...this.currentModel, ...model };
-					modified = true;
-				}
+		do {
+			logMessage(this.componentName, nextMsg);
 
-				execCmd(this.dispatch, ...commands);
+			const [model, ...commands] = this.update(this.currentModel, nextMsg, this.props);
 
-				nextMsg = this.buffer.shift();
+			if (modelHasChanged(this.currentModel, model)) {
+				this.currentModel = { ...this.currentModel, ...model };
+				modified = true;
 			}
-			this.reentered = false;
 
-			if (this.mounted && modified) {
-				Services.logger?.debug("Update model for", this.componentName, this.currentModel);
-				this.forceUpdate();
-			}
+			execCmd(this.dispatch, ...commands);
+
+			nextMsg = this.buffer.shift();
+		} while (nextMsg);
+
+		this.running = false;
+
+		if (this.mounted && modified) {
+			Services.logger?.debug("Update model for", this.componentName, this.currentModel);
+			this.forceUpdate();
 		}
 	};
 
