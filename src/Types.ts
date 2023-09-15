@@ -29,17 +29,12 @@ interface MsgSource<T extends string> {
  */
 type InitResult<TModel, TMessage> = [TModel, ...(Cmd<TMessage> | undefined)[]];
 
-type InitFunction<TProps, TModel, TMessage> = (
-	props: TProps,
-) => InitResult<TModel, TMessage>;
+type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TModel, TMessage>;
 
 /**
  * Type for the return value of the `update` function.
  */
-type UpdateReturnType<TModel, TMessage> = [
-	Partial<TModel>,
-	...(Cmd<TMessage> | undefined)[],
-];
+type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]];
 
 type UpdateFunction<TProps, TModel, TMessage> = (
 	model: TModel,
@@ -52,11 +47,7 @@ type UpdateFunction<TProps, TModel, TMessage> = (
  * Use this type to create your update logic for the useElmish hook.
  */
 type UpdateMap<TProps, TModel, TMessage extends Message> = {
-	[M in TMessage["name"]]: (
-		msg: TMessage & { name: M },
-		model: TModel,
-		props: TProps,
-	) => UpdateReturnType<TModel, TMessage>;
+	[M in TMessage["name"]]: (msg: TMessage & { name: M }, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage>;
 };
 
 export type {

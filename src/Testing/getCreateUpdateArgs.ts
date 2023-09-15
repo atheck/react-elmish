@@ -16,7 +16,7 @@ function getCreateUpdateArgs<TProps, TModel, TMessage extends Message>(
 	init: InitFunction<TProps, TModel, TMessage>,
 	initProps: () => TProps,
 ): UpdateArgsFactory<TProps, TModel, TMessage> {
-	return function (
+	return function createUpdateArgs(
 		msg: TMessage,
 		modelTemplate?: Partial<TModel>,
 		propsTemplate?: Partial<TProps>,

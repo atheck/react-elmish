@@ -1,9 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useCallback, useEffect, useRef, useState } from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
 import { getFakeOptionsOnce } from "./Testing/fakeOptions";
 import { Cmd, Dispatch, InitFunction, Message, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * The return type of the `subscription` function.
@@ -149,7 +149,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		execCmd(dispatch, ...initCommands);
 	}
 
-	// rome-ignore lint/nursery/useExhaustiveDependencies: We want to run this effect only once
+	// biome-ignore lint/nursery/useExhaustiveDependencies: We want to run this effect only once
 	useEffect(() => {
 		if (subscription) {
 			const [subCmd, destructor] = subscription(initializedModel as TModel, props);

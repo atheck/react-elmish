@@ -7,11 +7,7 @@ import { execCmd } from "./execCmd";
  * @param {TArgs} [args] The parameters of the init function.
  * @returns {Promise<[TModel, Nullable<TMessage> []]>} The initialized model and the returned messages.
  */
-async function initAndExecCmd<
-	TArgs extends unknown[],
-	TModel,
-	TMessage extends Message,
->(
+async function initAndExecCmd<TArgs extends unknown[], TModel, TMessage extends Message>(
 	init: (...args: TArgs) => InitResult<TModel, TMessage>,
 	...args: TArgs
 ): Promise<[TModel, Nullable<TMessage>[]]> {

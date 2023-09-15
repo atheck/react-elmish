@@ -1,7 +1,4 @@
-import {
-	UpdateArgsFactory,
-	createUpdateArgsFactory,
-} from "./createUpdateArgsFactory";
+import { UpdateArgsFactory, createUpdateArgsFactory } from "./createUpdateArgsFactory";
 import { execCmd } from "./execCmd";
 import { RenderWithModelOptions } from "./fakeOptions";
 import { getCreateUpdateArgs } from "./getCreateUpdateArgs";

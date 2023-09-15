@@ -21,7 +21,7 @@ function createUpdateArgsFactory<TProps, TModel, TMessage extends Message>(
 	initModel: () => TModel,
 	initProps: () => TProps,
 ): UpdateArgsFactory<TProps, TModel, TMessage> {
-	return function (
+	return function createUpdateArgs(
 		msg: TMessage,
 		modelTemplate?: Partial<TModel>,
 		propsTemplate?: Partial<TProps>,

@@ -13,9 +13,7 @@ const cmd = {
 	 * Aggregates multiple commands.
 	 * @param {Cmd<TMessage> []} commands Array of commands.
 	 */
-	batch<TMessage extends Message>(
-		...commands: (Cmd<TMessage> | undefined | null)[]
-	): Cmd<TMessage> {
+	batch<TMessage extends Message>(...commands: (Cmd<TMessage> | undefined | null)[]): Cmd<TMessage> {
 		return (commands.filter(Boolean) as Cmd<TMessage>[]).flat();
 	},
 
@@ -34,20 +32,13 @@ const cmd = {
 	 * @param ofError Creates the message to dispatch when the function throws an error or, for an async function, the promise is rejected.
 	 * @param args The parameters of the task.
 	 */
-	ofEither<
-		TSuccessMessage extends Message,
-		TErrorMessage extends Message,
-		TArgs extends unknown[],
-		TReturn,
-	>(
+	ofEither<TSuccessMessage extends Message, TErrorMessage extends Message, TArgs extends unknown[], TReturn>(
 		task: (...args: TArgs) => TReturn,
 		ofSuccess: (result: Awaited<TReturn>) => TSuccessMessage,
 		ofError: (error: Error) => TErrorMessage,
 		...args: TArgs
 	): Cmd<TSuccessMessage | TErrorMessage> {
-		const bind = (
-			dispatch: Dispatch<TSuccessMessage | TErrorMessage>,
-		): void => {
+		const bind = (dispatch: Dispatch<TSuccessMessage | TErrorMessage>): void => {
 			try {
 				const taskResult = task(...args);
 
@@ -73,10 +64,7 @@ const cmd = {
 		ofSuccess: (result: Awaited<TReturn>) => TSuccessMessage,
 		...args: TArgs
 	): Cmd<TSuccessMessage> {
-		const bind = (
-			dispatch: Dispatch<TSuccessMessage>,
-			fallback: FallbackHandler = defaultFallbackHandler,
-		): void => {
+		const bind = (dispatch: Dispatch<TSuccessMessage>, fallback: FallbackHandler = defaultFallbackHandler): void => {
 			try {
 				const taskResult = task(...args);
 
@@ -102,10 +90,7 @@ const cmd = {
 		ofError: (error: Error) => TErrorMessage,
 		...args: TArgs
 	): Cmd<TErrorMessage> {
-		const bind = (
-			dispatch: Dispatch<TErrorMessage>,
-			fallback?: FallbackHandler,
-		): void => {
+		const bind = (dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): void => {
 			try {
 				const taskResult = task(...args);
 
@@ -131,20 +116,13 @@ const cmd = {
 		 * @param ofError Creates the message to dispatch when an error occurred.
 		 * @param args The parameters of the task.
 		 */
-		either<
-			TSuccessMessage extends Message,
-			TErrorMessage extends Message,
-			TArgs extends unknown[],
-			TReturn,
-		>(
+		either<TSuccessMessage extends Message, TErrorMessage extends Message, TArgs extends unknown[], TReturn>(
 			task: (...args: TArgs) => TReturn,
 			ofSuccess: (result: TReturn) => TSuccessMessage,
 			ofError: (error: Error) => TErrorMessage,
 			...args: TArgs
 		): Cmd<TSuccessMessage | TErrorMessage> {
-			const bind = (
-				dispatch: Dispatch<TSuccessMessage | TErrorMessage>,
-			): void => {
+			const bind = (dispatch: Dispatch<TSuccessMessage | TErrorMessage>): void => {
 				try {
 					const result = task(...args);
 
@@ -168,10 +146,7 @@ const cmd = {
 			ofSuccess: (result: TReturn) => TSuccessMessage,
 			...args: TArgs
 		): Cmd<TSuccessMessage> {
-			const bind = (
-				dispatch: Dispatch<TSuccessMessage>,
-				fallback?: FallbackHandler,
-			): void => {
+			const bind = (dispatch: Dispatch<TSuccessMessage>, fallback?: FallbackHandler): void => {
 				try {
 					const result = task(...args);
 
@@ -197,10 +172,7 @@ const cmd = {
 			ofError: (error: Error) => TErrorMessage,
 			...args: TArgs
 		): Cmd<TErrorMessage> {
-			const bind = (
-				dispatch: Dispatch<TErrorMessage>,
-				fallback?: FallbackHandler,
-			): void => {
+			const bind = (dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): void => {
 				try {
 					task(...args);
 
@@ -227,20 +199,13 @@ const cmd = {
 		 * @param ofError Creates the message to dispatch when the promise is rejected.
 		 * @param args The parameters of the task.
 		 */
-		either<
-			TSuccessMessage extends Message,
-			TErrorMessage extends Message,
-			TArgs extends unknown[],
-			TReturn,
-		>(
+		either<TSuccessMessage extends Message, TErrorMessage extends Message, TArgs extends unknown[], TReturn>(
 			task: (...args: TArgs) => Promise<TReturn>,
 			ofSuccess: (result: TReturn) => TSuccessMessage,
 			ofError: (error: Error) => TErrorMessage,
 			...args: TArgs
 		): Cmd<TSuccessMessage | TErrorMessage> {
-			const bind = (
-				dispatch: Dispatch<TSuccessMessage | TErrorMessage>,
-			): void => {
+			const bind = (dispatch: Dispatch<TSuccessMessage | TErrorMessage>): void => {
 				task(...args)
 					.then((result) => dispatch(ofSuccess(result)))
 					.catch((ex: Error) => dispatch(ofError(ex)));
@@ -260,10 +225,7 @@ const cmd = {
 			ofSuccess: (result: TReturn) => TSuccessMessage,
 			...args: TArgs
 		): Cmd<TSuccessMessage> {
-			const bind = (
-				dispatch: Dispatch<TSuccessMessage>,
-				fallback: FallbackHandler = defaultFallbackHandler,
-			): void => {
+			const bind = (dispatch: Dispatch<TSuccessMessage>, fallback: FallbackHandler = defaultFallbackHandler): void => {
 				task(...args)
 					.then((result) => dispatch(ofSuccess(result)))
 					.catch(fallback);
@@ -283,10 +245,7 @@ const cmd = {
 			ofError: (error: Error) => TErrorMessage,
 			...args: TArgs
 		): Cmd<TErrorMessage> {
-			const bind = (
-				dispatch: Dispatch<TErrorMessage>,
-				fallback?: FallbackHandler,
-			): void => {
+			const bind = (dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): void => {
 				task(...args)
 					.then(() => {
 						if (fallback) {

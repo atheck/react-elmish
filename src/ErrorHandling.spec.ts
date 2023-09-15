@@ -65,8 +65,7 @@ describe("ErrorHandling", () => {
 			init({});
 
 			// act
-			const succeeds = (): UpdateReturnType<unknown, unknown> =>
-				handleError(error);
+			const succeeds = (): UpdateReturnType<unknown, unknown> => handleError(error);
 
 			// assert
 			expect(succeeds).not.toThrow();

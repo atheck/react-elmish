@@ -20,8 +20,7 @@ interface RenderWithModelOptions<TMessage extends Message> {
  * @template TModel The type of the model.
  * @template TMessage The type of the messages discriminated union.
  */
-interface RenderWithModelConfig<TModel, TMessage extends Message>
-	extends RenderWithModelOptions<TMessage> {
+interface RenderWithModelConfig<TModel, TMessage extends Message> extends RenderWithModelOptions<TMessage> {
 	/**
 	 * The model to use when rendering the component.
 	 * @type {TModel}
@@ -37,9 +36,7 @@ function setFakeOptions<TModel extends object, TMessage extends Message>(
 	currentFakeOptions = options as RenderWithModelConfig<unknown, Message>;
 }
 
-function getFakeOptionsOnce<TModel, TMessage extends Message>(): Nullable<
-	RenderWithModelConfig<TModel, TMessage>
-> {
+function getFakeOptionsOnce<TModel, TMessage extends Message>(): Nullable<RenderWithModelConfig<TModel, TMessage>> {
 	const temp = currentFakeOptions;
 
 	currentFakeOptions = null;

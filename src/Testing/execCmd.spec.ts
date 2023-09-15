@@ -15,10 +15,7 @@ describe("execCmd", () => {
 
 	it("executes all message commands", async () => {
 		// arrange
-		const commands = cmd.batch(
-			cmd.ofMsg({ name: "Msg1" }),
-			cmd.ofMsg({ name: "Msg2" }),
-		);
+		const commands = cmd.batch(cmd.ofMsg({ name: "Msg1" }), cmd.ofMsg({ name: "Msg2" }));
 
 		// act
 		const messages = await execCmd(commands);
@@ -164,14 +161,10 @@ describe("execCmd", () => {
 			throw new Error("fail");
 		};
 
-		const commands = cmd.ofPromise.perform(
-			asyncFunc,
-			(): Message => ({ name: "Msg1" }),
-		);
+		const commands = cmd.ofPromise.perform(asyncFunc, (): Message => ({ name: "Msg1" }));
 
 		// act
-		const fail = async (): Promise<Nullable<Message>[]> =>
-			await execCmd(commands);
+		const fail = async (): Promise<Nullable<Message>[]> => await execCmd(commands);
 
 		// assert
 		await expect(fail()).rejects.toThrow("fail");
@@ -228,14 +221,10 @@ describe("execCmd", () => {
 			throw new Error("fail");
 		};
 
-		const commands = cmd.ofFunc.perform(
-			func,
-			(): Message => ({ name: "Msg1" }),
-		);
+		const commands = cmd.ofFunc.perform(func, (): Message => ({ name: "Msg1" }));
 
 		// act
-		const fail = async (): Promise<Nullable<Message>[]> =>
-			await execCmd(commands);
+		const fail = async (): Promise<Nullable<Message>[]> => await execCmd(commands);
 
 		// assert
 		await expect(fail()).rejects.toThrow("fail");
