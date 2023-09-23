@@ -6,6 +6,7 @@ import { getCreateModelAndProps, getCreateUpdateArgs } from "./getCreateUpdateAr
 import { getUpdateAndExecCmdFn, getUpdateFn } from "./getUpdateFn";
 import { initAndExecCmd } from "./initAndExecCmd";
 import { renderWithModel } from "./renderWithModel";
+import { runSubscription } from "./runSubscription";
 
 export type { ModelAndPropsFactory, RenderWithModelOptions, UpdateArgsFactory };
 
@@ -19,4 +20,5 @@ export {
 	getUpdateFn,
 	initAndExecCmd,
 	renderWithModel,
+	runSubscription,
 };
