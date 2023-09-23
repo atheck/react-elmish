@@ -28,6 +28,7 @@ This library brings the elmish pattern to react.
   - [Testing the init function](#testing-the-init-function)
   - [Testing the update handler](#testing-the-update-handler)
   - [Combine update and execCmd](#combine-update-and-execcmd)
+  - [Testing subscriptions](#testing-subscriptions)
   - [UI Tests](#ui-tests)
 - [Migrations](#migrations)
   - [From v1.x to v2.x](#from-v1x-to-v2x)
@@ -948,6 +949,33 @@ it("returns the correct cmd", async () => {
     expect(messages).toEqual([Msg.asyncTestSuccess()])
 });
 ...
+```
+
+### Testing subscriptions
+
+It is almost the same as testing the `update` function. You can use the `getCreateModelAndProps` function to create a factory for the model and the props. Then use `runSubscription` to execute the subscriptions:
+
+```ts
+import { getCreateModelAndProps, runSubscription } from "react-elmish/dist/Testing";
+import { init, Msg, subscription } from "./MyComponent";
+
+const createModelAndProps = getCreateModelAndProps(init, () => ({ /* initial props */ }));
+
+it("dispatches the eventTriggered message", async () => {
+    // arrange
+    const mockDispatch = jest.fn();
+    const args = createModelAndProps({ /* optionally override model here */ }, { /* optionally override props here */ });
+    const dispose = runSubscription(subscription, mockDispatch, ...args);
+
+    // act
+    // Trigger events
+
+    // assert
+    expect(mockDispatch).toHaveBeenCalledWith(Msg.eventTriggered());
+
+    // Dispose the subscriptions if required
+    dispose?.();
+});
 ```
 
 ### UI Tests

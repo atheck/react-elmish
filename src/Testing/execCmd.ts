@@ -1,3 +1,4 @@
+import { Dispatch } from "react";
 import { Cmd, Nullable } from "../Types";
 
 /**
@@ -29,4 +30,14 @@ async function execCmd<TMessage>(...commands: (Cmd<TMessage> | undefined)[]): Pr
 	return results;
 }
 
-export { execCmd };
+function execCmdWithDispatch<TMessage>(dispatch: Dispatch<TMessage>, ...commands: (Cmd<TMessage> | undefined)[]): void {
+	const definedCommands = commands.filter((cmd) => cmd !== undefined) as Cmd<TMessage>[];
+
+	for (const cmd of definedCommands) {
+		for (const sub of cmd) {
+			sub(dispatch);
+		}
+	}
+}
+
+export { execCmd, execCmdWithDispatch };

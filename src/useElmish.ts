@@ -190,6 +190,6 @@ function callUpdateMap<TProps, TModel, TMessage extends Message>(
 	return updateMap[msgName](msg, model, props);
 }
 
-export type { SubscriptionResult, UseElmishOptions };
+export type { Subscription, SubscriptionResult, UseElmishOptions };
 
 export { callUpdate, callUpdateMap, useElmish };

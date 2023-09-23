@@ -6,6 +6,11 @@ type UpdateArgsFactory<TProps, TModel, TMessage extends Message> = (
 	propsTemplate?: Partial<TProps>,
 ) => [TMessage, TModel, TProps];
 
+type ModelAndPropsFactory<TProps, TModel> = (
+	modelTemplate?: Partial<TModel>,
+	propsTemplate?: Partial<TProps>,
+) => [TModel, TProps];
+
 /**
  * Creates a factory function to create a message, a model, and props which can be passed to an update function in tests.
  * @param {() => TModel} initModel A function to create an initial model.
@@ -40,6 +45,6 @@ function createUpdateArgsFactory<TProps, TModel, TMessage extends Message>(
 	};
 }
 
-export type { UpdateArgsFactory };
+export type { ModelAndPropsFactory, UpdateArgsFactory };
 
 export { createUpdateArgsFactory };
