@@ -4,16 +4,24 @@ import { Subscription } from "../useElmish";
 import { execCmdWithDispatch } from "./execCmd";
 
 function runSubscription<TProps, TModel, TMessage extends Message>(
-	subscription: Subscription<TProps, TModel, TMessage>,
+	subscription: Subscription<TProps, TModel, TMessage> | undefined,
 	dispatch: Dispatch<TMessage>,
 	model: TModel,
 	props: TProps,
-): (() => void) | undefined {
+): () => void {
+	const noop = (): void => {
+		// do nothing
+	};
+
+	if (!subscription) {
+		return noop;
+	}
+
 	const [cmd, dispose] = subscription(model, props);
 
 	execCmdWithDispatch<TMessage>(dispatch, cmd);
 
-	return dispose;
+	return dispose ?? noop;
 }
 
 export { runSubscription };
