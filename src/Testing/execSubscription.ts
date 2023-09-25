@@ -3,7 +3,7 @@ import { Message } from "../Types";
 import { Subscription } from "../useElmish";
 import { execCmdWithDispatch } from "./execCmd";
 
-function runSubscription<TProps, TModel, TMessage extends Message>(
+function execSubscription<TProps, TModel, TMessage extends Message>(
 	subscription: Subscription<TProps, TModel, TMessage> | undefined,
 	dispatch: Dispatch<TMessage>,
 	model: TModel,
@@ -24,4 +24,4 @@ function runSubscription<TProps, TModel, TMessage extends Message>(
 	return dispose ?? noop;
 }
 
-export { runSubscription };
+export { execSubscription };

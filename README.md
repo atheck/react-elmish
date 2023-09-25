@@ -953,10 +953,10 @@ it("returns the correct cmd", async () => {
 
 ### Testing subscriptions
 
-It is almost the same as testing the `update` function. You can use the `getCreateModelAndProps` function to create a factory for the model and the props. Then use `runSubscription` to execute the subscriptions:
+It is almost the same as testing the `update` function. You can use the `getCreateModelAndProps` function to create a factory for the model and the props. Then use `execSubscription` to execute the subscriptions:
 
 ```ts
-import { getCreateModelAndProps, runSubscription } from "react-elmish/dist/Testing";
+import { getCreateModelAndProps, execSubscription } from "react-elmish/dist/Testing";
 import { init, Msg, subscription } from "./MyComponent";
 
 const createModelAndProps = getCreateModelAndProps(init, () => ({ /* initial props */ }));
@@ -965,7 +965,7 @@ it("dispatches the eventTriggered message", async () => {
     // arrange
     const mockDispatch = jest.fn();
     const args = createModelAndProps({ /* optionally override model here */ }, { /* optionally override props here */ });
-    const dispose = runSubscription(subscription, mockDispatch, ...args);
+    const dispose = execSubscription(subscription, mockDispatch, ...args);
 
     // act
     // Trigger events
@@ -974,7 +974,7 @@ it("dispatches the eventTriggered message", async () => {
     expect(mockDispatch).toHaveBeenCalledWith(Msg.eventTriggered());
 
     // Dispose the subscriptions if required
-    dispose?.();
+    dispose();
 });
 ```
 
