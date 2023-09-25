@@ -99,7 +99,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 				let modified = false;
 
 				do {
-					modified = handleMessage(nextMsg);
+					modified ||= handleMessage(nextMsg);
 
 					nextMsg = buffer.shift();
 				} while (nextMsg);
