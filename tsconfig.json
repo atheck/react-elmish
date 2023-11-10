@@ -15,7 +15,8 @@
     "resolveJsonModule": true,
     "module": "esnext",
     "declaration": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
   },
   "typeAcquisition": {
     "include": [

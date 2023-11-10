@@ -1,5 +1,5 @@
 import { RenderResult, render } from "@testing-library/react";
-import React, { JSX } from "react";
+import { JSX } from "react";
 import { Cmd, ElmComponent, UpdateReturnType, cmd } from ".";
 
 describe("ElmComponent", () => {

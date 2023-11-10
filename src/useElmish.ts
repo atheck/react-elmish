@@ -132,7 +132,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		execCmd(dispatch, ...initCommands);
 	}
 
-	// biome-ignore lint/nursery/useExhaustiveDependencies: We want to run this effect only once
+	// biome-ignore lint/correctness/useExhaustiveDependencies: We want to run this effect only once
 	useEffect(() => {
 		if (subscription) {
 			const [subCmd, destructor] = subscription(initializedModel as TModel, props);

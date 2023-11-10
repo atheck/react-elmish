@@ -1,5 +1,5 @@
 import { RenderResult, render, waitFor } from "@testing-library/react";
-import React, { JSX, useEffect } from "react";
+import { JSX, useEffect } from "react";
 import { Cmd, InitResult, SubscriptionResult, UpdateReturnType, cmd, useElmish } from ".";
 
 type Message = { name: "Test" } | { name: "First" } | { name: "Second" } | { name: "Third" };
