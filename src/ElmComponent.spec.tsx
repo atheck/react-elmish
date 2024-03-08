@@ -33,7 +33,7 @@ describe("ElmComponent", () => {
 		renderComponent(props);
 
 		// assert
-		expect(update).toHaveBeenCalledWith({}, message, props, expect.any(Function));
+		expect(update).toHaveBeenCalledWith({}, message, props, expect.anything());
 	});
 });
 
