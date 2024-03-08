@@ -1,7 +1,7 @@
 import React from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
-import { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
+import type { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
 import { getFakeOptionsOnce } from "./fakeOptions";
 
 /**

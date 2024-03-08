@@ -1,4 +1,4 @@
-import { Message } from "./Types";
+import type { Message } from "./Types";
 
 interface Logger {
 	debug: (...args: unknown[]) => void;

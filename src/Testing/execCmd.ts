@@ -1,5 +1,5 @@
-import { Dispatch } from "react";
-import { Cmd, Nullable } from "../Types";
+import type { Dispatch } from "react";
+import type { Cmd, Nullable } from "../Types";
 
 /**
  * Executes all commands and resolves the messages.

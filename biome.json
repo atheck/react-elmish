@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": [
-    "./node_modules/eslint-config-heck/biomeLinting.json"
+    "eslint-config-heck/biome"
   ],
   "organizeImports": {
     "enabled": false

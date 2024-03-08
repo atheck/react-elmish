@@ -1,6 +1,6 @@
-import { InitFunction, Message } from "../Types";
+import type { InitFunction, Message } from "../Types";
 import { createModelAndProps } from "./createModelAndProps";
-import { ModelAndPropsFactory, UpdateArgsFactory } from "./createUpdateArgsFactory";
+import type { ModelAndPropsFactory, UpdateArgsFactory } from "./createUpdateArgsFactory";
 
 /**
  * Creates a factory function to create a message, a model, and props which can be passed to an update function in tests.

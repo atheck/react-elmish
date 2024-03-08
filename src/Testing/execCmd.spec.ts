@@ -1,5 +1,5 @@
 import { execCmd } from ".";
-import { Nullable } from "../Types";
+import type { Nullable } from "../Types";
 import { cmd } from "../cmd";
 
 type Message = { name: "Msg1" } | { name: "Msg2" } | { name: "Error" };

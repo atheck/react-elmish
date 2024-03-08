@@ -1,4 +1,4 @@
-import { InitResult, Message, Nullable } from "../Types";
+import type { InitResult, Message, Nullable } from "../Types";
 import { execCmd } from "./execCmd";
 
 /**

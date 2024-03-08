@@ -1,6 +1,6 @@
-import { UpdateReturnType } from ".";
+import type { UpdateReturnType } from ".";
 import { errorHandler, errorMsg, handleError } from "./ErrorHandling";
-import { Logger, init } from "./Init";
+import { init, type Logger } from "./Init";
 
 describe("ErrorHandling", () => {
 	describe("errorMsg", () => {

@@ -1,4 +1,4 @@
-import { Cmd, Dispatch, FallbackHandler, Message, Sub } from "./Types";
+import type { Cmd, Dispatch, FallbackHandler, Message, Sub } from "./Types";
 
 const cmd = {
 	/**

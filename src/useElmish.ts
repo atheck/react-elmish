@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
-import { Cmd, Dispatch, InitFunction, Message, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
+import type { Cmd, Dispatch, InitFunction, Message, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
 import { getFakeOptionsOnce } from "./fakeOptions";
 
 /**

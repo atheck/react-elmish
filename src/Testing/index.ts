@@ -1,6 +1,6 @@
-import { RenderWithModelOptions } from "../fakeOptions";
+import type { RenderWithModelOptions } from "../fakeOptions";
 import { createModelAndProps } from "./createModelAndProps";
-import { ModelAndPropsFactory, UpdateArgsFactory, createUpdateArgsFactory } from "./createUpdateArgsFactory";
+import { createUpdateArgsFactory, type ModelAndPropsFactory, type UpdateArgsFactory } from "./createUpdateArgsFactory";
 import { execCmd } from "./execCmd";
 import { execSubscription } from "./execSubscription";
 import { getCreateModelAndProps, getCreateUpdateArgs } from "./getCreateUpdateArgs";

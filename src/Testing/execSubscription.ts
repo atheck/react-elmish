@@ -1,6 +1,6 @@
-import { Dispatch } from "react";
-import { Message } from "../Types";
-import { Subscription } from "../useElmish";
+import type { Dispatch } from "react";
+import type { Message } from "../Types";
+import type { Subscription } from "../useElmish";
 import { execCmdWithDispatch } from "./execCmd";
 
 function execSubscription<TProps, TModel, TMessage extends Message>(

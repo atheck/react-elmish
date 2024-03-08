@@ -1,4 +1,4 @@
-import { Cmd } from "./Types";
+import type { Cmd } from "./Types";
 import { cmd } from "./cmd";
 
 type Message = { name: "none" } | { name: "success" } | { name: "error" };

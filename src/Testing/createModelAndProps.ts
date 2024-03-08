@@ -1,4 +1,4 @@
-import { InitFunction, Message } from "../Types";
+import type { InitFunction, Message } from "../Types";
 
 function createModelAndProps<TProps, TModel, TMessage extends Message>(
 	init: InitFunction<TProps, TModel, TMessage>,

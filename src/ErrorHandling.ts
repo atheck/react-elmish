@@ -1,5 +1,5 @@
 import { Services } from "./Init";
-import { UpdateReturnType } from "./Types";
+import type { UpdateReturnType } from "./Types";
 
 /**
  * Error message object.

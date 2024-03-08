@@ -1,4 +1,4 @@
-import { Message } from "../Types";
+import type { Message } from "../Types";
 
 type UpdateArgsFactory<TProps, TModel, TMessage extends Message> = (
 	msg: TMessage,

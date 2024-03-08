@@ -1,4 +1,4 @@
-import { Message, Nullable, UpdateMap, UpdateReturnType } from "../Types";
+import type { Message, Nullable, UpdateMap, UpdateReturnType } from "../Types";
 import { callUpdateMap } from "../useElmish";
 import { execCmd } from "./execCmd";
 
