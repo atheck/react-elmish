@@ -1,7 +1,7 @@
 import React from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
-import type { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
+import type { Cmd, DeferFunction, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
 import { getFakeOptionsOnce } from "./fakeOptions";
 
 /**
@@ -100,14 +100,22 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 		do {
 			logMessage(this.componentName, nextMsg);
 
-			const [model, ...commands] = this.update(this.currentModel, nextMsg, this.props);
+			let deferredModel: Partial<TModel> = {};
+			const deferredCommands: (Cmd<TMessage> | undefined)[] = [];
 
-			if (modelHasChanged(this.currentModel, model)) {
-				this.currentModel = { ...this.currentModel, ...model };
+			const deferHandler: DeferFunction<TModel, TMessage> = (tempDeferredModel, ...tempDeferredCommands) => {
+				deferredModel = { ...deferredModel, ...tempDeferredModel };
+				deferredCommands.push(...tempDeferredCommands);
+			};
+
+			const [model, ...commands] = this.update(this.currentModel, nextMsg, this.props, deferHandler);
+
+			if (modelHasChanged(this.currentModel, { ...deferredModel, ...model })) {
+				this.currentModel = { ...this.currentModel, ...deferredModel, ...model };
 				modified = true;
 			}
 
-			execCmd(this.dispatch, ...commands);
+			execCmd(this.dispatch, ...commands, ...deferredCommands);
 
 			nextMsg = this.buffer.shift();
 		} while (nextMsg);
@@ -125,6 +133,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	 * @param {TModel} model The current model.
 	 * @param {TMessage} msg The message to process.
 	 * @param {TProps} props The props of the component.
+	 * @param {DeferFunction<TModel, TMessage>} defer A function to defer a model update and command execution.
 	 * @returns The new model (can also be an empty object {}) and an optional new message to dispatch.
 	 * @abstract
 	 * @memberof ElmComponent

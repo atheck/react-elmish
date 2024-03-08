@@ -1,4 +1,4 @@
-import type { Message, Nullable, UpdateMap, UpdateReturnType } from "../Types";
+import type { DeferFunction, Message, Nullable, UpdateMap, UpdateReturnType } from "../Types";
 import { callUpdateMap } from "../useElmish";
 import { execCmd } from "./execCmd";
 
@@ -14,9 +14,9 @@ import { execCmd } from "./execCmd";
  */
 function getUpdateFn<TProps, TModel, TMessage extends Message>(
 	updateMap: UpdateMap<TProps, TModel, TMessage>,
-): (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage> {
-	return function updateFn(msg: TMessage, model: TModel, props: TProps): UpdateReturnType<TModel, TMessage> {
-		return callUpdateMap(updateMap, msg, model, props);
+): (msg: TMessage, model: TModel, props: TProps, defer: DeferFunction<TModel, TMessage>) => UpdateReturnType<TModel, TMessage> {
+	return function updateFn(msg, model, props, defer): UpdateReturnType<TModel, TMessage> {
+		return callUpdateMap(updateMap, msg, model, props, defer);
 	};
 }
 
@@ -32,13 +32,14 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
  */
 function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 	updateMap: UpdateMap<TProps, TModel, TMessage>,
-): (msg: TMessage, model: TModel, props: TProps) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
-	return async function updateAndExecCmdFn(
-		msg: TMessage,
-		model: TModel,
-		props: TProps,
-	): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
-		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props);
+): (
+	msg: TMessage,
+	model: TModel,
+	props: TProps,
+	defer: DeferFunction<TModel, TMessage>,
+) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
+	return async function updateAndExecCmdFn(msg, model, props, defer): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
+		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props, defer);
 
 		const messages = await execCmd(...commands);
 

@@ -36,10 +36,13 @@ type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TMod
  */
 type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]];
 
+type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: (Cmd<TMessage> | undefined)[]) => void;
+
 type UpdateFunction<TProps, TModel, TMessage> = (
 	model: TModel,
 	msg: TMessage,
 	props: TProps,
+	defer: DeferFunction<TModel, TMessage>,
 ) => UpdateReturnType<TModel, TMessage>;
 
 /**
@@ -47,11 +50,17 @@ type UpdateFunction<TProps, TModel, TMessage> = (
  * Use this type to create your update logic for the useElmish hook.
  */
 type UpdateMap<TProps, TModel, TMessage extends Message> = {
-	[M in TMessage["name"]]: (msg: TMessage & { name: M }, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage>;
+	[M in TMessage["name"]]: (
+		msg: TMessage & { name: M },
+		model: TModel,
+		props: TProps,
+		defer: DeferFunction<TModel, TMessage>,
+	) => UpdateReturnType<TModel, TMessage>;
 };
 
 export type {
 	Cmd,
+	DeferFunction,
 	Dispatch,
 	FallbackHandler,
 	InitFunction,

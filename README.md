@@ -23,6 +23,7 @@ This library brings the elmish pattern to react.
 - [Composition](#composition)
   - [With an `UpdateMap`](#with-an-updatemap)
 - [With an update function](#with-an-update-function)
+- [Deferring model updates and messages](#deferring-model-updates-and-messages)
 - [Call back parent components](#call-back-parent-components)
 - [Testing](#testing)
   - [Testing the init function](#testing-the-init-function)
@@ -797,6 +798,48 @@ const updateComposition = (model: Model, msg: CompositionMessage): Elm.UpdateRet
     }
 }
 ```
+
+## Deferring model updates and messages
+
+Sometimes you want to always dispatch a message or update the model in all cases. You can use the `defer` function to do this. The `defer` function is the fourth parameter of the `update` function.
+
+Without the `defer` function, you would have to return the model and the command in all cases:
+
+```ts
+const update: UpdateMap<Props, Model, Message> = {
+    deferSomething (_msg, model, _props, defer) {
+        if (model.someCondition) {
+            return [{ alwaysUpdate: "someValue", extra: "extra" }, cmd.ofMsg(Msg.alwaysExecute())];
+        }
+
+        return [{ alwaysUpdate: "someValue" }, cmd.ofMsg(Msg.doSomethingElse()), cmd.ofMsg(Msg.alwaysExecute())];
+    },
+
+    ...LoadSettings.update,
+};
+```
+
+Here we always want to update the model with the `alwaysUpdate` property and always dispatch the `alwaysExecute` message.
+
+With the `defer` function, you can do this:
+
+```ts
+const update: UpdateMap<Props, Model, Message> = {
+    deferSomething (_msg, model, _props, defer) {
+        defer({ alwaysUpdate: "someValue" }, cmd.ofMsg(Msg.alwaysExecute()));
+
+        if (model.someCondition) {
+            return [{ extra: "extra" }];
+        }
+
+        return [{}, cmd.ofMsg(Msg.doSomethingElse())];
+    },
+
+    ...LoadSettings.update,
+};
+```
+
+The `defer` function can be called multiple times. Model updates and commands are then aggregated. Model updates by the return value overwrite the deferred model updates, while deferred messages are dispatched after the returned messages.
 
 ## Call back parent components
 

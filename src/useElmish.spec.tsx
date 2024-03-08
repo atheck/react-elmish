@@ -1,8 +1,9 @@
 import { render, waitFor, type RenderResult } from "@testing-library/react";
 import { useEffect, type JSX } from "react";
 import { cmd, useElmish, type Cmd, type InitResult, type SubscriptionResult, type UpdateReturnType } from ".";
+import type { DeferFunction } from "./Types";
 
-type Message = { name: "Test" } | { name: "First" } | { name: "Second" } | { name: "Third" };
+type Message = { name: "Test" } | { name: "First" } | { name: "Second" } | { name: "Third" } | { name: "Defer" };
 
 interface Model {
 	value1: string;
@@ -11,7 +12,7 @@ interface Model {
 
 interface Props {
 	init: () => InitResult<Model, Message>;
-	update: (model: Model, msg: Message, props: Props) => UpdateReturnType<Model, Message>;
+	update: (model: Model, msg: Message, props: Props, defer: DeferFunction<Model, Message>) => UpdateReturnType<Model, Message>;
 	subscription?: (model: Model) => SubscriptionResult<Message>;
 }
 
@@ -25,7 +26,12 @@ function defaultInit(msg?: Cmd<Message>): InitResult<Model, Message> {
 	];
 }
 
-function defaultUpdate(_model: Model, msg: Message): UpdateReturnType<Model, Message> {
+function defaultUpdate(
+	_model: Model,
+	msg: Message,
+	_props: Props,
+	defer: DeferFunction<Model, Message>,
+): UpdateReturnType<Model, Message> {
 	switch (msg.name) {
 		case "Test":
 			return [{}];
@@ -38,6 +44,12 @@ function defaultUpdate(_model: Model, msg: Message): UpdateReturnType<Model, Mes
 
 		case "Third":
 			return [{ value2: "Third" }];
+
+		case "Defer": {
+			defer({ value2: "Defer" }, cmd.ofMsg({ name: "Third" }));
+
+			return [{ value1: "Defer" }, cmd.ofMsg({ name: "Second" })];
+		}
 	}
 }
 
@@ -74,7 +86,7 @@ describe("useElmish", () => {
 		renderComponent(props);
 
 		// assert
-		expect(update).toHaveBeenCalledWith({}, message, props);
+		expect(update).toHaveBeenCalledWith({}, message, props, expect.any(Function));
 	});
 
 	it("updates the model correctly with multiple commands in a row", () => {
@@ -110,6 +122,9 @@ describe("useElmish", () => {
 
 					case "Third":
 						return [{ value2: "Third" }];
+
+					case "Defer":
+						return [{ value2: "Defer" }];
 				}
 			},
 		};
@@ -126,6 +141,21 @@ describe("useElmish", () => {
 
 		// assert
 		expect(componentModel).toStrictEqual({ value1: "Second", value2: "Third" });
+	});
+
+	it("updates the model correctly with a call to defer", () => {
+		// arrange
+		const message: Message = { name: "Defer" };
+		const props: Props = {
+			init: () => defaultInit(cmd.ofMsg(message)),
+			update: defaultUpdate,
+		};
+
+		// act
+		renderComponent(props);
+
+		// assert
+		expect(componentModel).toStrictEqual({ value1: "Defer", value2: "Third" });
 	});
 
 	it("calls the subscription", () => {

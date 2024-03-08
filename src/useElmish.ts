@@ -2,7 +2,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
-import type { Cmd, Dispatch, InitFunction, Message, Nullable, UpdateFunction, UpdateMap, UpdateReturnType } from "./Types";
+import type {
+	Cmd,
+	DeferFunction,
+	Dispatch,
+	InitFunction,
+	Message,
+	Nullable,
+	UpdateFunction,
+	UpdateMap,
+	UpdateReturnType,
+} from "./Types";
 import { getFakeOptionsOnce } from "./fakeOptions";
 
 /**
@@ -135,7 +145,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	// biome-ignore lint/correctness/useExhaustiveDependencies: We want to run this effect only once
 	useEffect(() => {
 		if (subscription) {
-			const [subCmd, destructor] = subscription(initializedModel as TModel, props);
+			const [subCmd, destructor] = subscription(initializedModel, props);
 
 			execCmd(dispatch, subCmd);
 
@@ -154,15 +164,29 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		logMessage(name, nextMsg);
 
-		const [newModel, ...commands] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current);
+		let deferredModel: Partial<TModel> = {};
+		const deferredCommands: (Cmd<TMessage> | undefined)[] = [];
 
-		if (modelHasChanged(currentModel, newModel)) {
-			currentModel = { ...currentModel, ...newModel };
+		const deferHandler: DeferFunction<TModel, TMessage> = (tempDeferredModel, ...tempDeferredCommands) => {
+			deferredModel = { ...deferredModel, ...tempDeferredModel };
+			deferredCommands.push(...tempDeferredCommands);
+		};
+
+		const [newModel, ...commands] = callUpdate(
+			update,
+			nextMsg,
+			{ ...initializedModel, ...currentModel },
+			propsRef.current,
+			deferHandler,
+		);
+
+		if (modelHasChanged(currentModel, { ...deferredModel, ...newModel })) {
+			currentModel = { ...currentModel, ...deferredModel, ...newModel };
 
 			modified = true;
 		}
 
-		execCmd(dispatch, ...commands);
+		execCmd(dispatch, ...commands, ...deferredCommands);
 
 		return modified;
 	}
@@ -173,12 +197,13 @@ function callUpdate<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
+	defer: DeferFunction<TModel, TMessage>,
 ): UpdateReturnType<TModel, TMessage> {
 	if (typeof update === "function") {
-		return update(model, msg, props);
+		return update(model, msg, props, defer);
 	}
 
-	return callUpdateMap(update, msg, model, props);
+	return callUpdateMap(update, msg, model, props, defer);
 }
 
 function callUpdateMap<TProps, TModel, TMessage extends Message>(
@@ -186,10 +211,11 @@ function callUpdateMap<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
+	defer: DeferFunction<TModel, TMessage>,
 ): UpdateReturnType<TModel, TMessage> {
 	const msgName: TMessage["name"] = msg.name;
 
-	return updateMap[msgName](msg, model, props);
+	return updateMap[msgName](msg, model, props, defer);
 }
 
 export type { Subscription, SubscriptionResult, UseElmishOptions };
