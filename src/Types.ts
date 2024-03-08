@@ -38,11 +38,15 @@ type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | 
 
 type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: (Cmd<TMessage> | undefined)[]) => void;
 
+interface UpdateFunctionOptions<TModel, TMessage> {
+	defer: DeferFunction<TModel, TMessage>;
+}
+
 type UpdateFunction<TProps, TModel, TMessage> = (
 	model: TModel,
 	msg: TMessage,
 	props: TProps,
-	defer: DeferFunction<TModel, TMessage>,
+	options: UpdateFunctionOptions<TModel, TMessage>,
 ) => UpdateReturnType<TModel, TMessage>;
 
 /**
@@ -54,7 +58,7 @@ type UpdateMap<TProps, TModel, TMessage extends Message> = {
 		msg: TMessage & { name: M },
 		model: TModel,
 		props: TProps,
-		defer: DeferFunction<TModel, TMessage>,
+		options: UpdateFunctionOptions<TModel, TMessage>,
 	) => UpdateReturnType<TModel, TMessage>;
 };
 
@@ -70,6 +74,7 @@ export type {
 	Nullable,
 	Sub,
 	UpdateFunction,
+	UpdateFunctionOptions,
 	UpdateMap,
 	UpdateReturnType,
 };

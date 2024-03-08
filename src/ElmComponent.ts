@@ -103,12 +103,12 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 			let deferredModel: Partial<TModel> = {};
 			const deferredCommands: (Cmd<TMessage> | undefined)[] = [];
 
-			const deferHandler: DeferFunction<TModel, TMessage> = (tempDeferredModel, ...tempDeferredCommands) => {
+			const defer: DeferFunction<TModel, TMessage> = (tempDeferredModel, ...tempDeferredCommands) => {
 				deferredModel = { ...deferredModel, ...tempDeferredModel };
 				deferredCommands.push(...tempDeferredCommands);
 			};
 
-			const [model, ...commands] = this.update(this.currentModel, nextMsg, this.props, deferHandler);
+			const [model, ...commands] = this.update(this.currentModel, nextMsg, this.props, { defer });
 
 			if (modelHasChanged(this.currentModel, { ...deferredModel, ...model })) {
 				this.currentModel = { ...this.currentModel, ...deferredModel, ...model };
@@ -133,7 +133,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	 * @param {TModel} model The current model.
 	 * @param {TMessage} msg The message to process.
 	 * @param {TProps} props The props of the component.
-	 * @param {DeferFunction<TModel, TMessage>} defer A function to defer a model update and command execution.
+	 * @param options The options for the update function.
 	 * @returns The new model (can also be an empty object {}) and an optional new message to dispatch.
 	 * @abstract
 	 * @memberof ElmComponent

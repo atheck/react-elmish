@@ -1,7 +1,7 @@
 import { render, waitFor, type RenderResult } from "@testing-library/react";
 import { useEffect, type JSX } from "react";
 import { cmd, useElmish, type Cmd, type InitResult, type SubscriptionResult, type UpdateReturnType } from ".";
-import type { DeferFunction } from "./Types";
+import type { UpdateFunctionOptions } from "./Types";
 
 type Message = { name: "Test" } | { name: "First" } | { name: "Second" } | { name: "Third" } | { name: "Defer" };
 
@@ -12,7 +12,12 @@ interface Model {
 
 interface Props {
 	init: () => InitResult<Model, Message>;
-	update: (model: Model, msg: Message, props: Props, defer: DeferFunction<Model, Message>) => UpdateReturnType<Model, Message>;
+	update: (
+		model: Model,
+		msg: Message,
+		props: Props,
+		options: UpdateFunctionOptions<Model, Message>,
+	) => UpdateReturnType<Model, Message>;
 	subscription?: (model: Model) => SubscriptionResult<Message>;
 }
 
@@ -30,7 +35,7 @@ function defaultUpdate(
 	_model: Model,
 	msg: Message,
 	_props: Props,
-	defer: DeferFunction<Model, Message>,
+	{ defer }: UpdateFunctionOptions<Model, Message>,
 ): UpdateReturnType<Model, Message> {
 	switch (msg.name) {
 		case "Test":
@@ -135,7 +140,7 @@ describe("useElmish", () => {
 		await waitFor(
 			async () =>
 				new Promise((resolve) => {
-					setTimeout(() => resolve(null), 30);
+					setTimeout(() => resolve(null), 40);
 				}),
 		);
 

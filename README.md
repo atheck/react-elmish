@@ -801,13 +801,13 @@ const updateComposition = (model: Model, msg: CompositionMessage): Elm.UpdateRet
 
 ## Deferring model updates and messages
 
-Sometimes you want to always dispatch a message or update the model in all cases. You can use the `defer` function to do this. The `defer` function is the fourth parameter of the `update` function.
+Sometimes you want to always dispatch a message or update the model in all cases. You can use the `defer` function from the `options` parameter to do this. The `options` parameter is the fourth parameter of the `update` function.
 
 Without the `defer` function, you would have to return the model and the command in all cases:
 
 ```ts
 const update: UpdateMap<Props, Model, Message> = {
-    deferSomething (_msg, model, _props, defer) {
+    deferSomething (_msg, model) {
         if (model.someCondition) {
             return [{ alwaysUpdate: "someValue", extra: "extra" }, cmd.ofMsg(Msg.alwaysExecute())];
         }
@@ -825,7 +825,7 @@ With the `defer` function, you can do this:
 
 ```ts
 const update: UpdateMap<Props, Model, Message> = {
-    deferSomething (_msg, model, _props, defer) {
+    deferSomething (_msg, model, _props, { defer }) {
         defer({ alwaysUpdate: "someValue" }, cmd.ofMsg(Msg.alwaysExecute()));
 
         if (model.someCondition) {

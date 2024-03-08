@@ -10,6 +10,7 @@ import type {
 	Message,
 	Nullable,
 	UpdateFunction,
+	UpdateFunctionOptions,
 	UpdateMap,
 	UpdateReturnType,
 } from "./Types";
@@ -167,18 +168,14 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		let deferredModel: Partial<TModel> = {};
 		const deferredCommands: (Cmd<TMessage> | undefined)[] = [];
 
-		const deferHandler: DeferFunction<TModel, TMessage> = (tempDeferredModel, ...tempDeferredCommands) => {
+		const defer: DeferFunction<TModel, TMessage> = (tempDeferredModel, ...tempDeferredCommands) => {
 			deferredModel = { ...deferredModel, ...tempDeferredModel };
 			deferredCommands.push(...tempDeferredCommands);
 		};
 
-		const [newModel, ...commands] = callUpdate(
-			update,
-			nextMsg,
-			{ ...initializedModel, ...currentModel },
-			propsRef.current,
-			deferHandler,
-		);
+		const [newModel, ...commands] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current, {
+			defer,
+		});
 
 		if (modelHasChanged(currentModel, { ...deferredModel, ...newModel })) {
 			currentModel = { ...currentModel, ...deferredModel, ...newModel };
@@ -197,13 +194,13 @@ function callUpdate<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
-	defer: DeferFunction<TModel, TMessage>,
+	options: UpdateFunctionOptions<TModel, TMessage>,
 ): UpdateReturnType<TModel, TMessage> {
 	if (typeof update === "function") {
-		return update(model, msg, props, defer);
+		return update(model, msg, props, options);
 	}
 
-	return callUpdateMap(update, msg, model, props, defer);
+	return callUpdateMap(update, msg, model, props, options);
 }
 
 function callUpdateMap<TProps, TModel, TMessage extends Message>(
@@ -211,11 +208,11 @@ function callUpdateMap<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
-	defer: DeferFunction<TModel, TMessage>,
+	options: UpdateFunctionOptions<TModel, TMessage>,
 ): UpdateReturnType<TModel, TMessage> {
 	const msgName: TMessage["name"] = msg.name;
 
-	return updateMap[msgName](msg, model, props, defer);
+	return updateMap[msgName](msg, model, props, options);
 }
 
 export type { Subscription, SubscriptionResult, UseElmishOptions };
