@@ -1,7 +1,8 @@
 import React from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
-import type { Cmd, DeferFunction, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
+import type { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
+import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
 
 /**
@@ -100,15 +101,11 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 		do {
 			logMessage(this.componentName, nextMsg);
 
-			let deferredModel: Partial<TModel> = {};
-			const deferredCommands: (Cmd<TMessage> | undefined)[] = [];
-
-			const defer: DeferFunction<TModel, TMessage> = (tempDeferredModel, ...tempDeferredCommands) => {
-				deferredModel = { ...deferredModel, ...tempDeferredModel };
-				deferredCommands.push(...tempDeferredCommands);
-			};
+			const [defer, getDeferred] = createDefer<TModel, TMessage>();
 
 			const [model, ...commands] = this.update(this.currentModel, nextMsg, this.props, { defer });
+
+			const [deferredModel, deferredCommands] = getDeferred();
 
 			if (modelHasChanged(this.currentModel, { ...deferredModel, ...model })) {
 				this.currentModel = { ...this.currentModel, ...deferredModel, ...model };

@@ -4,7 +4,6 @@ import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
 import type {
 	Cmd,
-	DeferFunction,
 	Dispatch,
 	InitFunction,
 	Message,
@@ -14,6 +13,7 @@ import type {
 	UpdateMap,
 	UpdateReturnType,
 } from "./Types";
+import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
 
 /**
@@ -165,17 +165,13 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		logMessage(name, nextMsg);
 
-		let deferredModel: Partial<TModel> = {};
-		const deferredCommands: (Cmd<TMessage> | undefined)[] = [];
-
-		const defer: DeferFunction<TModel, TMessage> = (tempDeferredModel, ...tempDeferredCommands) => {
-			deferredModel = { ...deferredModel, ...tempDeferredModel };
-			deferredCommands.push(...tempDeferredCommands);
-		};
+		const [defer, getDeferred] = createDefer<TModel, TMessage>();
 
 		const [newModel, ...commands] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current, {
 			defer,
 		});
+
+		const [deferredModel, deferredCommands] = getDeferred();
 
 		if (modelHasChanged(currentModel, { ...deferredModel, ...newModel })) {
 			currentModel = { ...currentModel, ...deferredModel, ...newModel };
