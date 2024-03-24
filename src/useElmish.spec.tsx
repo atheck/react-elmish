@@ -1,5 +1,5 @@
 import { render, type RenderResult } from "@testing-library/react";
-import { useEffect, type JSX } from "react";
+import type { JSX } from "react";
 import { cmd, useElmish, type Cmd, type InitResult, type SubscriptionResult, type UpdateReturnType } from ".";
 import type { UpdateFunctionOptions } from "./Types";
 
@@ -181,37 +181,4 @@ function TestComponent(props: Props): JSX.Element {
 
 function renderComponent(props: Props): RenderResult {
 	return render(<TestComponent {...props} />);
-}
-
-function TestComponentWithEffect(props: Props): JSX.Element {
-	const { init, update, subscription } = props;
-	const [model, dispatch] = useElmish({
-		props,
-		init,
-		update,
-		subscription,
-		name: "Test",
-	});
-
-	if (model.value1 === "") {
-		setTimeout(() => dispatch({ name: "First" }), 5);
-	}
-
-	if (model.value1 === "First" && model.value2 === "") {
-		setTimeout(() => dispatch({ name: "Second" }), 5);
-	}
-
-	componentModel = model;
-
-	useEffect(() => {
-		setTimeout(() => {
-			dispatch({ name: "Third" });
-		}, 20);
-	}, [dispatch]);
-
-	return <div />;
-}
-
-function renderComponentWithEffect(props: Props): RenderResult {
-	return render(<TestComponentWithEffect {...props} />);
 }
