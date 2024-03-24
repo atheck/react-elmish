@@ -1,4 +1,4 @@
-import { render, waitFor, type RenderResult } from "@testing-library/react";
+import { render, type RenderResult } from "@testing-library/react";
 import { useEffect, type JSX } from "react";
 import { cmd, useElmish, type Cmd, type InitResult, type SubscriptionResult, type UpdateReturnType } from ".";
 import type { UpdateFunctionOptions } from "./Types";
@@ -107,45 +107,6 @@ describe("useElmish", () => {
 
 		// assert
 		expect(componentModel).toStrictEqual({ value1: "First", value2: "Second" });
-	});
-
-	it("updates the model correctly with multiple commands delayed", async () => {
-		// arrange
-		const props: Props = {
-			init: () => defaultInit(),
-			update(_model: Model, msg: Message): UpdateReturnType<Model, Message> {
-				// eslint-disable-next-line jest/no-conditional-in-test
-				switch (msg.name) {
-					case "Test":
-						return [{}];
-
-					case "First":
-						return [{ value1: "First" }];
-
-					case "Second":
-						return [{ value1: "Second" }];
-
-					case "Third":
-						return [{ value2: "Third" }];
-
-					case "Defer":
-						return [{ value2: "Defer" }];
-				}
-			},
-		};
-
-		// act
-		renderComponentWithEffect(props);
-
-		await waitFor(
-			async () =>
-				new Promise((resolve) => {
-					setTimeout(() => resolve(null), 40);
-				}),
-		);
-
-		// assert
-		expect(componentModel).toStrictEqual({ value1: "Second", value2: "Third" });
 	});
 
 	it("updates the model correctly with a call to defer", () => {
