@@ -1,4 +1,4 @@
-type Nullable<T> = T | null;
+type Nullable<TType> = TType | null;
 
 interface Message {
 	name: string;
@@ -20,8 +20,8 @@ type Cmd<TMessage> = Sub<TMessage>[];
 /**
  * Creates a MsgSource type.
  */
-interface MsgSource<T extends string> {
-	source: T;
+interface MsgSource<TSource extends string> {
+	source: TSource;
 }
 
 /**
@@ -54,8 +54,8 @@ type UpdateFunction<TProps, TModel, TMessage> = (
  * Use this type to create your update logic for the useElmish hook.
  */
 type UpdateMap<TProps, TModel, TMessage extends Message> = {
-	[M in TMessage["name"]]: (
-		msg: TMessage & { name: M },
+	[TMessageName in TMessage["name"]]: (
+		msg: TMessage & { name: TMessageName },
 		model: TModel,
 		props: TProps,
 		options: UpdateFunctionOptions<TModel, TMessage>,
