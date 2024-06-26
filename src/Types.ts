@@ -37,16 +37,23 @@ type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TMod
 type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]];
 
 type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: (Cmd<TMessage> | undefined)[]) => void;
+type UpdateMapFunction<TProps, TModel, TMessage> = (
+	msg: TMessage,
+	model: TModel,
+	props: TProps,
+	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
+) => UpdateReturnType<TModel, TMessage>;
 
-interface UpdateFunctionOptions<TModel, TMessage> {
+interface UpdateFunctionOptions<TProps, TModel, TMessage> {
 	defer: DeferFunction<TModel, TMessage>;
+	callBase: (fn: UpdateMapFunction<TProps, TModel, TMessage>) => UpdateReturnType<TModel, TMessage>;
 }
 
 type UpdateFunction<TProps, TModel, TMessage> = (
 	model: TModel,
 	msg: TMessage,
 	props: TProps,
-	options: UpdateFunctionOptions<TModel, TMessage>,
+	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ) => UpdateReturnType<TModel, TMessage>;
 
 /**
@@ -58,7 +65,7 @@ type UpdateMap<TProps, TModel, TMessage extends Message> = {
 		msg: TMessage & { name: TMessageName },
 		model: TModel,
 		props: TProps,
-		options: UpdateFunctionOptions<TModel, TMessage>,
+		options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 	) => UpdateReturnType<TModel, TMessage>;
 };
 
@@ -76,5 +83,6 @@ export type {
 	UpdateFunction,
 	UpdateFunctionOptions,
 	UpdateMap,
+	UpdateMapFunction,
 	UpdateReturnType,
 };

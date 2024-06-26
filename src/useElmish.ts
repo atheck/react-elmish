@@ -13,6 +13,7 @@ import type {
 	UpdateMap,
 	UpdateReturnType,
 } from "./Types";
+import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
 
@@ -165,11 +166,12 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		logMessage(name, nextMsg);
 
-		const [defer, getDeferred] = createDefer<TModel, TMessage>();
+		const updatedModel = { ...initializedModel, ...currentModel };
 
-		const [newModel, ...commands] = callUpdate(update, nextMsg, { ...initializedModel, ...currentModel }, propsRef.current, {
-			defer,
-		});
+		const [defer, getDeferred] = createDefer<TModel, TMessage>();
+		const callBase = createCallBase(nextMsg, updatedModel, propsRef.current, { defer });
+
+		const [newModel, ...commands] = callUpdate(update, nextMsg, updatedModel, propsRef.current, { defer, callBase });
 
 		const [deferredModel, deferredCommands] = getDeferred();
 
@@ -190,7 +192,7 @@ function callUpdate<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
-	options: UpdateFunctionOptions<TModel, TMessage>,
+	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ): UpdateReturnType<TModel, TMessage> {
 	if (typeof update === "function") {
 		return update(model, msg, props, options);
@@ -204,7 +206,7 @@ function callUpdateMap<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
-	options: UpdateFunctionOptions<TModel, TMessage>,
+	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ): UpdateReturnType<TModel, TMessage> {
 	const msgName: TMessage["name"] = msg.name;
 

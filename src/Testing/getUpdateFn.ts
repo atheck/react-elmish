@@ -1,4 +1,5 @@
 import type { Message, Nullable, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "../Types";
+import { createCallBase } from "../createCallBase";
 import { createDefer } from "../createDefer";
 import { callUpdateMap } from "../useElmish";
 import { execCmd } from "./execCmd";
@@ -18,9 +19,11 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
 ): (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage> {
 	return function updateFn(msg, model, props): UpdateReturnType<TModel, TMessage> {
 		const [defer, getDeferred] = createDefer<TModel, TMessage>();
+		const callBase = createCallBase(msg, model, props, { defer });
 
-		const options: UpdateFunctionOptions<TModel, TMessage> = {
+		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
 			defer,
+			callBase,
 		};
 
 		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props, options);
@@ -46,9 +49,11 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 ): (msg: TMessage, model: TModel, props: TProps) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
 	return async function updateAndExecCmdFn(msg, model, props): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
 		const [defer, getDeferred] = createDefer<TModel, TMessage>();
+		const callBase = createCallBase(msg, model, props, { defer });
 
-		const options: UpdateFunctionOptions<TModel, TMessage> = {
+		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
 			defer,
+			callBase,
 		};
 
 		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props, options);

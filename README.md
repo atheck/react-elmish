@@ -20,11 +20,11 @@ This library brings the elmish pattern to react.
 - [Setup](#setup)
 - [Error handling](#error-handling)
 - [React life cycle management](#react-life-cycle-management)
+- [Deferring model updates and messages](#deferring-model-updates-and-messages)
+- [Call back parent components](#call-back-parent-components)
 - [Composition](#composition)
   - [With an `UpdateMap`](#with-an-updatemap)
 - [With an update function](#with-an-update-function)
-- [Deferring model updates and messages](#deferring-model-updates-and-messages)
-- [Call back parent components](#call-back-parent-components)
 - [Testing](#testing)
   - [Testing the init function](#testing-the-init-function)
   - [Testing the update handler](#testing-the-update-handler)
@@ -570,6 +570,97 @@ class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
 
 In a functional component you can use the **useEffect** hook as normal.
 
+## Deferring model updates and messages
+
+Sometimes you want to always dispatch a message or update the model in all cases. You can use the `defer` function from the `options` parameter to do this. The `options` parameter is the fourth parameter of the `update` function.
+
+Without the `defer` function, you would have to return the model and the command in all cases:
+
+```ts
+const update: UpdateMap<Props, Model, Message> = {
+    deferSomething (_msg, model) {
+        if (model.someCondition) {
+            return [{ alwaysUpdate: "someValue", extra: "extra" }, cmd.ofMsg(Msg.alwaysExecute())];
+        }
+
+        return [{ alwaysUpdate: "someValue" }, cmd.ofMsg(Msg.doSomethingElse()), cmd.ofMsg(Msg.alwaysExecute())];
+    },
+
+    ...LoadSettings.update,
+};
+```
+
+Here we always want to update the model with the `alwaysUpdate` property and always dispatch the `alwaysExecute` message.
+
+With the `defer` function, you can do this:
+
+```ts
+const update: UpdateMap<Props, Model, Message> = {
+    deferSomething (_msg, model, _props, { defer }) {
+        defer({ alwaysUpdate: "someValue" }, cmd.ofMsg(Msg.alwaysExecute()));
+
+        if (model.someCondition) {
+            return [{ extra: "extra" }];
+        }
+
+        return [{}, cmd.ofMsg(Msg.doSomethingElse())];
+    },
+
+    ...LoadSettings.update,
+};
+```
+
+The `defer` function can be called multiple times. Model updates and commands are then aggregated. Model updates by the return value overwrite the deferred model updates, while deferred messages are dispatched after the returned messages.
+
+## Call back parent components
+
+Since each component has its own model and messages, communication with parent components is done via callback functions.
+
+To inform the parent component about some action, let's say to close a dialog form, you do the following:
+
+1. Create a message
+
+    ```ts Dialog.ts
+    export type Message =
+        ...
+        | { name: "close" }
+        ...
+
+    export const Msg = {
+        ...
+        close: (): Message => ({ name: "close" }),
+        ...
+    }
+    ```
+
+1. Define a callback function property in the **Props**:
+
+    ```ts Dialog.ts
+    export type Props = {
+        onClose: () => void,
+    };
+    ```
+
+1. Handle the message and call the callback function:
+
+    ```ts Dialog.ts
+    {
+        // ...
+        close () {
+            return [{}, cmd.ofError(props.onClose, Msg.error)];
+        }
+        // ...
+    };
+    ```
+
+1. In the **render** method of the parent component pass the callback as prop
+
+    ```tsx Parent.tsx
+    ...
+    <Dialog onClose={() => this.dispatch(Msg.closeDialog())}>
+    ...
+    ```
+
 ## Composition
 
 If you have some business logic that you want to reuse in other components, you can do this by using different sources for messages.
@@ -672,6 +763,16 @@ const update: UpdateMap<Props, Model, Message> = {
     },
 
     ...LoadSettings.update,
+
+    // You can overwrite the LoadSettings messages handlers here
+
+    settingsLoaded (_msg, _model, _props, { defer, callBase }) {
+        // Use defer and callBase to execute the original handler function:
+        defer(...callBase(LoadSettings.settingsLoaded));
+
+        // Do additional stuff
+        return [{ /* ... */ }];
+    }
 };
 ```
 
@@ -798,97 +899,6 @@ const updateComposition = (model: Model, msg: CompositionMessage): Elm.UpdateRet
     }
 }
 ```
-
-## Deferring model updates and messages
-
-Sometimes you want to always dispatch a message or update the model in all cases. You can use the `defer` function from the `options` parameter to do this. The `options` parameter is the fourth parameter of the `update` function.
-
-Without the `defer` function, you would have to return the model and the command in all cases:
-
-```ts
-const update: UpdateMap<Props, Model, Message> = {
-    deferSomething (_msg, model) {
-        if (model.someCondition) {
-            return [{ alwaysUpdate: "someValue", extra: "extra" }, cmd.ofMsg(Msg.alwaysExecute())];
-        }
-
-        return [{ alwaysUpdate: "someValue" }, cmd.ofMsg(Msg.doSomethingElse()), cmd.ofMsg(Msg.alwaysExecute())];
-    },
-
-    ...LoadSettings.update,
-};
-```
-
-Here we always want to update the model with the `alwaysUpdate` property and always dispatch the `alwaysExecute` message.
-
-With the `defer` function, you can do this:
-
-```ts
-const update: UpdateMap<Props, Model, Message> = {
-    deferSomething (_msg, model, _props, { defer }) {
-        defer({ alwaysUpdate: "someValue" }, cmd.ofMsg(Msg.alwaysExecute()));
-
-        if (model.someCondition) {
-            return [{ extra: "extra" }];
-        }
-
-        return [{}, cmd.ofMsg(Msg.doSomethingElse())];
-    },
-
-    ...LoadSettings.update,
-};
-```
-
-The `defer` function can be called multiple times. Model updates and commands are then aggregated. Model updates by the return value overwrite the deferred model updates, while deferred messages are dispatched after the returned messages.
-
-## Call back parent components
-
-Since each component has its own model and messages, communication with parent components is done via callback functions.
-
-To inform the parent component about some action, let's say to close a dialog form, you do the following:
-
-1. Create a message
-
-    ```ts Dialog.ts
-    export type Message =
-        ...
-        | { name: "close" }
-        ...
-
-    export const Msg = {
-        ...
-        close: (): Message => ({ name: "close" }),
-        ...
-    }
-    ```
-
-1. Define a callback function property in the **Props**:
-
-    ```ts Dialog.ts
-    export type Props = {
-        onClose: () => void,
-    };
-    ```
-
-1. Handle the message and call the callback function:
-
-    ```ts Dialog.ts
-    {
-        // ...
-        close () {
-            return [{}, cmd.ofError(props.onClose, Msg.error)];
-        }
-        // ...
-    };
-    ```
-
-1. In the **render** method of the parent component pass the callback as prop
-
-    ```tsx Parent.tsx
-    ...
-    <Dialog onClose={() => this.dispatch(Msg.closeDialog())}>
-    ...
-    ```
 
 ## Testing
 

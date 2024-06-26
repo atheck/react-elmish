@@ -2,6 +2,7 @@ import React from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
 import type { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
+import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
 
@@ -99,11 +100,14 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 		let modified = false;
 
 		do {
-			logMessage(this.componentName, nextMsg);
+			const currentMessage = nextMsg;
+
+			logMessage(this.componentName, currentMessage);
 
 			const [defer, getDeferred] = createDefer<TModel, TMessage>();
+			const callBase = createCallBase(currentMessage, this.currentModel, this.props, { defer });
 
-			const [model, ...commands] = this.update(this.currentModel, nextMsg, this.props, { defer });
+			const [model, ...commands] = this.update(this.currentModel, currentMessage, this.props, { defer, callBase });
 
 			const [deferredModel, deferredCommands] = getDeferred();
 
