@@ -1,5 +1,5 @@
-import type { InitFunction, Message } from "../Types";
-import { createModelAndProps } from "./createModelAndProps";
+import type { InitFunction, Message, UpdateFunctionOptions } from "../Types";
+import { createModelAndProps, createOptions } from "./createModelAndProps";
 import type { ModelAndPropsFactory, UpdateArgsFactory } from "./createUpdateArgsFactory";
 
 /**
@@ -21,8 +21,12 @@ function getCreateUpdateArgs<TProps, TModel, TMessage extends Message>(
 		msg: TMessage,
 		modelTemplate?: Partial<TModel>,
 		propsTemplate?: Partial<TProps>,
-	): [TMessage, TModel, TProps] {
-		return [msg, ...createModelAndProps(init, initProps, modelTemplate, propsTemplate)];
+		optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
+	): [TMessage, TModel, TProps, UpdateFunctionOptions<TProps, TModel, TMessage>] {
+		const args = createModelAndProps(init, initProps, modelTemplate, propsTemplate);
+		const options = createOptions(msg, ...args, optionsTemplate);
+
+		return [msg, ...args, options];
 	};
 }
 
