@@ -16,14 +16,20 @@ import { execCmd } from "./execCmd";
  */
 function getUpdateFn<TProps, TModel, TMessage extends Message>(
 	updateMap: UpdateMap<TProps, TModel, TMessage>,
-): (msg: TMessage, model: TModel, props: TProps) => UpdateReturnType<TModel, TMessage> {
-	return function updateFn(msg, model, props): UpdateReturnType<TModel, TMessage> {
+): (
+	msg: TMessage,
+	model: TModel,
+	props: TProps,
+	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
+) => UpdateReturnType<TModel, TMessage> {
+	return function updateFn(msg, model, props, optionsTemplate): UpdateReturnType<TModel, TMessage> {
 		const [defer, getDeferred] = createDefer<TModel, TMessage>();
 		const callBase = createCallBase(msg, model, props, { defer });
 
 		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
 			defer,
 			callBase,
+			...optionsTemplate,
 		};
 
 		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props, options);
@@ -46,14 +52,20 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
  */
 function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 	updateMap: UpdateMap<TProps, TModel, TMessage>,
-): (msg: TMessage, model: TModel, props: TProps) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
-	return async function updateAndExecCmdFn(msg, model, props): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
+): (
+	msg: TMessage,
+	model: TModel,
+	props: TProps,
+	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
+) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
+	return async function updateAndExecCmdFn(msg, model, props, optionsTemplate): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
 		const [defer, getDeferred] = createDefer<TModel, TMessage>();
 		const callBase = createCallBase(msg, model, props, { defer });
 
 		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
 			defer,
 			callBase,
+			...optionsTemplate,
 		};
 
 		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props, options);
