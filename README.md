@@ -957,7 +957,7 @@ const createUpdateArgs = getCreateUpdateArgs(init, () => ({ /* initial props */ 
 
 it("returns the correct model and cmd", async () => {
     // arrange
-    const args = createUpdateArgs(Msg.test(), { /* optionally override model here */ }, { /* optionally override props here */ });
+    const args = createUpdateArgs(Msg.test(), { /* optionally override model here */ }, { /* optionally override props here */ }, { /* optionally override options here */ });
 
     // act
     // Call the update handler
