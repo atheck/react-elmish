@@ -1,6 +1,6 @@
-import type { UpdateFunctionOptions, UpdateMapFunction, UpdateReturnType } from "./Types";
+import type { Message, UpdateFunctionOptions, UpdateMapFunction, UpdateReturnType } from "./Types";
 
-function createCallBase<TProps, TModel, TMessage>(
+function createCallBase<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
