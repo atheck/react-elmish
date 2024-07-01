@@ -1,12 +1,11 @@
 import type { Message, UpdateFunctionOptions } from "../Types";
-import { createOptions } from "./createModelAndProps";
 
 type UpdateArgsFactory<TProps, TModel, TMessage extends Message> = (
 	msg: TMessage,
 	modelTemplate?: Partial<TModel>,
 	propsTemplate?: Partial<TProps>,
 	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-) => [TMessage, TModel, TProps, UpdateFunctionOptions<TProps, TModel, TMessage>];
+) => [TMessage, TModel, TProps, Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>?];
 
 type ModelAndPropsFactory<TProps, TModel> = (
 	modelTemplate?: Partial<TModel>,
@@ -14,7 +13,7 @@ type ModelAndPropsFactory<TProps, TModel> = (
 ) => [TModel, TProps];
 
 /**
- * Creates a factory function to create a message, a model, and props which can be passed to an update function in tests.
+ * Creates a factory function to create a message, a model, props, and options which can be passed to an update function in tests.
  * @param {() => TModel} initModel A function to create an initial model.
  * @param {() => TProps} initProps A function to create initial props.
  * @returns {UpdateArgsFactory<TProps, TModel, TMessage>} A function to create a message, a model, and props.
@@ -33,7 +32,7 @@ function createUpdateArgsFactory<TProps, TModel, TMessage extends Message>(
 		modelTemplate?: Partial<TModel>,
 		propsTemplate?: Partial<TProps>,
 		optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-	): [TMessage, TModel, TProps, UpdateFunctionOptions<TProps, TModel, TMessage>] {
+	): [TMessage, TModel, TProps, Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>?] {
 		const model = {
 			...initModel(),
 			...modelTemplate,
@@ -43,9 +42,7 @@ function createUpdateArgsFactory<TProps, TModel, TMessage extends Message>(
 			...propsTemplate,
 		};
 
-		const options = createOptions(msg, model, props, optionsTemplate);
-
-		return [msg, model, props, options];
+		return [msg, model, props, optionsTemplate];
 	};
 }
 
