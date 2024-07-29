@@ -264,12 +264,6 @@ You can call one of the functions of that object:
 | `cmd.ofEither` | Calls a function (sync or async) and maps the result into a message. |
 | `cmd.ofSuccess` | Same as `ofEither` but ignores the error case. |
 | `cmd.ofError` | Same as `ofEither` but ignores the success case. |
-| `cmd.ofFunc.either` | Calls a synchronous function and maps the result into a message. |
-| `cmd.ofFunc.perform` | Same as `either` but ignores the error case.  |
-| `cmd.ofFunc.attempt` | Same as `either` but ignores the success case.  |
-| `cmd.ofPromise.either` | Calls an async function and maps the result into a message. |
-| `cmd.ofPromise.perform` | Same as `either` but ignores the error case. |
-| `cmd.ofPromise.attempt` | Same as `either` but ignores the success case. |
 | `cmd.ofSub` | Use this function to trigger a command in a subscription. |
 
 ### Dispatch a message

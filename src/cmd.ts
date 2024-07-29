@@ -107,6 +107,7 @@ const cmd = {
 
 	/**
 	 * Provides functionalities to create commands from simple functions.
+	 * @deprecated Use `ofEither`, `ofSuccess`, or `ofError` instead.
 	 */
 	ofFunc: {
 		/**
@@ -188,6 +189,7 @@ const cmd = {
 
 	/**
 	 * Provides functionalities to create commands from async functions.
+	 * @deprecated Use `ofEither`, `ofSuccess`, or `ofError` instead.
 	 */
 	ofPromise: {
 		/**
