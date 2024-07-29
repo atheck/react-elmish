@@ -1,5 +1,4 @@
 import { execCmd } from ".";
-import type { Nullable } from "../Types";
 import { cmd } from "../cmd";
 
 type Message = { name: "Msg1" } | { name: "Msg2" } | { name: "Error" };
@@ -155,7 +154,7 @@ describe("execCmd", () => {
 		expect(messages).toStrictEqual([{ name: "Msg1" }]);
 	});
 
-	it("rejects for async perform, fail", async () => {
+	it("does not throw when async perform fails", async () => {
 		// arrange
 		const asyncFunc = async (): Promise<void> => {
 			throw new Error("fail");
@@ -164,10 +163,10 @@ describe("execCmd", () => {
 		const commands = cmd.ofPromise.perform(asyncFunc, (): Message => ({ name: "Msg1" }));
 
 		// act
-		const fail = async (): Promise<Nullable<Message>[]> => await execCmd(commands);
+		const messages = await execCmd(commands);
 
 		// assert
-		await expect(fail()).rejects.toThrow("fail");
+		expect(messages).toStrictEqual([null]);
 	});
 
 	it("resolves for attempt", async () => {
@@ -215,7 +214,7 @@ describe("execCmd", () => {
 		expect(messages).toStrictEqual([{ name: "Msg1" }]);
 	});
 
-	it("rejects for sync perform, fail", async () => {
+	it("does not throw if sync perform fails", async () => {
 		// arrange
 		const func = (): void => {
 			throw new Error("fail");
@@ -224,9 +223,9 @@ describe("execCmd", () => {
 		const commands = cmd.ofFunc.perform(func, (): Message => ({ name: "Msg1" }));
 
 		// act
-		const fail = async (): Promise<Nullable<Message>[]> => await execCmd(commands);
+		const messages = await execCmd(commands);
 
 		// assert
-		await expect(fail()).rejects.toThrow("fail");
+		expect(messages).toStrictEqual([null]);
 	});
 });

@@ -44,7 +44,7 @@ const cmd = {
 
 				Promise.resolve(taskResult)
 					.then((result) => dispatch(ofSuccess(result)))
-					.catch((ex: Error) => dispatch(ofError(ex)));
+					.catch((ex: unknown) => dispatch(ofError(ex as Error)));
 			} catch (ex: unknown) {
 				dispatch(ofError(ex as Error));
 			}
@@ -70,9 +70,9 @@ const cmd = {
 
 				Promise.resolve(taskResult)
 					.then((result) => dispatch(ofSuccess(result)))
-					.catch(fallback);
-			} catch (ex: unknown) {
-				fallback(ex as Error);
+					.catch(() => fallback());
+			} catch {
+				fallback();
 			}
 		};
 
@@ -96,7 +96,7 @@ const cmd = {
 
 				Promise.resolve(taskResult)
 					.then(() => fallback?.())
-					.catch((ex: Error) => dispatch(ofError(ex)));
+					.catch((ex: unknown) => dispatch(ofError(ex as Error)));
 			} catch (ex: unknown) {
 				dispatch(ofError(ex as Error));
 			}
@@ -151,10 +151,8 @@ const cmd = {
 					const result = task(...args);
 
 					dispatch(ofSuccess(result));
-				} catch (ex: unknown) {
-					if (fallback) {
-						fallback(ex as Error);
-					}
+				} catch {
+					fallback?.();
 				}
 			};
 
@@ -208,7 +206,7 @@ const cmd = {
 			const bind = (dispatch: Dispatch<TSuccessMessage | TErrorMessage>): void => {
 				task(...args)
 					.then((result) => dispatch(ofSuccess(result)))
-					.catch((ex: Error) => dispatch(ofError(ex)));
+					.catch((ex: unknown) => dispatch(ofError(ex as Error)));
 			};
 
 			return [bind];
@@ -228,7 +226,7 @@ const cmd = {
 			const bind = (dispatch: Dispatch<TSuccessMessage>, fallback: FallbackHandler = defaultFallbackHandler): void => {
 				task(...args)
 					.then((result) => dispatch(ofSuccess(result)))
-					.catch(fallback);
+					.catch(() => fallback());
 			};
 
 			return [bind];
@@ -247,12 +245,8 @@ const cmd = {
 		): Cmd<TErrorMessage> {
 			const bind = (dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): void => {
 				task(...args)
-					.then(() => {
-						if (fallback) {
-							fallback();
-						}
-					})
-					.catch((ex: Error) => dispatch(ofError(ex)));
+					.then(() => fallback?.())
+					.catch((ex: unknown) => dispatch(ofError(ex as Error)));
 			};
 
 			return [bind];
