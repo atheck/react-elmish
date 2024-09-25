@@ -3,6 +3,13 @@
   "extends": [
     "eslint-config-heck/biome"
   ],
+  "linter": {
+    "rules": {
+      "performance": {
+        "noBarrelFile": "off"
+      }
+    }
+  },
   "organizeImports": {
     "enabled": false
   },
