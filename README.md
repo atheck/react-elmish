@@ -24,7 +24,8 @@ This library brings the elmish pattern to react.
 - [Call back parent components](#call-back-parent-components)
 - [Composition](#composition)
   - [With an `UpdateMap`](#with-an-updatemap)
-- [With an update function](#with-an-update-function)
+  - [With an update function](#with-an-update-function)
+  - [Merge multiple subscriptions](#merge-multiple-subscriptions)
 - [Testing](#testing)
   - [Testing the init function](#testing-the-init-function)
   - [Testing the update handler](#testing-the-update-handler)
@@ -770,7 +771,7 @@ const update: UpdateMap<Props, Model, Message> = {
 };
 ```
 
-## With an update function
+### With an update function
 
 Let's say you want to load some settings, you can write a module like this:
 
@@ -892,6 +893,21 @@ const updateComposition = (model: Model, msg: CompositionMessage): Elm.UpdateRet
             return [{}];
     }
 }
+```
+
+### Merge multiple subscriptions
+
+If you use composition and thus have multiple subscriptions, you can merge them with the `mergeSubscriptions` function:
+
+```ts
+import { mergeSubscriptions } from "react-elmish";
+import * as LoadSettings from "./LoadSettings";
+
+function localSubscription (model: Model): SubscriptionResult<Message> {
+    // ...
+}
+
+const subscription = mergeSubscriptions(LoadSettings.subscription, localSubscription);
 ```
 
 ## Testing
