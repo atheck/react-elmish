@@ -78,6 +78,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	 * @type {Readonly<TModel>}
 	 * @memberof ElmComponent
 	 */
+	// eslint-disable-next-line react/no-unused-class-component-methods -- We need it internally.
 	public get model(): Readonly<TModel> {
 		return this.currentModel;
 	}

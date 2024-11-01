@@ -85,8 +85,8 @@ const cmd = {
 	 * @param ofError Creates the message to dispatch when the function runs successfully or, for an async function, the promise is rejected.
 	 * @param args The parameters of the task.
 	 */
-	ofError<TErrorMessage extends Message, TArgs extends unknown[], TReturn>(
-		task: (...args: TArgs) => TReturn,
+	ofError<TErrorMessage extends Message, TArgs extends unknown[]>(
+		task: (...args: TArgs) => unknown,
 		ofError: (error: Error) => TErrorMessage,
 		...args: TArgs
 	): Cmd<TErrorMessage> {
@@ -166,8 +166,8 @@ const cmd = {
 		 * @param ofError Creates the message to dispatch when an error occurred.
 		 * @param args The parameters of the task.
 		 */
-		attempt<TErrorMessage extends Message, TArgs extends unknown[], TReturn>(
-			task: (...args: TArgs) => TReturn,
+		attempt<TErrorMessage extends Message, TArgs extends unknown[]>(
+			task: (...args: TArgs) => unknown,
 			ofError: (error: Error) => TErrorMessage,
 			...args: TArgs
 		): Cmd<TErrorMessage> {

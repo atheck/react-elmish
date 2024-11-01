@@ -10,9 +10,9 @@ import { setFakeOptions, type RenderWithModelOptions } from "../fakeOptions";
  * @param {(TModel | RenderWithModelOptions<TModel, TMessage>)} options The model or an options object.
  * @returns {TResult} The returned value of the `render` function.
  */
-function renderWithModel<TModel extends object, TMessage extends Message, TResult>(
+function renderWithModel<TMessage extends Message, TResult>(
 	render: () => TResult,
-	model: TModel,
+	model: object,
 	options?: RenderWithModelOptions<TMessage>,
 ): TResult {
 	setFakeOptions({

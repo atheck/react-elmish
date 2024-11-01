@@ -1,7 +1,7 @@
 import { Services } from "./Init";
 import type { Cmd, Dispatch, Message } from "./Types";
 
-function logMessage<TMessage extends Message>(name: string, msg: TMessage): void {
+function logMessage(name: string, msg: Message): void {
 	Services.logger?.info("Message from", name, msg.name);
 	Services.logger?.debug("Message from", name, msg);
 
