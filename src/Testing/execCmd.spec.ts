@@ -30,7 +30,7 @@ describe("execCmd", () => {
 		};
 
 		const commands = cmd.batch(
-			cmd.ofFunc.either(
+			cmd.ofEither(
 				func,
 				() => ({ name: "Msg1" }),
 				() => ({ name: "Error" }),
@@ -52,7 +52,7 @@ describe("execCmd", () => {
 		};
 
 		const commands = cmd.batch(
-			cmd.ofFunc.either(
+			cmd.ofEither(
 				func,
 				() => ({ name: "Msg1" }),
 				() => ({ name: "Error" }),
@@ -72,7 +72,7 @@ describe("execCmd", () => {
 		const asyncFunc = async (): Promise<void> => undefined;
 
 		const commands = cmd.batch(
-			cmd.ofPromise.either(
+			cmd.ofEither(
 				asyncFunc,
 				() => ({ name: "Msg1" }),
 				() => ({ name: "Error" }),
@@ -94,7 +94,7 @@ describe("execCmd", () => {
 		};
 
 		const commands = cmd.batch(
-			cmd.ofPromise.either(
+			cmd.ofEither(
 				asyncFunc,
 				() => ({ name: "Msg1" }),
 				() => ({ name: "Error" }),
@@ -113,7 +113,7 @@ describe("execCmd", () => {
 		// arrange
 		const asyncFunc = async (): Promise<void> => undefined;
 
-		const commands = cmd.ofPromise.attempt(asyncFunc, () => ({
+		const commands = cmd.ofError(asyncFunc, () => ({
 			name: "Error",
 		}));
 
@@ -130,7 +130,7 @@ describe("execCmd", () => {
 			throw new Error("error");
 		};
 
-		const commands = cmd.ofPromise.attempt(asyncFunc, () => ({
+		const commands = cmd.ofError(asyncFunc, () => ({
 			name: "Error",
 		}));
 
@@ -145,7 +145,7 @@ describe("execCmd", () => {
 		// arrange
 		const asyncFunc = async (): Promise<void> => undefined;
 
-		const commands = cmd.ofPromise.perform(asyncFunc, () => ({ name: "Msg1" }));
+		const commands = cmd.ofSuccess(asyncFunc, () => ({ name: "Msg1" }));
 
 		// act
 		const messages = await execCmd(commands);
@@ -160,7 +160,7 @@ describe("execCmd", () => {
 			throw new Error("fail");
 		};
 
-		const commands = cmd.ofPromise.perform(asyncFunc, (): Message => ({ name: "Msg1" }));
+		const commands = cmd.ofSuccess(asyncFunc, (): Message => ({ name: "Msg1" }));
 
 		// act
 		const messages = await execCmd(commands);
@@ -175,7 +175,7 @@ describe("execCmd", () => {
 			// blank
 		};
 
-		const commands = cmd.ofFunc.attempt(func, () => ({ name: "Error" }));
+		const commands = cmd.ofError(func, () => ({ name: "Error" }));
 
 		// act
 		const messages = await execCmd(commands);
@@ -190,7 +190,7 @@ describe("execCmd", () => {
 			throw new Error("fail");
 		};
 
-		const commands = cmd.ofFunc.attempt(func, () => ({ name: "Error" }));
+		const commands = cmd.ofError(func, () => ({ name: "Error" }));
 
 		// act
 		const messages = await execCmd(commands);
@@ -205,7 +205,7 @@ describe("execCmd", () => {
 			// blank
 		};
 
-		const commands = cmd.ofFunc.perform(func, () => ({ name: "Msg1" }));
+		const commands = cmd.ofSuccess(func, () => ({ name: "Msg1" }));
 
 		// act
 		const messages = await execCmd(commands);
@@ -220,7 +220,7 @@ describe("execCmd", () => {
 			throw new Error("fail");
 		};
 
-		const commands = cmd.ofFunc.perform(func, (): Message => ({ name: "Msg1" }));
+		const commands = cmd.ofSuccess(func, (): Message => ({ name: "Msg1" }));
 
 		// act
 		const messages = await execCmd(commands);
