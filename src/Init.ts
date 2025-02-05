@@ -48,4 +48,4 @@ function init(options: ElmOptions): void {
 
 export type { DispatchMiddlewareFunc, ElmOptions, ErrorMiddlewareFunc, Logger };
 
-export { Services, init };
+export { init, Services };

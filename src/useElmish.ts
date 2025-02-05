@@ -95,7 +95,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		propsRef.current = props;
 	}
 
-	const fakeOptions = getFakeOptionsOnce();
+	const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
 	const dispatch = useCallback(
 		fakeOptions?.dispatch ??
 			((msg: TMessage): void => {
@@ -122,11 +122,12 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 				if (isMountedRef.current && modified) {
 					setModel((prevModel) => {
-						const updatedModel = { ...(prevModel as TModel), ...currentModel };
+						const updatedModel = { ...prevModel, ...currentModel };
 
 						Services.logger?.debug("Update model for", name, updatedModel);
 
-						return updatedModel;
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We always have a full model here
+						return updatedModel as TModel;
 					});
 				}
 			}),
@@ -134,7 +135,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	);
 
 	if (!initializedModel) {
-		const [initModel, ...initCommands] = fakeOptions?.model ? [fakeOptions.model as TModel] : init(props);
+		const [initModel, ...initCommands] = fakeOptions?.model ? [fakeOptions.model] : init(props);
 
 		initializedModel = initModel;
 		setModel(initializedModel);

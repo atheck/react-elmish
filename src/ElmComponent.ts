@@ -34,7 +34,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	public constructor(props: TProps, init: InitFunction<TProps, TModel, TMessage>, name: string) {
 		super(props);
 
-		const fakeOptions = getFakeOptionsOnce();
+		const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
 
 		if (fakeOptions?.dispatch) {
 			this.dispatch = fakeOptions.dispatch;

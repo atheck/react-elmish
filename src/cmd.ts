@@ -14,7 +14,7 @@ const cmd = {
 	 * @param {Cmd<TMessage> []} commands Array of commands.
 	 */
 	batch<TMessage extends Message>(...commands: (Cmd<TMessage> | undefined | null)[]): Cmd<TMessage> {
-		return (commands.filter(Boolean) as Cmd<TMessage>[]).flat();
+		return commands.filter((current) => current != null).flat();
 	},
 
 	/**
@@ -44,8 +44,10 @@ const cmd = {
 
 				Promise.resolve(taskResult)
 					.then((result) => dispatch(ofSuccess(result)))
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
 					.catch((ex: unknown) => dispatch(ofError(ex as Error)));
 			} catch (ex: unknown) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
 				dispatch(ofError(ex as Error));
 			}
 		};
@@ -96,8 +98,10 @@ const cmd = {
 
 				Promise.resolve(taskResult)
 					.then(() => fallback?.())
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
 					.catch((ex: unknown) => dispatch(ofError(ex as Error)));
 			} catch (ex: unknown) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
 				dispatch(ofError(ex as Error));
 			}
 		};
