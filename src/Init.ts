@@ -27,12 +27,15 @@ interface ElmOptions {
 	 * @type {DispatchMiddlewareFunc}
 	 */
 	dispatchMiddleware?: DispatchMiddlewareFunc;
+
+	enableDevTools?: boolean;
 }
 
 const Services: ElmOptions = {
 	logger: undefined,
 	errorMiddleware: undefined,
 	dispatchMiddleware: undefined,
+	enableDevTools: false,
 };
 
 /**
@@ -44,6 +47,7 @@ function init(options: ElmOptions): void {
 	Services.logger = options.logger;
 	Services.errorMiddleware = options.errorMiddleware;
 	Services.dispatchMiddleware = options.dispatchMiddleware;
+	Services.enableDevTools = options.enableDevTools;
 }
 
 export type { DispatchMiddlewareFunc, ElmOptions, ErrorMiddlewareFunc, Logger };

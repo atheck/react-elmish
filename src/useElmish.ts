@@ -59,6 +59,8 @@ interface UseElmishOptions<TProps, TModel, TMessage extends Message> {
 	subscription?: Subscription<TProps, TModel, TMessage>;
 }
 
+const withDevTools = Services.enableDevTools && typeof window !== "undefined" && "__REDUX_DEVTOOLS_EXTENSION__" in window;
+
 /**
  * Hook to use the Elm architecture pattern in a function component.
  * @param {UseElmishOptions} options The options passed the the hook.
@@ -80,12 +82,27 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	const [model, setModel] = useState<Nullable<TModel>>(null);
 	const propsRef = useRef(props);
 	const isMountedRef = useRef(true);
+	const devTools = useRef<unknown>(null);
 
 	useEffect(() => {
+		if (withDevTools) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, no-underscore-dangle, @typescript-eslint/no-unsafe-member-access
+			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect();
+		}
+
 		isMountedRef.current = true;
 
 		return () => {
 			isMountedRef.current = false;
+
+			if (withDevTools) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, no-underscore-dangle, @typescript-eslint/no-unsafe-member-access
+				window.__REDUX_DEVTOOLS_EXTENSION__.disconnect();
+			}
 		};
 	}, []);
 
@@ -178,6 +195,13 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		if (modelHasChanged(currentModel, { ...deferredModel, ...newModel })) {
 			currentModel = { ...currentModel, ...deferredModel, ...newModel };
+
+			if (withDevTools) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+				devTools.current?.send(nextMsg.name, currentModel);
+			}
 
 			modified = true;
 		}
