@@ -59,8 +59,6 @@ interface UseElmishOptions<TProps, TModel, TMessage extends Message> {
 	subscription?: Subscription<TProps, TModel, TMessage>;
 }
 
-const withDevTools = Services.enableDevTools && typeof window !== "undefined" && "__REDUX_DEVTOOLS_EXTENSION__" in window;
-
 /**
  * Hook to use the Elm architecture pattern in a function component.
  * @param {UseElmishOptions} options The options passed the the hook.
@@ -82,6 +80,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	const [model, setModel] = useState<Nullable<TModel>>(null);
 	const propsRef = useRef(props);
 	const isMountedRef = useRef(true);
+
+	const withDevTools = Services.enableDevTools && typeof window !== "undefined" && "__REDUX_DEVTOOLS_EXTENSION__" in window;
 	const devTools = useRef<unknown>(null);
 
 	useEffect(() => {
@@ -104,7 +104,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 				window.__REDUX_DEVTOOLS_EXTENSION__.disconnect();
 			}
 		};
-	}, []);
+	}, [withDevTools]);
 
 	let initializedModel = model;
 
