@@ -95,6 +95,9 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			console.log("redux dev tools:", devTools.current);
 
 			reduxUnsubscribe = devTools.current.subscribe<TModel>((message) => {
+				// biome-ignore lint/suspicious/noConsole: <explanation>
+				console.log("redux dev tools message:", message);
+
 				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
 					setModel(message.state);
 				}
@@ -201,6 +204,9 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		if (modelHasChanged(currentModel, { ...deferredModel, ...newModel })) {
 			currentModel = { ...currentModel, ...deferredModel, ...newModel };
+
+			// biome-ignore lint/suspicious/noConsole: <explanation>
+			console.log("redux currentModel:", currentModel);
 
 			devTools.current?.send(nextMsg.name, currentModel);
 
