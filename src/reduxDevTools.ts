@@ -10,16 +10,16 @@ interface ReduxOptions {
 interface ReduxDevTools {
 	init: (state: unknown) => void;
 	send: (message: string, state: unknown, options?: ReduxOptions) => void;
-	subscribe: <TState>(callback: (message: ReduxMessage<TState>) => void) => () => void;
+	subscribe: (callback: (message: ReduxMessage) => void) => () => void;
 	unsubscribe: () => void;
 }
 
-interface ReduxMessage<TState> {
+interface ReduxMessage {
 	type: string;
 	payload: {
 		type: string;
 	};
-	state: TState;
+	state: string;
 }
 
 interface ReduxDevToolsExtensionWindow extends Window {

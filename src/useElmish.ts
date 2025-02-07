@@ -94,12 +94,13 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			// biome-ignore lint/suspicious/noConsole: <explanation>
 			console.log("redux dev tools:", devTools.current);
 
-			reduxUnsubscribe = devTools.current.subscribe<TModel>((message) => {
+			reduxUnsubscribe = devTools.current.subscribe((message) => {
 				// biome-ignore lint/suspicious/noConsole: <explanation>
 				console.log("redux dev tools message:", message);
 
 				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
-					setModel(message.state);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+					setModel(JSON.parse(message.state) as TModel);
 				}
 			});
 		}
