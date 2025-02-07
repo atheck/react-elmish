@@ -89,7 +89,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		if (Services.enableDevTools === true && isReduxDevToolsEnabled(window)) {
 			// eslint-disable-next-line no-underscore-dangle
-			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name });
+			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name, serialize: { options: true } });
 
 			// biome-ignore lint/suspicious/noConsole: <explanation>
 			console.log("redux dev tools:", devTools.current);

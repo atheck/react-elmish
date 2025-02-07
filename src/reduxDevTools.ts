@@ -5,6 +5,9 @@ interface ReduxDevToolsExtension {
 
 interface ReduxOptions {
 	name?: string;
+	serialize?: {
+		options?: boolean;
+	};
 }
 
 interface ReduxDevTools {
