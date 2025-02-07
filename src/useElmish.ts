@@ -16,6 +16,7 @@ import type {
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
+import { isReduxDevToolsEnabled, type ReduxDevTools } from "./reduxDevTools";
 
 /**
  * The return type of the `subscription` function.
@@ -81,15 +82,26 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	const propsRef = useRef(props);
 	const isMountedRef = useRef(true);
 
-	const withDevTools = Services.enableDevTools && typeof window !== "undefined" && "__REDUX_DEVTOOLS_EXTENSION__" in window;
-	const devTools = useRef<unknown>(null);
+	const devTools = useRef<ReduxDevTools | null>(null);
 
 	useEffect(() => {
-		if (withDevTools) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-expect-error
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, no-underscore-dangle, @typescript-eslint/no-unsafe-member-access
-			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect();
+		let reduxUnsubscribe: (() => void) | undefined;
+
+		if (Services.enableDevTools === true && isReduxDevToolsEnabled(window)) {
+			// eslint-disable-next-line no-underscore-dangle
+			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name });
+
+			// biome-ignore lint/suspicious/noConsole: <explanation>
+			console.log("redux dev tools:", devTools.current);
+
+			reduxUnsubscribe = devTools.current.subscribe<TModel>((message) => {
+				// biome-ignore lint/suspicious/noConsole: <explanation>
+				console.log("redux dev tools message:", message);
+
+				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_STATE") {
+					setModel(message.state);
+				}
+			});
 		}
 
 		isMountedRef.current = true;
@@ -97,14 +109,14 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		return () => {
 			isMountedRef.current = false;
 
-			if (withDevTools) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-expect-error
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, no-underscore-dangle, @typescript-eslint/no-unsafe-member-access
-				window.__REDUX_DEVTOOLS_EXTENSION__.disconnect();
-			}
+			reduxUnsubscribe?.();
+
+			// if (Services.enableDevTools === true && isReduxDevToolsEnabled(window)) {
+			// 	// eslint-disable-next-line no-underscore-dangle
+			// 	window.__REDUX_DEVTOOLS_EXTENSION__.disconnect();
+			// }
 		};
-	}, [withDevTools]);
+	}, [name]);
 
 	let initializedModel = model;
 
@@ -157,6 +169,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		initializedModel = initModel;
 		setModel(initializedModel);
 
+		devTools.current?.init(initializedModel);
+
 		Services.logger?.debug("Initial model for", name, initializedModel);
 
 		execCmd(dispatch, ...initCommands);
@@ -196,12 +210,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		if (modelHasChanged(currentModel, { ...deferredModel, ...newModel })) {
 			currentModel = { ...currentModel, ...deferredModel, ...newModel };
 
-			if (withDevTools) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-expect-error
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-				devTools.current?.send(nextMsg.name, currentModel);
-			}
+			devTools.current?.send(nextMsg.name, currentModel);
 
 			modified = true;
 		}
