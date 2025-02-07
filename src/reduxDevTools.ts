@@ -11,6 +11,7 @@ interface ReduxDevTools {
 	init: (state: unknown) => void;
 	send: (message: string, state: unknown, options?: ReduxOptions) => void;
 	subscribe: <TState>(callback: (message: ReduxMessage<TState>) => void) => () => void;
+	unsubscribe: () => void;
 }
 
 interface ReduxMessage<TState> {
@@ -34,6 +35,12 @@ declare global {
 }
 
 function isReduxDevToolsEnabled(window: Window | undefined): window is ReduxDevToolsExtensionWindow {
+	// eslint-disable-next-line no-underscore-dangle
+	const forLog = window?.__REDUX_DEVTOOLS_EXTENSION__;
+
+	// biome-ignore lint/suspicious/noConsole: <explanation>
+	console.log("REDUX_DEVTOOLS_EXTENSION", forLog);
+
 	return window !== undefined && "__REDUX_DEVTOOLS_EXTENSION__" in window;
 }
 

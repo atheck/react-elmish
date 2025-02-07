@@ -95,10 +95,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			console.log("redux dev tools:", devTools.current);
 
 			reduxUnsubscribe = devTools.current.subscribe<TModel>((message) => {
-				// biome-ignore lint/suspicious/noConsole: <explanation>
-				console.log("redux dev tools message:", message);
-
-				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_STATE") {
+				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
 					setModel(message.state);
 				}
 			});
@@ -110,11 +107,6 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			isMountedRef.current = false;
 
 			reduxUnsubscribe?.();
-
-			// if (Services.enableDevTools === true && isReduxDevToolsEnabled(window)) {
-			// 	// eslint-disable-next-line no-underscore-dangle
-			// 	window.__REDUX_DEVTOOLS_EXTENSION__.disconnect();
-			// }
 		};
 	}, [name]);
 
