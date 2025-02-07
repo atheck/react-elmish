@@ -16,6 +16,7 @@ import type {
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
+import { isReduxDevToolsEnabled, type ReduxDevTools } from "./reduxDevTools";
 
 /**
  * The return type of the `subscription` function.
@@ -81,13 +82,31 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	const propsRef = useRef(props);
 	const isMountedRef = useRef(true);
 
+	const devTools = useRef<ReduxDevTools | null>(null);
+
 	useEffect(() => {
+		let reduxUnsubscribe: (() => void) | undefined;
+
+		if (Services.enableDevTools === true && isReduxDevToolsEnabled(window)) {
+			// eslint-disable-next-line no-underscore-dangle
+			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name, serialize: { options: true } });
+
+			reduxUnsubscribe = devTools.current.subscribe((message) => {
+				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+					setModel(JSON.parse(message.state) as TModel);
+				}
+			});
+		}
+
 		isMountedRef.current = true;
 
 		return () => {
 			isMountedRef.current = false;
+
+			reduxUnsubscribe?.();
 		};
-	}, []);
+	}, [name]);
 
 	let initializedModel = model;
 
@@ -115,6 +134,10 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 						modified = true;
 					}
 
+					if (devTools.current) {
+						devTools.current.send(nextMsg.name, { ...initializedModel, ...currentModel });
+					}
+
 					nextMsg = buffer.shift();
 				} while (nextMsg);
 
@@ -139,6 +162,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		initializedModel = initModel;
 		setModel(initializedModel);
+
+		devTools.current?.init(initializedModel);
 
 		Services.logger?.debug("Initial model for", name, initializedModel);
 

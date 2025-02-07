@@ -32,6 +32,7 @@ This library brings the elmish pattern to react.
   - [Combine update and execCmd](#combine-update-and-execcmd)
   - [Testing subscriptions](#testing-subscriptions)
   - [UI Tests](#ui-tests)
+- [Redux Dev Tools](#redux-dev-tools)
 - [Migrations](#migrations)
   - [From v1.x to v2.x](#from-v1x-to-v2x)
   - [From v2.x to v3.x](#from-v2x-to-v3x)
@@ -1076,6 +1077,20 @@ it("dispatches the correct message", async () => {
 ```
 
 This works for function components using the `useElmish` hook and class components.
+
+## Redux Dev Tools
+
+If you have the Redux Dev Tools installed in your browser, you can enable support for this extension by setting the `enableDevTools` option to `true` in the `init` function.
+
+```ts
+import { init } from "react-elmish";
+
+init({
+    enableDevTools: true,
+});
+```
+
+Hint: You should only enable this in development mode.
 
 ## Migrations
 
