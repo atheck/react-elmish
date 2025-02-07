@@ -91,13 +91,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			// eslint-disable-next-line no-underscore-dangle
 			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name, serialize: { options: true } });
 
-			// biome-ignore lint/suspicious/noConsole: <explanation>
-			console.log("redux dev tools:", devTools.current);
-
 			reduxUnsubscribe = devTools.current.subscribe((message) => {
-				// biome-ignore lint/suspicious/noConsole: <explanation>
-				console.log("redux dev tools message:", message);
-
 				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
 					setModel(JSON.parse(message.state) as TModel);
@@ -140,10 +134,9 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 						modified = true;
 					}
 
-					// biome-ignore lint/suspicious/noConsole: <explanation>
-					console.log("redux currentModel:", { ...initializedModel, ...currentModel });
-
-					devTools.current?.send(nextMsg.name, { ...initializedModel, ...currentModel });
+					if (devTools.current) {
+						devTools.current.send(nextMsg.name, { ...initializedModel, ...currentModel });
+					}
 
 					nextMsg = buffer.shift();
 				} while (nextMsg);
