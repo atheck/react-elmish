@@ -139,6 +139,11 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 						modified = true;
 					}
 
+					// biome-ignore lint/suspicious/noConsole: <explanation>
+					console.log("redux currentModel:", { ...initializedModel, ...currentModel });
+
+					devTools.current?.send(nextMsg.name, { ...initializedModel, ...currentModel });
+
 					nextMsg = buffer.shift();
 				} while (nextMsg);
 
@@ -204,11 +209,6 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		if (modelHasChanged(currentModel, { ...deferredModel, ...newModel })) {
 			currentModel = { ...currentModel, ...deferredModel, ...newModel };
-
-			// biome-ignore lint/suspicious/noConsole: <explanation>
-			console.log("redux currentModel:", currentModel);
-
-			devTools.current?.send(nextMsg.name, currentModel);
 
 			modified = true;
 		}
