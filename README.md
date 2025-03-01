@@ -423,15 +423,15 @@ function subscription (model: Model): SubscriptionResult<Message> {
 }
 ```
 
-This function gets the initialized model as parameter and returns a command.
+This function gets the initialized model as parameter and returns a function that gets the `dispatch` function as parameter. This function is called when the component is mounted.
+
+Because the return type of the `subscription` function is an array, you can define and return multiple functions.
 
 In the function component we call `useElmish` and pass the subscription to it:
 
 ```ts
 const [{ date }] = useElmish({ name: "Subscriptions", props, init, update, subscription })
 ```
-
-Because the return type is an array, you can define and return multiple subscription functions.
 
 ### Cleanup subscriptions
 
