@@ -1,24 +1,31 @@
-import { cmd } from "./cmd";
-import type { Message } from "./Types";
-import type { Subscription } from "./useElmish";
+import type { Dispatch, Message, Sub } from "./Types";
+import { subscriptionIsFunctionArray, type Subscription, type SubscriptionFunction } from "./useElmish";
+
+type MergedSubscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionFunction<TMessage>[];
 
 function mergeSubscriptions<TProps, TModel, TMessage extends Message>(
 	...subscriptions: (Subscription<TProps, TModel, TMessage> | undefined)[]
-): Subscription<TProps, TModel, TMessage> {
+): MergedSubscription<TProps, TModel, TMessage> {
 	return function mergedSubscription(model, props) {
-		const results = subscriptions.map((sub) => sub?.(model, props));
+		const results = subscriptions.map((sub) => sub?.(model, props)).filter((subscription) => subscription !== undefined);
 
-		const commands = results.map((sub) => sub?.[0]);
-		const disposers = results.map((sub) => sub?.[1]);
+		const subscriptionFunctions = results.flatMap((result) => {
+			if (subscriptionIsFunctionArray(result)) {
+				return result;
+			}
 
-		return [
-			cmd.batch(...commands),
-			() => {
-				for (const disposer of disposers) {
-					disposer?.();
-				}
-			},
-		];
+			const [subCmd, dispose] = result;
+
+			return [...subCmd.map(mapToFn), () => () => dispose?.()];
+		});
+
+		return subscriptionFunctions;
+	};
+}
+
+function mapToFn<TMessage>(cmd: Sub<TMessage>): (dispatch: Dispatch<TMessage>) => undefined {
+	return (dispatch) => {
+		cmd(dispatch);
 	};
 }
 
