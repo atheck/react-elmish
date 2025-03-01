@@ -1,6 +1,6 @@
 import type { Dispatch } from "react";
 import type { Message } from "../Types";
-import type { Subscription } from "../useElmish";
+import { subscriptionIsFunctionArray, type Subscription } from "../useElmish";
 import { execCmdWithDispatch } from "./execCmd";
 
 function execSubscription<TProps, TModel, TMessage extends Message>(
@@ -17,7 +17,19 @@ function execSubscription<TProps, TModel, TMessage extends Message>(
 		return noop;
 	}
 
-	const [cmd, dispose] = subscription(model, props);
+	const subscriptionResult = subscription(model, props);
+
+	if (subscriptionIsFunctionArray(subscriptionResult)) {
+		const disposers = subscriptionResult.map((sub) => sub(dispatch)).filter((disposer) => disposer !== undefined);
+
+		return () => {
+			for (const dispose of disposers) {
+				dispose();
+			}
+		};
+	}
+
+	const [cmd, dispose] = subscriptionResult;
 
 	execCmdWithDispatch<TMessage>(dispatch, cmd);
 

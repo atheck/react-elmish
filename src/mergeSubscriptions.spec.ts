@@ -1,5 +1,4 @@
 import { cmd } from "./cmd";
-import { execCmd } from "./Common";
 import { mergeSubscriptions } from "./mergeSubscriptions";
 import type { Message } from "./Types";
 import type { SubscriptionResult } from "./useElmish";
@@ -47,10 +46,12 @@ describe("mergeSubscriptions", () => {
 		const sub2 = (): SubscriptionResult<Message> => [cmd.ofSub(sub2Fn)];
 
 		const subscription = mergeSubscriptions(sub1, sub2);
-		const [command] = subscription(model, props);
+		const commands = subscription(model, props);
 
 		// act
-		execCmd(mockDispatch, command);
+		for (const command of commands) {
+			command(mockDispatch);
+		}
 
 		// assert
 		expect(sub1Fn).toHaveBeenCalledWith(mockDispatch);
@@ -59,16 +60,20 @@ describe("mergeSubscriptions", () => {
 
 	it("executes all disposer functions", () => {
 		// arrange
+		const mockDispatch = jest.fn();
+
 		const dispose1 = jest.fn();
 		const sub1 = (): SubscriptionResult<Message> => [cmd.ofSub(jest.fn()), dispose1];
 		const dispose2 = jest.fn();
 		const sub2 = (): SubscriptionResult<Message> => [cmd.ofSub(jest.fn()), dispose2];
 
 		const subscription = mergeSubscriptions(sub1, sub2);
-		const [, dispose] = subscription(model, props);
+		const commands = subscription(model, props);
 
 		// act
-		dispose?.();
+		for (const command of commands) {
+			command(mockDispatch)?.();
+		}
 
 		// assert
 		expect(dispose1).toHaveBeenCalledTimes(1);

@@ -415,11 +415,11 @@ Then we write our `subscription` function:
 
 ```ts
 function subscription (model: Model): SubscriptionResult<Message> {
-    const sub = (dispatch: Dispatch<Message>): void => {
-        setInterval(() => dispatch(Msg.timer(new Date())), 1000) as unknown as number;
+    const sub = (dispatch: Dispatch<Message>) => {
+        setInterval(() => dispatch(Msg.timer(new Date())), 1000);
     }
 
-    return [cmd.ofSub(sub)];
+    return [sub];
 }
 ```
 
@@ -431,31 +431,29 @@ In the function component we call `useElmish` and pass the subscription to it:
 const [{ date }] = useElmish({ name: "Subscriptions", props, init, update, subscription })
 ```
 
-You can define and aggregate multiple subscriptions with a call to `cmd.batch(...)`.
+Because the return type is an array, you can define and return multiple subscription functions.
 
 ### Cleanup subscriptions
 
-In the solution above `setInterval` will trigger events even if the component is removed from the DOM. To cleanup subscriptions, we can return a `destructor` function from the subscription the same as in the `useEffect` hook.
+In the solution above `setInterval` will trigger events even if the component is removed from the DOM. To cleanup subscriptions, we can return a `destructor` function the same way as in the `useEffect` hook.
 
 Let's rewrite our `subscription` function:
 
 ```ts
 function subscription (model: Model): SubscriptionResult<Message> {
-    let timer: NodeJS.Timer;
+    const sub = (dispatch: Dispatch<Message>) => {
+        const timer = setInterval(() => dispatch(Msg.timer(new Date())), 1000);
 
-    const sub = (dispatch: Dispatch<Message>): void => {
-        timer = setInterval(() => dispatch(Msg.timer(new Date())), 1000);
+        return () => {
+            clearInterval(timer);
+        }
     }
 
-    const destructor = () => {
-        clearInterval(timer);
-    }
-
-    return [cmd.ofSub(sub), destructor];
+    return [sub];
 }
 ```
 
-Here we save the return value of `setInterval` and clear that interval in the returned `destructor` function.
+The destructor is called when the component is removed from the DOM.
 
 ## Setup
 
