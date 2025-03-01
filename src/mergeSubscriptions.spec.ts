@@ -79,4 +79,30 @@ describe("mergeSubscriptions", () => {
 		expect(dispose1).toHaveBeenCalledTimes(1);
 		expect(dispose2).toHaveBeenCalledTimes(1);
 	});
+
+	it("works with subscription functions", () => {
+		// arrange
+		const mockDispatch = jest.fn();
+
+		const sub1Fn = jest.fn();
+		const sub1Dispose = jest.fn();
+		const sub1 = (): SubscriptionResult<Message> => [cmd.ofSub(sub1Fn), sub1Dispose];
+		const sub2Dispose = jest.fn();
+		const sub2Fn = jest.fn().mockReturnValue(sub2Dispose);
+		const sub2 = (): SubscriptionResult<Message> => [sub2Fn];
+
+		const subscription = mergeSubscriptions(sub1, sub2);
+		const commands = subscription(model, props);
+
+		// act
+		for (const command of commands) {
+			command(mockDispatch)?.();
+		}
+
+		// assert
+		expect(sub1Fn).toHaveBeenCalledTimes(1);
+		expect(sub2Fn).toHaveBeenCalledTimes(1);
+		expect(sub1Dispose).toHaveBeenCalledTimes(1);
+		expect(sub2Dispose).toHaveBeenCalledTimes(1);
+	});
 });

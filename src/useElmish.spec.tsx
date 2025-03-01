@@ -162,6 +162,28 @@ describe("useElmish", () => {
 		// assert
 		expect(mockDestructor).toHaveBeenCalledWith();
 	});
+
+	it("calls the subscription function and its destructor", () => {
+		// arrange
+		const mockDestructor = jest.fn();
+		const mockSub = jest.fn().mockReturnValue(mockDestructor);
+		const mockSubscription = jest.fn().mockReturnValue([mockSub]);
+		const [initModel, initCmd] = defaultInit();
+		const props: Props = {
+			init: () => [initModel, initCmd],
+			update: defaultUpdate,
+			subscription: mockSubscription,
+		};
+
+		// act
+		const api = renderComponent(props);
+
+		api.unmount();
+
+		// assert
+		expect(mockSub).toHaveBeenCalledTimes(1);
+		expect(mockDestructor).toHaveBeenCalledWith();
+	});
 });
 
 function TestComponent(props: Props): JSX.Element {
