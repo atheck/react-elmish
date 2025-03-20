@@ -15,7 +15,7 @@
     "semantic-release": "semantic-release"
   },
   "peerDependencies": {
-    "react": ">=16.8.0 <19"
+    "react": ">=16.8.0 <20"
   },
   "devDependencies": {
     "@babel/cli": "7.26.4",
