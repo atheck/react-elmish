@@ -37,6 +37,15 @@ type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TMod
 type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]];
 
 type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: (Cmd<TMessage> | undefined)[]) => void;
+type CallBaseFunction<TModel, TProps, TMessage> = (
+	fn: (
+		msg: TMessage,
+		model: TModel,
+		props: TProps,
+		options: UpdateFunctionOptions<TProps, TModel, TMessage>,
+	) => UpdateReturnType<TModel, Message>,
+) => UpdateReturnType<TModel, TMessage>;
+
 type UpdateMapFunction<TProps, TModel, TMessage> = (
 	msg: TMessage,
 	model: TModel,
@@ -46,11 +55,10 @@ type UpdateMapFunction<TProps, TModel, TMessage> = (
 
 interface UpdateFunctionOptions<TProps, TModel, TMessage> {
 	defer: DeferFunction<TModel, TMessage>;
-	// biome-ignore lint/suspicious/noExplicitAny: Didn't find a better solution for now.
-	callBase: (fn: UpdateMapFunction<TProps, TModel, any>) => UpdateReturnType<TModel, any>;
+	callBase: CallBaseFunction<TModel, TProps, TMessage>;
 }
 
-type UpdateFunction<TProps, TModel, TMessage> = (
+type UpdateFunction<TProps, TModel, TMessage extends Message> = (
 	model: TModel,
 	msg: TMessage,
 	props: TProps,
@@ -66,11 +74,12 @@ type UpdateMap<TProps, TModel, TMessage extends Message> = {
 		msg: TMessage & { name: TMessageName },
 		model: TModel,
 		props: TProps,
-		options: UpdateFunctionOptions<TProps, TModel, TMessage>,
+		options: UpdateFunctionOptions<TProps, TModel, TMessage & { name: TMessageName }>,
 	) => UpdateReturnType<TModel, TMessage>;
 };
 
 export type {
+	CallBaseFunction,
 	Cmd,
 	DeferFunction,
 	Dispatch,

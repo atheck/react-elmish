@@ -1,13 +1,14 @@
-import type { Message, UpdateFunctionOptions, UpdateMapFunction, UpdateReturnType } from "./Types";
+import type { CallBaseFunction, Message, UpdateFunctionOptions, UpdateReturnType } from "./Types";
 
 function createCallBase<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
 	options: Omit<UpdateFunctionOptions<TProps, TModel, TMessage>, "callBase">,
-): (fn: UpdateMapFunction<TProps, TModel, TMessage>) => UpdateReturnType<TModel, TMessage> {
-	const callBase = (fn: UpdateMapFunction<TProps, TModel, TMessage>): UpdateReturnType<TModel, TMessage> =>
-		fn(msg, model, props, { ...options, callBase });
+): CallBaseFunction<TModel, TProps, TMessage> {
+	const callBase: CallBaseFunction<TModel, TProps, TMessage> = (fn) =>
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- The current TMessage must be extended from Message
+		fn(msg, model, props, { ...options, callBase }) as UpdateReturnType<TModel, TMessage>;
 
 	return callBase;
 }
