@@ -1,0 +1,26 @@
+name: Feature
+on:
+  push:
+    branches-ignore:
+      - main
+      - beta
+      - alpha
+    tags-ignore:
+      - "**"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.0.4
+        with:
+          node-version: 'lts/*'
+      - name: Test
+        run: |
+          npm install
+          npm run lint
+          npm run test
