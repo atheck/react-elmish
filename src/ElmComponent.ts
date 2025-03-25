@@ -1,3 +1,4 @@
+import { castImmutable, freeze } from "immer";
 import React from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
@@ -105,10 +106,15 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
 			logMessage(this.componentName, currentMessage);
 
-			const [defer, getDeferred] = createDefer<TModel, TMessage>();
-			const callBase = createCallBase(currentMessage, this.currentModel, this.props, { defer });
+			const immutableModel = castImmutable(freeze(this.currentModel, true));
 
-			const [model, ...commands] = this.update(this.currentModel, currentMessage, this.props, { defer, callBase });
+			const [defer, getDeferred] = createDefer<TModel, TMessage>();
+			const callBase = createCallBase(currentMessage, immutableModel, this.props, { defer });
+
+			const [model, ...commands] = this.update(immutableModel, currentMessage, this.props, {
+				defer,
+				callBase,
+			});
 
 			const [deferredModel, deferredCommands] = getDeferred();
 
