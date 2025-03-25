@@ -27,6 +27,7 @@ const updateMap2: UpdateMap<Props, Model, Message2> = {
 
 	test(_msg, _model, _props, { defer, callBase }) {
 		defer(...callBase(updateMap1.test));
+		defer({}, cmd.ofMsg({ name: "first" }));
 
 		return [{}];
 	},
