@@ -37,25 +37,26 @@ type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TMod
 type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]];
 
 type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: (Cmd<TMessage> | undefined)[]) => void;
-type CallBaseFunction<TModel, TProps, TMessage> = (
+type CallBaseFunction<TModel, TProps, TMessage extends Message> = (
 	fn: (
 		msg: TMessage,
 		model: TModel,
 		props: TProps,
-		options: UpdateFunctionOptions<TProps, TModel, TMessage>,
+		// biome-ignore lint/suspicious/noExplicitAny: any is needed here to allow options of any type
+		...args: any[]
 	) => UpdateReturnType<TModel, Message>,
 ) => UpdateReturnType<TModel, TMessage>;
 
-type UpdateMapFunction<TProps, TModel, TMessage> = (
+type UpdateMapFunction<TProps, TModel, TMessage extends Message> = (
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ) => UpdateReturnType<TModel, TMessage>;
 
-interface UpdateFunctionOptions<TProps, TModel, TMessage> {
+interface UpdateFunctionOptions<TProps, TModel, TMessage extends Message, TSpecificMessage extends Message = TMessage> {
 	defer: DeferFunction<TModel, TMessage>;
-	callBase: CallBaseFunction<TModel, TProps, TMessage>;
+	callBase: CallBaseFunction<TModel, TProps, TSpecificMessage>;
 }
 
 type UpdateFunction<TProps, TModel, TMessage extends Message> = (
@@ -74,7 +75,7 @@ type UpdateMap<TProps, TModel, TMessage extends Message> = {
 		msg: TMessage & { name: TMessageName },
 		model: TModel,
 		props: TProps,
-		options: UpdateFunctionOptions<TProps, TModel, TMessage & { name: TMessageName }>,
+		options: UpdateFunctionOptions<TProps, TModel, TMessage, TMessage & { name: TMessageName }>,
 	) => UpdateReturnType<TModel, TMessage>;
 };
 
