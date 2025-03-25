@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { castImmutable, freeze, type Immutable } from "immer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
@@ -78,7 +79,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	init,
 	update,
 	subscription,
-}: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
+}: UseElmishOptions<TProps, TModel, TMessage>): [Immutable<TModel>, Dispatch<TMessage>] {
 	let running = false;
 	const buffer: TMessage[] = [];
 	let currentModel: Partial<TModel> = {};
@@ -198,7 +199,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		}
 	}, []);
 
-	return [initializedModel, dispatch];
+	return [castImmutable(freeze(initializedModel, true)), dispatch];
 
 	function handleMessage(nextMsg: TMessage): boolean {
 		if (!initializedModel) {
@@ -209,7 +210,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		logMessage(name, nextMsg);
 
-		const updatedModel = { ...initializedModel, ...currentModel };
+		const updatedModel = castImmutable(freeze({ ...initializedModel, ...currentModel }, true));
 
 		const [defer, getDeferred] = createDefer<TModel, TMessage>();
 		const callBase = createCallBase(nextMsg, updatedModel, propsRef.current, { defer });
@@ -233,7 +234,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 function callUpdate<TProps, TModel, TMessage extends Message>(
 	update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>,
 	msg: TMessage,
-	model: TModel,
+	model: Immutable<TModel>,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ): UpdateReturnType<TModel, TMessage> {
@@ -247,7 +248,7 @@ function callUpdate<TProps, TModel, TMessage extends Message>(
 function callUpdateMap<TProps, TModel, TMessage extends Message>(
 	updateMap: UpdateMap<TProps, TModel, TMessage>,
 	msg: TMessage,
-	model: TModel,
+	model: Immutable<TModel>,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ): UpdateReturnType<TModel, TMessage> {

@@ -1,3 +1,5 @@
+import type { Immutable } from "immer";
+
 type Nullable<TType> = TType | null;
 
 interface Message {
@@ -40,7 +42,7 @@ type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: (Cm
 type CallBaseFunction<TModel, TProps, TMessage extends Message> = (
 	fn: (
 		msg: TMessage,
-		model: TModel,
+		model: Immutable<TModel>,
 		props: TProps,
 		// biome-ignore lint/suspicious/noExplicitAny: any is needed here to allow options of any type
 		...args: any[]
@@ -49,7 +51,7 @@ type CallBaseFunction<TModel, TProps, TMessage extends Message> = (
 
 type UpdateMapFunction<TProps, TModel, TMessage extends Message> = (
 	msg: TMessage,
-	model: TModel,
+	model: Immutable<TModel>,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ) => UpdateReturnType<TModel, TMessage>;
@@ -60,7 +62,7 @@ interface UpdateFunctionOptions<TProps, TModel, TMessage extends Message, TSpeci
 }
 
 type UpdateFunction<TProps, TModel, TMessage extends Message> = (
-	model: TModel,
+	model: Immutable<TModel>,
 	msg: TMessage,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
@@ -73,7 +75,7 @@ type UpdateFunction<TProps, TModel, TMessage extends Message> = (
 type UpdateMap<TProps, TModel, TMessage extends Message> = {
 	[TMessageName in TMessage["name"]]: (
 		msg: TMessage & { name: TMessageName },
-		model: TModel,
+		model: Immutable<TModel>,
 		props: TProps,
 		options: UpdateFunctionOptions<TProps, TModel, TMessage, TMessage & { name: TMessageName }>,
 	) => UpdateReturnType<TModel, TMessage>;

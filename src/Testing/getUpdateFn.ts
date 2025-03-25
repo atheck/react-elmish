@@ -1,3 +1,4 @@
+import { castImmutable, freeze } from "immer";
 import type { Message, Nullable, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "../Types";
 import { createCallBase } from "../createCallBase";
 import { createDefer } from "../createDefer";
@@ -23,8 +24,10 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
 	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
 ) => UpdateReturnType<TModel, TMessage> {
 	return function updateFn(msg, model, props, optionsTemplate): UpdateReturnType<TModel, TMessage> {
+		const immutableModel = castImmutable(freeze(model, true));
+
 		const [defer, getDeferred] = createDefer<TModel, TMessage>();
-		const callBase = createCallBase(msg, model, props, { defer });
+		const callBase = createCallBase(msg, immutableModel, props, { defer });
 
 		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
 			defer,
@@ -32,7 +35,7 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
 			...optionsTemplate,
 		};
 
-		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props, options);
+		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, immutableModel, props, options);
 
 		const [deferredModel, deferredCommands] = getDeferred();
 
@@ -59,8 +62,10 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
 ) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
 	return async function updateAndExecCmdFn(msg, model, props, optionsTemplate): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
+		const immutableModel = castImmutable(freeze(model, true));
+
 		const [defer, getDeferred] = createDefer<TModel, TMessage>();
-		const callBase = createCallBase(msg, model, props, { defer });
+		const callBase = createCallBase(msg, immutableModel, props, { defer });
 
 		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
 			defer,
@@ -68,7 +73,7 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 			...optionsTemplate,
 		};
 
-		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props, options);
+		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, immutableModel, props, options);
 
 		const [deferredModel, deferredCommands] = getDeferred();
 

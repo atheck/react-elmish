@@ -1,8 +1,9 @@
+import type { Immutable } from "immer";
 import type { CallBaseFunction, Message, UpdateFunctionOptions, UpdateReturnType } from "./Types";
 
 function createCallBase<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
-	model: TModel,
+	model: Immutable<TModel>,
 	props: TProps,
 	options: Omit<UpdateFunctionOptions<TProps, TModel, TMessage>, "callBase">,
 ): CallBaseFunction<TModel, TProps, TMessage> {
