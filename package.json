@@ -56,6 +56,10 @@
   "files": [
     "dist/**/*"
   ],
-  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./immutable": "./dist/immutable/index.js",
+    "./testing": "./dist/Testing/index.js"
+  },
   "types": "dist/index.d.ts"
 }
