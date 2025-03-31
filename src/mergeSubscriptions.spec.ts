@@ -1,7 +1,6 @@
 import { cmd } from "./cmd";
 import { mergeSubscriptions } from "./mergeSubscriptions";
-import type { Message } from "./Types";
-import type { SubscriptionResult } from "./useElmish";
+import type { Message, SubscriptionResult } from "./Types";
 
 describe("mergeSubscriptions", () => {
 	const model = {};

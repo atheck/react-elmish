@@ -2,33 +2,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
 import { Services } from "./Init";
-import type {
-	Cmd,
-	Dispatch,
-	InitFunction,
-	Message,
-	Nullable,
-	UpdateFunction,
-	UpdateFunctionOptions,
-	UpdateMap,
-	UpdateReturnType,
+import {
+	subscriptionIsFunctionArray,
+	type Dispatch,
+	type InitFunction,
+	type Message,
+	type Nullable,
+	type Subscription,
+	type UpdateFunction,
+	type UpdateFunctionOptions,
+	type UpdateMap,
+	type UpdateReturnType,
 } from "./Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
 import { isReduxDevToolsEnabled, type ReduxDevTools } from "./reduxDevTools";
-
-/**
- * The return type of the `subscription` function.
- * @template TMessage The type of the messages discriminated union.
- */
-type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?] | SubscriptionFunction<TMessage>[];
-type SubscriptionFunction<TMessage> = (dispatch: Dispatch<TMessage>) => (() => void) | undefined;
-type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionResult<TMessage>;
-
-function subscriptionIsFunctionArray(subscription: SubscriptionResult<unknown>): subscription is SubscriptionFunction<unknown>[] {
-	return typeof subscription[0] === "function";
-}
 
 /**
  * Options for the `useElmish` hook.
@@ -256,6 +245,6 @@ function callUpdateMap<TProps, TModel, TMessage extends Message>(
 	return updateMap[msgName](msg, model, props, options);
 }
 
-export type { Subscription, SubscriptionFunction, SubscriptionResult, UseElmishOptions };
+export type { UseElmishOptions };
 
-export { callUpdate, callUpdateMap, subscriptionIsFunctionArray, useElmish };
+export { callUpdate, callUpdateMap, useElmish };
