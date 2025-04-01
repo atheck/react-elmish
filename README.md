@@ -17,6 +17,7 @@ This library brings the elmish pattern to react.
 - [Subscriptions](#subscriptions)
   - [Working with external sources of events](#working-with-external-sources-of-events)
   - [Cleanup subscriptions](#cleanup-subscriptions)
+- [Immutability](#immutability)
 - [Setup](#setup)
 - [Error handling](#error-handling)
 - [React life cycle management](#react-life-cycle-management)
@@ -454,6 +455,52 @@ function subscription (model: Model): SubscriptionResult<Message> {
 ```
 
 The destructor is called when the component is removed from the DOM.
+
+## Immutability
+
+If you want to use immutable data structures, you can use the imports from "react-elmish/immutable". This version of the `useElmish` hook returns an immutable model.
+
+```tsx
+import { useElmish } from "react-elmish/immutable";
+
+function App(props: Props): JSX.Element {
+    const [model, dispatch] = useElmish({ props, init, update, name: "App" });
+
+    model.value = 42; // This will throw an error
+
+    return (
+        // ...
+    );
+}
+```
+
+To update your model in the update map or update function, you return a draft function as first value:
+
+```ts
+import { type UpdateMap } from "react-elmish/immutable";
+
+const updateMap: UpdateMap<Props, Model, Message> = {
+    increment (_msg, model) {
+        model.value += 1; // This will throw an error
+
+        return [(draft) => draft.value += 1];
+    },
+
+    decrement () {
+        return [(draft) => draft.value -= 1];
+    },
+
+    commandOnly() {
+        // The first value can be null or undefined
+        return [null, cmd.ofMsg(Msg.increment())];
+    },
+
+    doNothing() {
+        // Return an empty tuple to do nothing
+        return [];
+    },
+};
+```
 
 ## Setup
 
