@@ -79,6 +79,18 @@ type UpdateMap<TProps, TModel, TMessage extends Message> = {
 	) => UpdateReturnType<TModel, TMessage>;
 };
 
+/**
+ * The return type of the `subscription` function.
+ * @template TMessage The type of the messages discriminated union.
+ */
+type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?] | SubscriptionFunction<TMessage>[];
+type SubscriptionFunction<TMessage> = (dispatch: Dispatch<TMessage>) => (() => void) | undefined;
+type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionResult<TMessage>;
+
+function subscriptionIsFunctionArray(subscription: SubscriptionResult<unknown>): subscription is SubscriptionFunction<unknown>[] {
+	return typeof subscription[0] === "function";
+}
+
 export type {
 	CallBaseFunction,
 	Cmd,
@@ -91,9 +103,14 @@ export type {
 	MsgSource,
 	Nullable,
 	Sub,
+	Subscription,
+	SubscriptionFunction,
+	SubscriptionResult,
 	UpdateFunction,
 	UpdateFunctionOptions,
 	UpdateMap,
 	UpdateMapFunction,
 	UpdateReturnType,
 };
+
+export { subscriptionIsFunctionArray };

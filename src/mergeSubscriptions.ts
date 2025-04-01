@@ -1,5 +1,11 @@
-import type { Dispatch, Message, Sub } from "./Types";
-import { subscriptionIsFunctionArray, type Subscription, type SubscriptionFunction } from "./useElmish";
+import {
+	subscriptionIsFunctionArray,
+	type Dispatch,
+	type Message,
+	type Sub,
+	type Subscription,
+	type SubscriptionFunction,
+} from "./Types";
 
 type MergedSubscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionFunction<TMessage>[];
 

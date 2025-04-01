@@ -17,6 +17,7 @@ This library brings the elmish pattern to react.
 - [Subscriptions](#subscriptions)
   - [Working with external sources of events](#working-with-external-sources-of-events)
   - [Cleanup subscriptions](#cleanup-subscriptions)
+- [Immutability](#immutability)
 - [Setup](#setup)
 - [Error handling](#error-handling)
 - [React life cycle management](#react-life-cycle-management)
@@ -454,6 +455,52 @@ function subscription (model: Model): SubscriptionResult<Message> {
 ```
 
 The destructor is called when the component is removed from the DOM.
+
+## Immutability
+
+If you want to use immutable data structures, you can use the imports from "react-elmish/immutable". This version of the `useElmish` hook returns an immutable model.
+
+```tsx
+import { useElmish } from "react-elmish/immutable";
+
+function App(props: Props): JSX.Element {
+    const [model, dispatch] = useElmish({ props, init, update, name: "App" });
+
+    model.value = 42; // This will throw an error
+
+    return (
+        // ...
+    );
+}
+```
+
+To update your model in the update map or update function, you return a draft function as first value:
+
+```ts
+import { type UpdateMap } from "react-elmish/immutable";
+
+const updateMap: UpdateMap<Props, Model, Message> = {
+    increment (_msg, model) {
+        model.value += 1; // This will throw an error
+
+        return [(draft) => draft.value += 1];
+    },
+
+    decrement () {
+        return [(draft) => draft.value -= 1];
+    },
+
+    commandOnly() {
+        // The first value can be null or undefined
+        return [null, cmd.ofMsg(Msg.increment())];
+    },
+
+    doNothing() {
+        // Return an empty tuple to do nothing
+        return [];
+    },
+};
+```
 
 ## Setup
 
@@ -911,7 +958,7 @@ const subscription = mergeSubscriptions(LoadSettings.subscription, localSubscrip
 
 ## Testing
 
-To test your **update** handler you can use some helper functions in `react-elmish/dist/Testing`:
+To test your **update** handler you can use some helper functions in `react-elmish/testing`:
 
 | Function | Description |
 | --- | --- |
@@ -925,7 +972,7 @@ To test your **update** handler you can use some helper functions in `react-elmi
 ### Testing the init function
 
 ```ts
-import { initAndExecCmd } from "react-elmish/dist/Testing";
+import { initAndExecCmd } from "react-elmish/testing";
 import { init, Msg } from "./MyComponent";
 
 it("initializes the model correctly", async () => {
@@ -946,7 +993,7 @@ it("initializes the model correctly", async () => {
 **Note**: When using an `UpdateMap`, you can get an `update` function by calling `getUpdateFn`:
 
 ```ts
-import { getUpdateFn } from "react-elmish/dist/Testing";
+import { getUpdateFn } from "react-elmish/testing";
 import { updateMap } from "./MyComponent";
 
 const updateFn = getUpdateFn(updateMap);
@@ -958,7 +1005,7 @@ const [model, cmd] = updateFn(msg, model, props);
 A simple test:
 
 ```ts
-import { getCreateUpdateArgs, createUpdateArgsFactory, execCmd } from "react-elmish/dist/Testing";
+import { getCreateUpdateArgs, createUpdateArgsFactory, execCmd } from "react-elmish/testing";
 import { init, Msg } from "./MyComponent";
 
 const createUpdateArgs = getCreateUpdateArgs(init, () => ({ /* initial props */ }));
@@ -991,7 +1038,7 @@ It also resolves for `attempt` functions if the called functions succeed. And it
 There is an alternative function `getUpdateAndExecCmdFn` to get the `update` function for an update map, which immediately invokes the command and returns the messages.
 
 ```ts
-import { createUpdateArgs, getUpdateAndExecCmdFn } from "react-elmish/dist/Testing";
+import { createUpdateArgs, getUpdateAndExecCmdFn } from "react-elmish/testing";
 
 const updateAndExecCmdFn = getUpdateAndExecCmdFn(updateMap);
 
@@ -1018,7 +1065,7 @@ it("returns the correct cmd", async () => {
 It is almost the same as testing the `update` function. You can use the `getCreateModelAndProps` function to create a factory for the model and the props. Then use `execSubscription` to execute the subscriptions:
 
 ```ts
-import { getCreateModelAndProps, execSubscription } from "react-elmish/dist/Testing";
+import { getCreateModelAndProps, execSubscription } from "react-elmish/testing";
 import { init, Msg, subscription } from "./MyComponent";
 
 const createModelAndProps = getCreateModelAndProps(init, () => ({ /* initial props */ }));
@@ -1045,7 +1092,7 @@ it("dispatches the eventTriggered message", async () => {
 To test UI components with a fake model you can use `renderWithModel` from the Testing namespace. The first parameter is a function to render your component (e.g. with **@testing-library/react**). The second parameter is the fake model. The third parameter is an optional options object, where you can also pass a fake `dispatch` function.
 
 ```tsx
-import { renderWithModel } from "react-elmish/dist/Testing";
+import { renderWithModel } from "react-elmish/testing";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 it("renders the correct value", () => {
