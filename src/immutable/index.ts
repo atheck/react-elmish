@@ -1,5 +1,5 @@
 export { cmd } from "../cmd";
-export { errorHandler, errorMsg, handleError, type ErrorMessage } from "../ErrorHandling";
+export { errorMsg, type ErrorMessage } from "../ErrorHandling";
 export { init, type ElmOptions, type Logger } from "../Init";
 export { mergeSubscriptions } from "../mergeSubscriptions";
 export type {
@@ -9,6 +9,7 @@ export type {
 	Message,
 	SubscriptionResult,
 } from "../Types";
+export { errorHandler, handleError } from "./ErrorHandling";
 export type {
 	UpdateFunctionOptions,
 	UpdateMap,
