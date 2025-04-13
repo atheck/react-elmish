@@ -1,4 +1,6 @@
-import type { InitFunction, Message, UpdateFunctionOptions } from "../Types";
+import type { Immutable } from "immer";
+import type { InitFunction, Message } from "../../Types";
+import type { UpdateFunctionOptions } from "../Types";
 import { createModelAndProps } from "./createModelAndProps";
 import type { UpdateArgsFactory } from "./createUpdateArgsFactory";
 
@@ -22,7 +24,7 @@ function getCreateUpdateArgs<TProps, TModel, TMessage extends Message>(
 		modelTemplate?: Partial<TModel>,
 		propsTemplate?: Partial<TProps>,
 		optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-	): [TMessage, TModel, TProps, Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>?] {
+	): [TMessage, Immutable<TModel>, TProps, Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>?] {
 		const args = createModelAndProps(init, initProps, modelTemplate, propsTemplate);
 
 		return [msg, ...args, optionsTemplate];
@@ -32,7 +34,7 @@ function getCreateUpdateArgs<TProps, TModel, TMessage extends Message>(
 type ModelAndPropsFactory<TProps, TModel> = (
 	modelTemplate?: Partial<TModel>,
 	propsTemplate?: Partial<TProps>,
-) => [TModel, TProps];
+) => [Immutable<TModel>, TProps];
 
 /**
  * Creates a factory function to create a model, props, and options which can be passed to an update or subscription function in tests.
@@ -49,7 +51,7 @@ function getCreateModelAndProps<TProps, TModel, TMessage extends Message>(
 	init: InitFunction<TProps, TModel, TMessage>,
 	initProps: () => TProps,
 ): ModelAndPropsFactory<TProps, TModel> {
-	return function create(modelTemplate?: Partial<TModel>, propsTemplate?: Partial<TProps>): [TModel, TProps] {
+	return function create(modelTemplate?: Partial<TModel>, propsTemplate?: Partial<TProps>): [Immutable<TModel>, TProps] {
 		return createModelAndProps(init, initProps, modelTemplate, propsTemplate);
 	};
 }
