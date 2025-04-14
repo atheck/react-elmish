@@ -1,7 +1,7 @@
 import type { Draft, Immutable } from "immer";
 import type { Cmd, Message, SubscriptionResult } from "../Types";
 
-type DraftModelFunction<TModel> = (draft: Draft<Immutable<TModel>>) => void;
+type DraftModelFunction<TModel> = (draft: Draft<TModel>) => void;
 
 /**
  * Type for the return value of the `update` function.
