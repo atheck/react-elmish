@@ -18,6 +18,7 @@ This library brings the elmish pattern to react.
   - [Working with external sources of events](#working-with-external-sources-of-events)
   - [Cleanup subscriptions](#cleanup-subscriptions)
 - [Immutability](#immutability)
+  - [Testing](#testing)
 - [Setup](#setup)
 - [Error handling](#error-handling)
 - [React life cycle management](#react-life-cycle-management)
@@ -27,7 +28,7 @@ This library brings the elmish pattern to react.
   - [With an `UpdateMap`](#with-an-updatemap)
   - [With an update function](#with-an-update-function)
   - [Merge multiple subscriptions](#merge-multiple-subscriptions)
-- [Testing](#testing)
+- [Testing](#testing-1)
   - [Testing the init function](#testing-the-init-function)
   - [Testing the update handler](#testing-the-update-handler)
   - [Combine update and execCmd](#combine-update-and-execcmd)
@@ -501,6 +502,10 @@ const updateMap: UpdateMap<Props, Model, Message> = {
     },
 };
 ```
+
+### Testing
+
+If you want to test your component with immutable data structures, you can use the `react-elmish/testing/immutable` module. This module provides the same functions as the normal testing module.
 
 ## Setup
 

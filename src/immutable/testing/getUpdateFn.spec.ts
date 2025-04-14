@@ -1,7 +1,7 @@
 import type { UpdateMap } from "../Types";
 import { getUpdateFn } from "./getUpdateFn";
 
-type Message = { name: "foo" } | { name: "bar" };
+type Message = { name: "foo" } | { name: "bar" } | { name: "foobar" };
 
 interface Model {
 	foo: string;
@@ -9,6 +9,7 @@ interface Model {
 		foo: string;
 		bar: number;
 	} | null;
+	foobar: string[];
 }
 
 interface Props {}
@@ -28,35 +29,50 @@ const updateMap: UpdateMap<Props, Model, Message> = {
 			},
 		];
 	},
+	foobar() {
+		return [
+			(draft) => {
+				draft.foobar.push("bar");
+			},
+		];
+	},
 };
+
+const initialModel: Model = { foo: "initial", bar: null, foobar: [] };
 
 describe("getUpdateFn", () => {
 	describe("getUpdateFn", () => {
 		it("should update the model correctly with simple type update", () => {
-			const initialModel: Model = { foo: "initial", bar: null };
 			const updateFn = getUpdateFn(updateMap);
 
-			const [updatedModel] = updateFn({ name: "foo" }, initialModel, {});
+			const [updatedModel] = updateFn({ name: "foo" }, { ...initialModel }, {});
 
 			expect(updatedModel).toStrictEqual({ foo: "bar" });
 		});
 
 		it("should update the model correctly with complex type update replacing null", () => {
-			const initialModel: Model = { foo: "initial", bar: null };
 			const updateFn = getUpdateFn(updateMap);
 
-			const [updatedModel] = updateFn({ name: "bar" }, initialModel, {});
+			const [updatedModel] = updateFn({ name: "bar" }, { ...initialModel }, {});
 
 			expect(updatedModel).toStrictEqual({ bar: { foo: "bar", bar: 1 } });
 		});
 
 		it("should update the model correctly with complex type update replacing an existing object", () => {
-			const initialModel: Model = { foo: "initial", bar: { foo: "", bar: 1 } };
+			const localInitialModel: Model = { ...initialModel, bar: { foo: "", bar: 1 } };
 			const updateFn = getUpdateFn(updateMap);
 
-			const [updatedModel] = updateFn({ name: "bar" }, initialModel, {});
+			const [updatedModel] = updateFn({ name: "bar" }, localInitialModel, {});
 
 			expect(updatedModel).toStrictEqual({ bar: { foo: "bar", bar: 1 } });
+		});
+
+		it("should update the model correctly with an update of an array", () => {
+			const updateFn = getUpdateFn(updateMap);
+
+			const [updatedModel] = updateFn({ name: "foobar" }, { ...initialModel }, {});
+
+			expect(updatedModel).toStrictEqual({ foobar: ["bar"] });
 		});
 	});
 });
