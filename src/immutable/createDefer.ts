@@ -1,22 +1,14 @@
 import type { Cmd, Message } from "../Types";
-import type { DeferFunction, DraftModelFunction } from "./Types";
+import type { DeferFunction } from "./Types";
 
-function createDefer<TModel, TMessage extends Message>(): [
-	DeferFunction<TModel, TMessage>,
-	() => [DraftModelFunction<TModel>[], (Cmd<TMessage> | undefined)[]],
-] {
-	const draftFunctions: DraftModelFunction<TModel>[] = [];
+function createDefer<TMessage extends Message>(): [DeferFunction<TMessage>, () => (Cmd<TMessage> | undefined)[]] {
 	const deferredCommands: (Cmd<TMessage> | undefined)[] = [];
 
-	const defer: DeferFunction<TModel, TMessage> = (tempDraftFn, ...tempDeferredCommands) => {
-		if (tempDraftFn) {
-			draftFunctions.push(tempDraftFn);
-		}
-
+	const defer: DeferFunction<TMessage> = (...tempDeferredCommands) => {
 		deferredCommands.push(...tempDeferredCommands);
 	};
 
-	return [defer, () => [draftFunctions, deferredCommands]];
+	return [defer, () => deferredCommands];
 }
 
 export { createDefer };

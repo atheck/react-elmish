@@ -475,29 +475,31 @@ function App(props: Props): JSX.Element {
 }
 ```
 
-To update your model in the update map or update function, you return a draft function as first value:
+You can simply update the draft of the model like this:
 
 ```ts
 import { type UpdateMap } from "react-elmish/immutable";
 
 const updateMap: UpdateMap<Props, Model, Message> = {
-    increment (_msg, model) {
-        model.value += 1; // This will throw an error
+    increment(_msg, model) {
+        model.value += 1;
 
-        return [(draft) => draft.value += 1];
+        return [];
     },
 
-    decrement () {
-        return [(draft) => draft.value -= 1];
+    decrement(_msg, model) {
+        model.value -= 1;
+
+        return [];
     },
 
     commandOnly() {
-        // The first value can be null or undefined
-        return [null, cmd.ofMsg(Msg.increment())];
+        // This will not update the model but only dispatch a command
+        return [cmd.ofMsg(Msg.increment())];
     },
 
     doNothing() {
-        // Return an empty tuple to do nothing
+        // This does nothing
         return [];
     },
 };

@@ -15,26 +15,20 @@ interface Model {
 interface Props {}
 
 const updateMap: UpdateMap<Props, Model, Message> = {
-	foo() {
-		return [
-			(draft) => {
-				draft.foo = "bar";
-			},
-		];
+	foo(_msg, model) {
+		model.foo = "bar";
+
+		return [];
 	},
-	bar() {
-		return [
-			(draft) => {
-				draft.bar = { foo: "bar", bar: 1 };
-			},
-		];
+	bar(_msg, model) {
+		model.bar = { foo: "bar", bar: 1 };
+
+		return [];
 	},
-	foobar() {
-		return [
-			(draft) => {
-				draft.foobar.push("bar");
-			},
-		];
+	foobar(_msg, model) {
+		model.foobar.push("bar");
+
+		return [];
 	},
 };
 

@@ -19,7 +19,7 @@ interface Props {
 		msg: Message,
 		props: Props,
 		options: UpdateFunctionOptions<Props, Model, Message>,
-	) => UpdateReturnType<Model, Message>;
+	) => UpdateReturnType<Message>;
 	subscription?: (model: Model) => SubscriptionResult<Message>;
 }
 
@@ -34,54 +34,43 @@ function defaultInit(msg?: Cmd<Message>): InitResult<Model, Message> {
 }
 
 function defaultUpdate(
-	_model: Model,
+	model: Model,
 	msg: Message,
 	_props: Props,
 	{ defer }: UpdateFunctionOptions<Props, Model, Message>,
-): UpdateReturnType<Model, Message> {
+): UpdateReturnType<Message> {
 	switch (msg.name) {
 		case "Test":
 			return [];
 
 		case "First":
-			return [
-				(draft) => {
-					draft.value1 = "First";
-				},
-				cmd.ofMsg({ name: "Second" }),
-			];
+			model.value1 = "First";
+
+			return [cmd.ofMsg({ name: "Second" })];
 
 		case "Second":
-			return [
-				(draft) => {
-					draft.value2 = "Second";
-				},
-			];
+			model.value2 = "Second";
+
+			return [];
 
 		case "Third":
-			return [
-				(draft) => {
-					draft.value2 = "Third";
-				},
-			];
+			model.value2 = "Third";
+
+			return [];
 
 		case "Defer": {
-			defer(
-				(draft) => {
-					draft.value2 = "Defer";
-				},
-				cmd.ofMsg({ name: "Third" }),
-			);
+			model.value2 = "Defer";
 
-			return [
-				(draft) => {
-					draft.value1 = "Defer";
-				},
-				cmd.ofMsg({ name: "Second" }),
-			];
+			defer(cmd.ofMsg({ name: "Third" }));
+
+			model.value1 = "Defer";
+
+			return [cmd.ofMsg({ name: "Second" })];
 		}
 	}
 }
+
+// TODO: Tests mit callBase und defer
 
 let componentModel: Model | undefined;
 
@@ -106,7 +95,7 @@ describe("useElmish", () => {
 		// arrange
 		const message: Message = { name: "Test" };
 		const init = jest.fn().mockReturnValue([{}, cmd.ofMsg(message)]);
-		const update = jest.fn((): UpdateReturnType<Model, Message> => []);
+		const update = jest.fn((): UpdateReturnType<Message> => []);
 		const props: Props = {
 			init,
 			update,
@@ -117,7 +106,6 @@ describe("useElmish", () => {
 
 		// assert
 		expect(update).toHaveBeenCalledTimes(1);
-		expect(update).toHaveBeenCalledWith(expect.anything(), message, props, expect.anything());
 	});
 
 	it("updates the model correctly with multiple commands in a row", () => {

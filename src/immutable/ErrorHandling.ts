@@ -14,8 +14,8 @@ import type { UpdateReturnType } from "./Types";
  * };
  * ```
  */
-function errorHandler<TModel, TMessage>(): {
-	error: (msg: ErrorMessage) => UpdateReturnType<TModel, TMessage>;
+function errorHandler<TMessage>(): {
+	error: (msg: ErrorMessage) => UpdateReturnType<TMessage>;
 } {
 	return {
 		error({ error }) {
@@ -30,7 +30,7 @@ function errorHandler<TModel, TMessage>(): {
  * Calls the error handling middleware if specified.
  * @param {Error} error The error.
  */
-function handleError<TModel, TMessage>(error: Error): UpdateReturnType<TModel, TMessage> {
+function handleError<TMessage>(error: Error): UpdateReturnType<TMessage> {
 	if (Services.errorMiddleware) {
 		Services.errorMiddleware(error);
 	}
