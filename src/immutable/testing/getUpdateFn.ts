@@ -27,7 +27,7 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
 	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
 ) => [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]] {
 	return function updateFn(msg, model, props, optionsTemplate): [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]] {
-		const [defer, getDeferred] = createDefer<TModel, TMessage>();
+		const [defer, getDeferred] = createDefer<TMessage>();
 		const callBase = createCallBase(msg, model, props, { defer });
 
 		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
@@ -36,27 +36,20 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
 			...optionsTemplate,
 		};
 
-		const [draftFn, ...commands] = callUpdateMap(updateMap, msg, model, props, options);
-		const [deferredDraftFunctions, deferredCommands] = getDeferred();
-
-		const allDraftFunctions = [...deferredDraftFunctions, draftFn].filter((fn) => fn != null);
-
-		let currentModel = model;
+		const commands: (Cmd<TMessage> | undefined)[] = [];
 		const recordedPatches: Patch[] = [];
+		const updatedModel = produce(
+			model,
+			(draft: Draft<TModel>) => {
+				commands.push(...callUpdateMap(updateMap, msg, draft, props, options));
+			},
+			(patches) => {
+				recordedPatches.push(...patches);
+			},
+		);
+		const deferredCommands = getDeferred();
 
-		for (const fn of allDraftFunctions) {
-			currentModel = produce(
-				currentModel,
-				(draft: Draft<TModel>) => {
-					fn(draft);
-				},
-				(patches) => {
-					recordedPatches.push(...patches);
-				},
-			);
-		}
-
-		const diff = getDiffFromPatches(recordedPatches, currentModel);
+		const diff = getDiffFromPatches(recordedPatches, updatedModel);
 
 		return [diff, ...commands, ...deferredCommands];
 	};
@@ -81,7 +74,7 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
 ) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
 	return async function updateAndExecCmdFn(msg, model, props, optionsTemplate): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
-		const [defer, getDeferred] = createDefer<TModel, TMessage>();
+		const [defer, getDeferred] = createDefer<TMessage>();
 		const callBase = createCallBase(msg, model, props, { defer });
 
 		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
@@ -90,27 +83,20 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 			...optionsTemplate,
 		};
 
-		const [draftFn, ...commands] = callUpdateMap(updateMap, msg, model, props, options);
-		const [deferredDraftFunctions, deferredCommands] = getDeferred();
-
-		const allDraftFunctions = [draftFn, ...deferredDraftFunctions].filter((fn) => fn != null);
-
-		let currentModel = model;
+		const commands: (Cmd<TMessage> | undefined)[] = [];
 		const recordedPatches: Patch[] = [];
+		const updatedModel = produce(
+			model,
+			(draft: Draft<TModel>) => {
+				commands.push(...callUpdateMap(updateMap, msg, draft, props, options));
+			},
+			(patches) => {
+				recordedPatches.push(...patches);
+			},
+		);
+		const deferredCommands = getDeferred();
 
-		for (const fn of allDraftFunctions) {
-			currentModel = produce(
-				currentModel,
-				(draft: Draft<TModel>) => {
-					fn(draft);
-				},
-				(patches) => {
-					recordedPatches.push(...patches);
-				},
-			);
-		}
-
-		const diff = getDiffFromPatches(recordedPatches, currentModel);
+		const diff = getDiffFromPatches(recordedPatches, updatedModel);
 
 		const messages = await execCmd(...commands, ...deferredCommands);
 

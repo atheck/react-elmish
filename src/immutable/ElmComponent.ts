@@ -1,4 +1,4 @@
-import { castImmutable, freeze, produce, type Immutable } from "immer";
+import { castImmutable, freeze, produce, type Draft, type Immutable } from "immer";
 import React from "react";
 import { execCmd, logMessage } from "../Common";
 import { getFakeOptionsOnce } from "../fakeOptions";
@@ -6,7 +6,7 @@ import { Services } from "../Init";
 import type { Cmd, InitFunction, Message, Nullable } from "../Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
-import type { UpdateFunction } from "./Types";
+import type { UpdateFunction, UpdateReturnType } from "./Types";
 
 /**
  * Abstract class for a react class component using the Elmish pattern.
@@ -100,31 +100,22 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 		this.running = true;
 
 		let nextMsg: TMessage | undefined = msg;
-		let modified = false;
 
 		do {
 			const currentMessage = nextMsg;
 
 			logMessage(this.componentName, currentMessage);
 
-			const [defer, getDeferred] = createDefer<TModel, TMessage>();
+			const [defer, getDeferred] = createDefer<TMessage>();
 			const callBase = createCallBase(currentMessage, this.currentModel, this.props, { defer });
 
-			const [draftFn, ...commands] = this.update(this.currentModel, currentMessage, this.props, { defer, callBase });
+			const commands: UpdateReturnType<TMessage> = [];
 
-			const [deferredDraftFunctions, deferredCommands] = getDeferred();
+			this.currentModel = produce(this.currentModel, (draft: Draft<TModel>) => {
+				commands.push(...this.update(draft, currentMessage, this.props, { defer, callBase }));
+			});
 
-			for (const deferredDraftFn of deferredDraftFunctions) {
-				this.currentModel = produce(this.currentModel, deferredDraftFn);
-
-				modified = true;
-			}
-
-			if (draftFn) {
-				this.currentModel = produce(this.currentModel, draftFn);
-
-				modified = true;
-			}
+			const deferredCommands = getDeferred();
 
 			execCmd(this.dispatch, ...commands, ...deferredCommands);
 
@@ -133,7 +124,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
 		this.running = false;
 
-		if (this.mounted && modified) {
+		if (this.mounted) {
 			Services.logger?.debug("Update model for", this.componentName, this.currentModel);
 			this.forceUpdate();
 		}

@@ -1,11 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { castImmutable, freeze, produce, type Immutable } from "immer";
+import { castImmutable, freeze, produce, type Draft, type Immutable } from "immer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { execCmd, logMessage } from "../Common";
 import { getFakeOptionsOnce } from "../fakeOptions";
 import { Services } from "../Init";
 import { isReduxDevToolsEnabled, type ReduxDevTools } from "../reduxDevTools";
-import { subscriptionIsFunctionArray, type Dispatch, type InitFunction, type Message, type Nullable } from "../Types";
+import { subscriptionIsFunctionArray, type Cmd, type Dispatch, type InitFunction, type Message, type Nullable } from "../Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import type { Subscription, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
@@ -184,32 +184,21 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			return false;
 		}
 
-		let modified = false;
-
 		logMessage(name, nextMsg);
 
-		const [defer, getDeferred] = createDefer<TModel, TMessage>();
+		const [defer, getDeferred] = createDefer<TMessage>();
 		const callBase = createCallBase<TProps, TModel, TMessage>(nextMsg, currentModel, propsRef.current, { defer });
 
-		const [draftFn, ...commands] = callUpdate(update, nextMsg, currentModel, propsRef.current, { defer, callBase });
+		const [updatedModel, ...commands] = callUpdate(update, nextMsg, currentModel, propsRef.current, { defer, callBase });
 
-		const [deferredDraftFunctions, deferredCommands] = getDeferred();
+		const deferredCommands = getDeferred();
 
-		for (const deferredDraftFn of deferredDraftFunctions) {
-			currentModel = produce(currentModel, deferredDraftFn);
-
-			modified = true;
-		}
-
-		if (draftFn) {
-			currentModel = produce(currentModel, draftFn);
-
-			modified = true;
-		}
+		currentModel = updatedModel;
 
 		execCmd(dispatch, ...commands, ...deferredCommands);
 
-		return modified;
+		// TODO: optimieren
+		return true;
 	}
 }
 
@@ -219,21 +208,28 @@ function callUpdate<TProps, TModel, TMessage extends Message>(
 	model: Immutable<TModel>,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-): UpdateReturnType<TModel, TMessage> {
-	if (typeof update === "function") {
-		return update(model, msg, props, options);
-	}
+): [Immutable<TModel>, ...(Cmd<TMessage> | undefined)[]] {
+	const commands: (Cmd<TMessage> | undefined)[] = [];
+	const updatedModel = produce(model, (draft: Draft<TModel>) => {
+		if (typeof update === "function") {
+			commands.push(...update(draft, msg, props, options));
 
-	return callUpdateMap(update, msg, model, props, options);
+			return;
+		}
+
+		commands.push(...callUpdateMap(update, msg, draft, props, options));
+	});
+
+	return [updatedModel, ...commands];
 }
 
 function callUpdateMap<TProps, TModel, TMessage extends Message>(
 	updateMap: UpdateMap<TProps, TModel, TMessage>,
 	msg: TMessage,
-	model: Immutable<TModel>,
+	model: Draft<TModel>,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-): UpdateReturnType<TModel, TMessage> {
+): UpdateReturnType<TMessage> {
 	const msgName: TMessage["name"] = msg.name;
 
 	return updateMap[msgName](msg, model, props, options);
