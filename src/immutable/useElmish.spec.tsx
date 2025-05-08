@@ -70,8 +70,6 @@ function defaultUpdate(
 	}
 }
 
-// TODO: Tests mit callBase und defer
-
 let componentModel: Model | undefined;
 
 describe("useElmish", () => {
