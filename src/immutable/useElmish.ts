@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { castImmutable, freeze, produce, type Draft, type Immutable } from "immer";
+import { castImmutable, enablePatches, freeze, produce, type Draft, type Immutable } from "immer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { execCmd, logMessage } from "../Common";
 import { getFakeOptionsOnce } from "../fakeOptions";
@@ -141,6 +141,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	let initializedModel = model;
 
 	if (!initializedModel) {
+		enablePatches();
+
 		const [initModel, ...initCommands] = fakeOptions?.model ? [fakeOptions.model] : init(props);
 
 		initializedModel = castImmutable(freeze(initModel, true));
@@ -189,7 +191,10 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		const [defer, getDeferred] = createDefer<TMessage>();
 		const callBase = createCallBase<TProps, TModel, TMessage>(nextMsg, currentModel, propsRef.current, { defer });
 
-		const [updatedModel, ...commands] = callUpdate(update, nextMsg, currentModel, propsRef.current, { defer, callBase });
+		const [modified, updatedModel, ...commands] = callUpdate(update, nextMsg, currentModel, propsRef.current, {
+			defer,
+			callBase,
+		});
 
 		const deferredCommands = getDeferred();
 
@@ -197,8 +202,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		execCmd(dispatch, ...commands, ...deferredCommands);
 
-		// TODO: optimieren
-		return true;
+		return modified;
 	}
 }
 
@@ -208,19 +212,26 @@ function callUpdate<TProps, TModel, TMessage extends Message>(
 	model: Immutable<TModel>,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-): [Immutable<TModel>, ...(Cmd<TMessage> | undefined)[]] {
+): [boolean, Immutable<TModel>, ...(Cmd<TMessage> | undefined)[]] {
 	const commands: (Cmd<TMessage> | undefined)[] = [];
-	const updatedModel = produce(model, (draft: Draft<TModel>) => {
-		if (typeof update === "function") {
-			commands.push(...update(draft, msg, props, options));
+	let modified = false;
+	const updatedModel = produce(
+		model,
+		(draft: Draft<TModel>) => {
+			if (typeof update === "function") {
+				commands.push(...update(draft, msg, props, options));
 
-			return;
-		}
+				return;
+			}
 
-		commands.push(...callUpdateMap(update, msg, draft, props, options));
-	});
+			commands.push(...callUpdateMap(update, msg, draft, props, options));
+		},
+		(patches) => {
+			modified = patches.length > 0;
+		},
+	);
 
-	return [updatedModel, ...commands];
+	return [modified, updatedModel, ...commands];
 }
 
 function callUpdateMap<TProps, TModel, TMessage extends Message>(
@@ -237,4 +248,4 @@ function callUpdateMap<TProps, TModel, TMessage extends Message>(
 
 export type { UseElmishOptions };
 
-export { callUpdate, callUpdateMap, useElmish };
+export { callUpdateMap, useElmish };
