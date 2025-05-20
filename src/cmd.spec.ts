@@ -283,4 +283,52 @@ describe("cmd", () => {
 			expect(message.name).toBe("error");
 		});
 	});
+
+	describe("ofNone", () => {
+		it("runs a sync task", () => {
+			// arrange
+			const task = jest.fn();
+			const result = cmd.ofNone(task);
+
+			// act
+			result[0]?.(() => null);
+
+			// assert
+			expect(task).toHaveBeenCalledTimes(1);
+		});
+
+		it("runs an async task", () => {
+			// arrange
+			const task = jest.fn(asyncResolve);
+			const result = cmd.ofNone(task);
+
+			// act
+			result[0]?.(() => null);
+
+			// assert
+			expect(task).toHaveBeenCalledTimes(1);
+		});
+
+		it("ignores the error for a sync task", async () => {
+			// arrange
+			const result = cmd.ofNone(syncError);
+
+			// act
+			const succeeds = (): void => result[0]?.(jest.fn());
+
+			// assert
+			expect(succeeds).not.toThrow();
+		});
+
+		it("ignores the error for an async task", async () => {
+			// arrange
+			const result = cmd.ofNone(asyncReject);
+
+			// act
+			const succeeds = (): void => result[0]?.(jest.fn());
+
+			// assert
+			expect(succeeds).not.toThrow();
+		});
+	});
 });

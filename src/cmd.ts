@@ -108,6 +108,30 @@ const cmd = {
 
 		return [bind];
 	},
+
+	/**
+	 * Creates a command out of a function and ignores both, the success case and the error case. This can also be an async function.
+	 * @param task The function to call.
+	 * @param args The parameters of the task.
+	 */
+	ofNone<TErrorMessage extends Message, TArgs extends unknown[]>(
+		task: (...args: TArgs) => unknown,
+		...args: TArgs
+	): Cmd<TErrorMessage> {
+		const bind = (_dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): void => {
+			try {
+				const taskResult = task(...args);
+
+				Promise.resolve(taskResult)
+					.then(() => fallback?.())
+					.catch(() => fallback?.());
+			} catch {
+				fallback?.();
+			}
+		};
+
+		return [bind];
+	},
 };
 
 function defaultFallbackHandler(): void {

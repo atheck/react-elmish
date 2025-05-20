@@ -266,6 +266,7 @@ You can call one of the functions of that object:
 | `cmd.ofEither` | Calls a function (sync or async) and maps the result into a message. |
 | `cmd.ofSuccess` | Same as `ofEither` but ignores the error case. |
 | `cmd.ofError` | Same as `ofEither` but ignores the success case. |
+| `cmd.ofNone` | Same as `ofEither` but ignores both, the success case and the error case. |
 | `cmd.ofSub` | Use this function to trigger a command in a subscription. |
 
 ### Dispatch a message
