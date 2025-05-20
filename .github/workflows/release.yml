@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.2
       - name: Setup Node.js
-        uses: actions/setup-node@v4.0.4
+        uses: actions/setup-node@v4.4.0
         with:
           node-version: 'lts/*'
       - name: Test
@@ -29,11 +29,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
       - name: Setup Node.js
-        uses: actions/setup-node@v4.0.4
+        uses: actions/setup-node@v4.4.0
         with:
           node-version: 'lts/*'
       - name: Install dependencies
