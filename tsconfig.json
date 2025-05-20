@@ -5,7 +5,8 @@
     "noImplicitAny": true,
     "isolatedModules": true,
     "lib": ["ESNext", "DOM"],
-    "moduleResolution": "node",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "strict": true,
     "target": "esnext",
     "strictNullChecks": true,
@@ -13,7 +14,6 @@
     "downlevelIteration": true,
     "importHelpers": true,
     "resolveJsonModule": true,
-    "module": "esnext",
     "declaration": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react"

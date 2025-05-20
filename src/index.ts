@@ -9,6 +9,7 @@ export type {
 	InitResult,
 	Message,
 	MsgSource,
+	Subscription,
 	SubscriptionResult,
 	UpdateFunctionOptions,
 	UpdateMap,

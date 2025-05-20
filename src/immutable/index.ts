@@ -11,6 +11,7 @@ export type {
 } from "../Types";
 export { errorHandler, handleError } from "./ErrorHandling";
 export type {
+	Subscription,
 	UpdateFunctionOptions,
 	UpdateMap,
 	UpdateReturnType,
