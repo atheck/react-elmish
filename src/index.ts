@@ -4,4 +4,4 @@ export { errorHandler, errorMsg, handleError, type ErrorMessage } from "./ErrorH
 export { init, type ElmOptions, type Logger } from "./Init";
 export { mergeSubscriptions } from "./mergeSubscriptions";
 export type { Cmd, Dispatch, InitResult, Message, MsgSource, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
-export { useElmish, type SubscriptionResult, type UseElmishOptions } from "./useElmish";
+export { useElmish, type Subscription, type SubscriptionResult, type UseElmishOptions } from "./useElmish";
