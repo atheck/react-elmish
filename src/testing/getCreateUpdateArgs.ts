@@ -1,6 +1,6 @@
 import type { InitFunction, Message, UpdateFunctionOptions } from "../Types";
 import { createModelAndProps } from "./createModelAndProps";
-import type { ModelAndPropsFactory, UpdateArgsFactory } from "./createUpdateArgsFactory";
+import type { UpdateArgsFactory } from "./createUpdateArgsFactory";
 
 /**
  * Creates a factory function to create a message, a model, props, and options which can be passed to an update function in tests.
@@ -29,6 +29,11 @@ function getCreateUpdateArgs<TProps, TModel, TMessage extends Message>(
 	};
 }
 
+type ModelAndPropsFactory<TProps, TModel> = (
+	modelTemplate?: Partial<TModel>,
+	propsTemplate?: Partial<TProps>,
+) => [TModel, TProps];
+
 /**
  * Creates a factory function to create a model, props, and options which can be passed to an update or subscription function in tests.
  * @param {InitFunction<TProps, TModel, TMessage>} init The init function which creates the model.
@@ -48,5 +53,7 @@ function getCreateModelAndProps<TProps, TModel, TMessage extends Message>(
 		return createModelAndProps(init, initProps, modelTemplate, propsTemplate);
 	};
 }
+
+export type { ModelAndPropsFactory };
 
 export { getCreateModelAndProps, getCreateUpdateArgs };

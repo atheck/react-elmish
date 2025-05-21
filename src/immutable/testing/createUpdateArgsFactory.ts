@@ -1,0 +1,53 @@
+import { castImmutable, freeze, type Immutable } from "immer";
+import type { Message } from "../../Types";
+import type { UpdateFunctionOptions } from "../Types";
+
+type UpdateArgsFactory<TProps, TModel, TMessage extends Message> = (
+	msg: TMessage,
+	modelTemplate?: Partial<TModel>,
+	propsTemplate?: Partial<TProps>,
+	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
+) => [TMessage, Immutable<TModel>, TProps, Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>?];
+
+/**
+ * Creates a factory function to create a message, a model, props, and options which can be passed to an update function in tests.
+ * @param {() => TModel} initModel A function to create an initial model.
+ * @param {() => TProps} initProps A function to create initial props.
+ * @returns {UpdateArgsFactory<TProps, TModel, TMessage>} A function to create a message, a model, and props.
+ * @example
+ * // one time
+ * const createUpdateArgs = createUpdateArgsFactory(() => ({ ... }), () => ({ ... }));
+ * // in tests
+ * const [msg, model, props] = createUpdateArgs(Msg.myMessage(), { ... }, , { ... });
+ */
+function createUpdateArgsFactory<TProps, TModel, TMessage extends Message>(
+	initModel: () => TModel,
+	initProps: () => TProps,
+): UpdateArgsFactory<TProps, TModel, TMessage> {
+	return function createUpdateArgs(
+		msg: TMessage,
+		modelTemplate?: Partial<TModel>,
+		propsTemplate?: Partial<TProps>,
+		optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
+	): [TMessage, Immutable<TModel>, TProps, Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>?] {
+		const model = castImmutable(
+			freeze(
+				{
+					...initModel(),
+					...modelTemplate,
+				},
+				true,
+			),
+		);
+		const props = {
+			...initProps(),
+			...propsTemplate,
+		};
+
+		return [msg, model, props, optionsTemplate];
+	};
+}
+
+export type { UpdateArgsFactory };
+
+export { createUpdateArgsFactory };

@@ -1,23 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { castImmutable, enablePatches, freeze, produce, type Draft, type Immutable } from "immer";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { execCmd, logMessage, modelHasChanged } from "./Common";
-import { Services } from "./Init";
-import {
-	subscriptionIsFunctionArray,
-	type Dispatch,
-	type InitFunction,
-	type Message,
-	type Nullable,
-	type Subscription,
-	type UpdateFunction,
-	type UpdateFunctionOptions,
-	type UpdateMap,
-	type UpdateReturnType,
-} from "./Types";
+import { execCmd, logMessage } from "../Common";
+import { getFakeOptionsOnce } from "../fakeOptions";
+import { Services } from "../Init";
+import { isReduxDevToolsEnabled, type ReduxDevTools } from "../reduxDevTools";
+import { subscriptionIsFunctionArray, type Cmd, type Dispatch, type InitFunction, type Message, type Nullable } from "../Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
-import { getFakeOptionsOnce } from "./fakeOptions";
-import { isReduxDevToolsEnabled, type ReduxDevTools } from "./reduxDevTools";
+import type { Subscription, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
 
 /**
  * Options for the `useElmish` hook.
@@ -67,12 +58,11 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	init,
 	update,
 	subscription,
-}: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
+}: UseElmishOptions<TProps, TModel, TMessage>): [Immutable<TModel>, Dispatch<TMessage>] {
 	let running = false;
 	const buffer: TMessage[] = [];
-	let currentModel: Partial<TModel> = {};
 
-	const [model, setModel] = useState<Nullable<TModel>>(null);
+	const [model, setModel] = useState<Nullable<Immutable<TModel>>>(null);
 	const propsRef = useRef(props);
 	const isMountedRef = useRef(true);
 
@@ -88,7 +78,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			reduxUnsubscribe = devTools.current.subscribe((message) => {
 				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-					setModel(JSON.parse(message.state) as TModel);
+					setModel(JSON.parse(message.state) as Immutable<TModel>);
 				}
 			});
 		}
@@ -102,7 +92,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		};
 	}, [name]);
 
-	let initializedModel = model;
+	let currentModel = model;
 
 	if (propsRef.current !== props) {
 		propsRef.current = props;
@@ -129,7 +119,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 					}
 
 					if (devTools.current) {
-						devTools.current.send(nextMsg.name, { ...initializedModel, ...currentModel });
+						devTools.current.send(nextMsg.name, currentModel);
 					}
 
 					nextMsg = buffer.shift();
@@ -138,23 +128,25 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 				running = false;
 
 				if (isMountedRef.current && modified) {
-					setModel((prevModel) => {
-						const updatedModel = { ...prevModel, ...currentModel };
+					setModel(() => {
+						Services.logger?.debug("Update model for", name, currentModel);
 
-						Services.logger?.debug("Update model for", name, updatedModel);
-
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We always have a full model here
-						return updatedModel as TModel;
+						return currentModel;
 					});
 				}
 			}),
 		[],
 	);
 
+	let initializedModel = model;
+
 	if (!initializedModel) {
+		enablePatches();
+
 		const [initModel, ...initCommands] = fakeOptions?.model ? [fakeOptions.model] : init(props);
 
-		initializedModel = initModel;
+		initializedModel = castImmutable(freeze(initModel, true));
+		currentModel = initializedModel;
 		setModel(initializedModel);
 
 		devTools.current?.init(initializedModel);
@@ -190,28 +182,23 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	return [initializedModel, dispatch];
 
 	function handleMessage(nextMsg: TMessage): boolean {
-		if (!initializedModel) {
+		if (!currentModel) {
 			return false;
 		}
 
-		let modified = false;
-
 		logMessage(name, nextMsg);
 
-		const updatedModel = { ...initializedModel, ...currentModel };
+		const [defer, getDeferred] = createDefer<TMessage>();
+		const callBase = createCallBase<TProps, TModel, TMessage>(nextMsg, currentModel, propsRef.current, { defer });
 
-		const [defer, getDeferred] = createDefer<TModel, TMessage>();
-		const callBase = createCallBase(nextMsg, updatedModel, propsRef.current, { defer });
+		const [modified, updatedModel, ...commands] = callUpdate(update, nextMsg, currentModel, propsRef.current, {
+			defer,
+			callBase,
+		});
 
-		const [newModel, ...commands] = callUpdate(update, nextMsg, updatedModel, propsRef.current, { defer, callBase });
+		const deferredCommands = getDeferred();
 
-		const [deferredModel, deferredCommands] = getDeferred();
-
-		if (modelHasChanged(currentModel, { ...deferredModel, ...newModel })) {
-			currentModel = { ...currentModel, ...deferredModel, ...newModel };
-
-			modified = true;
-		}
+		currentModel = updatedModel;
 
 		execCmd(dispatch, ...commands, ...deferredCommands);
 
@@ -222,24 +209,38 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 function callUpdate<TProps, TModel, TMessage extends Message>(
 	update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>,
 	msg: TMessage,
-	model: TModel,
+	model: Immutable<TModel>,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-): UpdateReturnType<TModel, TMessage> {
-	if (typeof update === "function") {
-		return update(model, msg, props, options);
-	}
+): [boolean, Immutable<TModel>, ...(Cmd<TMessage> | undefined)[]] {
+	const commands: (Cmd<TMessage> | undefined)[] = [];
+	let modified = false;
+	const updatedModel = produce(
+		model,
+		(draft: Draft<TModel>) => {
+			if (typeof update === "function") {
+				commands.push(...update(draft, msg, props, options));
 
-	return callUpdateMap(update, msg, model, props, options);
+				return;
+			}
+
+			commands.push(...callUpdateMap(update, msg, draft, props, options));
+		},
+		(patches) => {
+			modified = patches.length > 0;
+		},
+	);
+
+	return [modified, updatedModel, ...commands];
 }
 
 function callUpdateMap<TProps, TModel, TMessage extends Message>(
 	updateMap: UpdateMap<TProps, TModel, TMessage>,
 	msg: TMessage,
-	model: TModel,
+	model: Draft<TModel>,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-): UpdateReturnType<TModel, TMessage> {
+): UpdateReturnType<TMessage> {
 	const msgName: TMessage["name"] = msg.name;
 
 	return updateMap[msgName](msg, model, props, options);
@@ -247,4 +248,4 @@ function callUpdateMap<TProps, TModel, TMessage extends Message>(
 
 export type { UseElmishOptions };
 
-export { callUpdate, callUpdateMap, useElmish };
+export { callUpdateMap, useElmish };

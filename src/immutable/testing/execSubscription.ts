@@ -1,12 +1,12 @@
-import type { Dispatch } from "react";
-import type { Message } from "../Types";
-import { subscriptionIsFunctionArray, type Subscription } from "../useElmish";
-import { execCmdWithDispatch } from "./execCmd";
+import type { Immutable } from "immer";
+import { subscriptionIsFunctionArray, type Dispatch, type Message } from "../../Types";
+import { execCmdWithDispatch } from "../../testing";
+import type { Subscription } from "../Types";
 
 function execSubscription<TProps, TModel, TMessage extends Message>(
 	subscription: Subscription<TProps, TModel, TMessage> | undefined,
 	dispatch: Dispatch<TMessage>,
-	model: TModel,
+	model: Immutable<TModel>,
 	props: TProps,
 ): () => void {
 	const noop = (): void => {

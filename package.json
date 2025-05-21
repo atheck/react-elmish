@@ -14,6 +14,9 @@
     "update": "npx -y npm-check-updates -i --install never && npx -y npm-check-updates -i --target minor --install never && npx -y npm-check-updates -i --target patch --install never && npm update",
     "semantic-release": "semantic-release"
   },
+  "dependencies": {
+    "immer": "10.1.1"
+  },
   "peerDependencies": {
     "react": ">=16.8.0 <20"
   },
@@ -53,6 +56,11 @@
   "files": [
     "dist/**/*"
   ],
-  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./testing": "./dist/testing/index.js",
+    "./immutable": "./dist/immutable/index.js",
+    "./immutable/testing": "./dist/immutable/testing/index.js"
+  },
   "types": "dist/index.d.ts"
 }
