@@ -44,7 +44,7 @@ type UpdateMap<TProps, TModel, TMessage extends Message> = {
 		msg: TMessage & { name: TMessageName },
 		model: Draft<TModel>,
 		props: TProps,
-		options: UpdateFunctionOptions<TProps, TModel, TMessage & { name: TMessageName }>,
+		options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 	) => UpdateReturnType<TMessage>;
 };
 

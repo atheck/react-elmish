@@ -1,12 +1,14 @@
 import { render, type RenderResult } from "@testing-library/react";
 import type { JSX } from "react";
-import { cmd } from "../cmd";
-import { errorHandler, errorMsg, type ErrorMessage } from "../ErrorHandling";
-import type { InitResult, UpdateMap } from "../Types";
+import { cmd } from "../../cmd";
+import { errorMsg, type ErrorMessage } from "../../ErrorHandling";
+import { renderWithModel } from "../../testing";
+import type { InitResult } from "../../Types";
+import { errorHandler } from "../ErrorHandling";
+import type { UpdateMap } from "../Types";
 import { useElmish } from "../useElmish";
 import { getCreateUpdateArgs } from "./getCreateUpdateArgs";
 import { getUpdateFn } from "./getUpdateFn";
-import { renderWithModel } from "./renderWithModel";
 
 interface Model {
 	value1: string;
@@ -37,23 +39,25 @@ function init(): InitResult<Model, Message> {
 }
 
 const update: UpdateMap<Props, Model, Message> = {
-	doubleDefer(_msg, _model, _props, { defer }) {
-		defer({ value2: "deferred" }, cmd.ofMsg(Msg.first()));
-		defer({ subPage: "subPage" }, cmd.ofMsg(Msg.second()));
+	doubleDefer(_msg, model, _props, { defer }) {
+		defer(cmd.ofMsg(Msg.first()));
+		defer(cmd.ofMsg(Msg.second()));
 
-		return [{ value1: "computed" }, cmd.ofMsg(Msg.third())];
+		model.value1 = "computed";
+
+		return [cmd.ofMsg(Msg.third())];
 	},
 
 	first() {
-		return [{}];
+		return [];
 	},
 
 	second() {
-		return [{}];
+		return [];
 	},
 
 	third() {
-		return [{}];
+		return [];
 	},
 
 	...errorHandler(),
@@ -96,7 +100,7 @@ describe("Playground", () => {
 
 			const [model, ...commands] = updateFn(...args);
 
-			expect(model).toStrictEqual({ value1: "computed", value2: "deferred", subPage: "subPage" });
+			expect(model).toStrictEqual({ value1: "computed" });
 			expect(commands).toHaveLength(3);
 		});
 	});
