@@ -59,8 +59,10 @@
   "exports": {
     ".": "./dist/index.js",
     "./testing": "./dist/testing/index.js",
+    "./extend": "./dist/extend/index.js",
     "./immutable": "./dist/immutable/index.js",
-    "./immutable/testing": "./dist/immutable/testing/index.js"
+    "./immutable/testing": "./dist/immutable/testing/index.js",
+    "./immutable/extend": "./dist/immutable/extend/index.js"
   },
   "types": "dist/index.d.ts"
 }
