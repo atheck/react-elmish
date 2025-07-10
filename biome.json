@@ -1,24 +1,28 @@
 {
-  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": [
-    "eslint-config-heck/biomeJsTs"
-  ],
-  "linter": {
-    "rules": {
-      "performance": {
-        "noBarrelFile": "off"
-      }
-    }
-  },
-  "organizeImports": {
-    "enabled": false
-  },
-  "formatter": {
-    "lineWidth": 130
-  },
-  "json": {
-    "parser": {
-      "allowComments": true
-    }
-  }
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": [
+		"eslint-config-heck/biomeJsTs"
+	],
+	"linter": {
+		"rules": {
+			"performance": {
+				"noBarrelFile": "off"
+			}
+		}
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"formatter": {
+		"lineWidth": 130
+	},
+	"json": {
+		"parser": {
+			"allowComments": true
+		}
+	}
 }

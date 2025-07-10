@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/nursery/noUselessUndefined: Tests only */
 import { execCmd } from ".";
 import { cmd } from "../cmd";
 

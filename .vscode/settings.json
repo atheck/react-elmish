@@ -1,7 +1,9 @@
 {
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"editor.codeActionsOnSave": {
-		"source.organizeImports": "explicit"
+		"source.fixAll.biome": "explicit",
+		"source.removeUnusedImports": "explicit",
+		"source.organizeImports.biome": "explicit"
 	},
 	"[javascript][javascriptreact][typescript][typescriptreact]": {
 		"editor.defaultFormatter": "biomejs.biome"

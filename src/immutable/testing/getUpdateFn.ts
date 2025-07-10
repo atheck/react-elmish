@@ -108,7 +108,6 @@ function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>):
 	const diff: Partial<TModel> = {};
 
 	/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-	/* eslint-disable @typescript-eslint/ban-ts-comment */
 	/* eslint-disable @typescript-eslint/no-dynamic-delete */
 	for (const patch of patches) {
 		// biome-ignore lint/style/noNonNullAssertion: The path is always defined
@@ -136,7 +135,6 @@ function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>):
 		}
 	}
 	/* eslint-enable @typescript-eslint/no-dynamic-delete */
-	/* eslint-enable @typescript-eslint/ban-ts-comment */
 	/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
 	return diff;
