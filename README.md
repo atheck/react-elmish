@@ -17,6 +17,7 @@ This library brings the elmish pattern to react.
 - [Subscriptions](#subscriptions)
   - [Working with external sources of events](#working-with-external-sources-of-events)
   - [Cleanup subscriptions](#cleanup-subscriptions)
+- [Re-Initialize the component](#re-initialize-the-component)
 - [Immutability](#immutability)
   - [Testing](#testing)
 - [Setup](#setup)
@@ -457,6 +458,22 @@ function subscription (model: Model): SubscriptionResult<Message> {
 ```
 
 The destructor is called when the component is removed from the DOM.
+
+## Re-Initialize the component
+
+If you want to re-initialize the component when a prop (or another value) changes, you can pass a `reInitOn` array to the `useElmish` hook. This array contains the dependencies that trigger a re-initialization of the component.
+
+```tsx
+interface Props {
+    changingValue: string;
+}
+
+// ...
+
+const [model, dispatch] = useElmish({ name: "ReInit", props, init, update, subscription, reInitOn: [props.changingValue] })
+```
+
+This will re-initialize the component whenever the `changingValue` prop changes. The `init` function is called again, and the model is reset to the initial state. Also the subscription is re-created.
 
 ## Immutability
 

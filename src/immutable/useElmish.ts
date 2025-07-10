@@ -1,11 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { castImmutable, enablePatches, freeze, produce, type Draft, type Immutable } from "immer";
+import { castImmutable, type Draft, enablePatches, freeze, type Immutable, produce } from "immer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { execCmd, logMessage } from "../Common";
 import { getFakeOptionsOnce } from "../fakeOptions";
 import { Services } from "../Init";
 import { isReduxDevToolsEnabled, type ReduxDevTools } from "../reduxDevTools";
-import { subscriptionIsFunctionArray, type Cmd, type Dispatch, type InitFunction, type Message, type Nullable } from "../Types";
+import { type Cmd, type Dispatch, type InitFunction, type Message, type Nullable, subscriptionIsFunctionArray } from "../Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import type { Subscription, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
@@ -28,6 +28,10 @@ interface UseElmishOptions<TProps, TModel, TMessage extends Message> {
 	 * @type {TProps}
 	 */
 	props: TProps;
+	/**
+	 * Array of values that trigger a re-initialization of the component.
+	 */
+	reInitOn?: unknown[];
 	/**
 	 * The function to initialize the components model. This function is only called once.
 	 * @type {InitFunction<TProps, TModel, TMessage>}
@@ -55,6 +59,7 @@ interface UseElmishOptions<TProps, TModel, TMessage extends Message> {
 function useElmish<TProps, TModel, TMessage extends Message>({
 	name,
 	props,
+	reInitOn,
 	init,
 	update,
 	subscription,
@@ -62,6 +67,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	let running = false;
 	const buffer: TMessage[] = [];
 
+	const firstCallRef = useRef(true);
 	const [model, setModel] = useState<Nullable<Immutable<TModel>>>(null);
 	const propsRef = useRef(props);
 	const isMountedRef = useRef(true);
@@ -156,7 +162,17 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		execCmd(dispatch, ...initCommands);
 	}
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: We want to run this effect only once
+	useEffect(() => {
+		if (firstCallRef.current) {
+			firstCallRef.current = false;
+
+			return;
+		}
+
+		setModel(null);
+		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
+	}, reInitOn ?? []);
+
 	useEffect(() => {
 		if (subscription) {
 			const subscriptionResult = subscription(initializedModel, props);
@@ -177,7 +193,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 			return destructor;
 		}
-	}, []);
+		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
+	}, reInitOn ?? []);
 
 	return [initializedModel, dispatch];
 

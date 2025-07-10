@@ -1,7 +1,7 @@
-import { render, type RenderResult } from "@testing-library/react";
+import { type RenderResult, render } from "@testing-library/react";
 import type { JSX } from "react";
-import type { Cmd, InitResult, SubscriptionResult } from "../Types";
 import { cmd } from "../cmd";
+import type { Cmd, InitResult, SubscriptionResult } from "../Types";
 import type { UpdateFunctionOptions, UpdateReturnType } from "./Types";
 import { useElmish } from "./useElmish";
 
@@ -21,6 +21,7 @@ interface Props {
 		options: UpdateFunctionOptions<Props, Model, Message>,
 	) => UpdateReturnType<Message>;
 	subscription?: (model: Model) => SubscriptionResult<Message>;
+	reInitOn?: unknown[];
 }
 
 function defaultInit(msg?: Cmd<Message>): InitResult<Model, Message> {
@@ -86,6 +87,7 @@ describe("useElmish", () => {
 		renderComponent(props);
 
 		// assert
+		expect(init).toHaveBeenCalledTimes(1);
 		expect(init).toHaveBeenCalledWith(props);
 	});
 
@@ -196,15 +198,72 @@ describe("useElmish", () => {
 		expect(mockSub).toHaveBeenCalledTimes(1);
 		expect(mockDestructor).toHaveBeenCalledWith();
 	});
+
+	it("reinitializes the model when reInitOn changes", () => {
+		// arrange
+		const init = jest.fn().mockReturnValue([{}, []]);
+		const update = jest.fn();
+		let props: Props = {
+			init,
+			update,
+			reInitOn: [1],
+		};
+
+		// act
+		const api = renderComponent(props);
+
+		expect(init).toHaveBeenCalledTimes(1);
+		expect(init).toHaveBeenLastCalledWith(props);
+
+		props = {
+			...props,
+			reInitOn: [2],
+		};
+
+		api.rerender(<TestComponent {...props} />);
+
+		expect(init).toHaveBeenCalledTimes(2);
+		expect(init).toHaveBeenLastCalledWith(props);
+	});
+
+	it("calls the subscription function again when reInitOn changes", () => {
+		// arrange
+		const mockDestructor = jest.fn();
+		const mockSub = jest.fn().mockReturnValue(mockDestructor);
+		const mockSubscription = jest.fn().mockReturnValue([mockSub]);
+		const [initModel, initCmd] = defaultInit();
+		let props: Props = {
+			init: () => [initModel, initCmd],
+			update: defaultUpdate,
+			subscription: mockSubscription,
+			reInitOn: [1, "other prop"],
+		};
+
+		// act
+		const api = renderComponent(props);
+
+		// assert
+		expect(mockSub).toHaveBeenCalledTimes(1);
+
+		props = {
+			...props,
+			reInitOn: [1, "changed prop"],
+		};
+
+		api.rerender(<TestComponent {...props} />);
+
+		expect(mockSub).toHaveBeenCalledTimes(2);
+	});
 });
 
 function TestComponent(props: Props): JSX.Element {
-	const { init, update, subscription } = props;
+	const { init, update, subscription, reInitOn } = props;
 	const [model] = useElmish({
 		props,
 		init,
 		update,
 		subscription,
+		reInitOn,
 		name: "Test",
 	});
 
