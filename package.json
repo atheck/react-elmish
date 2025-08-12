@@ -11,7 +11,7 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch --coverage",
     "lint": "biome lint src --max-diagnostics 200 && npx eslint src",
-    "update": "npx -y npm-check-updates -i --install never && npx -y npm-check-updates -i --target minor --install never && npx -y npm-check-updates -i --target patch --install never && npm update",
+    "update": "npx -y npm-check-updates -i --install never && npx -y npm-check-updates -i --target minor --install never && npx -y npm-check-updates -i --target patch --install never && npm update && npm audit signatures",
     "semantic-release": "semantic-release"
   },
   "dependencies": {
