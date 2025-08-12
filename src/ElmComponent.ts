@@ -1,10 +1,10 @@
 import React from "react";
 import { execCmd, logMessage, modelHasChanged } from "./Common";
-import { Services } from "./Init";
-import type { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
+import { Services } from "./Init";
+import type { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
 
 /**
  * Abstract class for a react class component using the Elmish pattern.
@@ -16,6 +16,7 @@ import { getFakeOptionsOnce } from "./fakeOptions";
  * @template TMessage The type of the messages.
  * @template TProps The type of the props.
  */
+// biome-ignore lint/nursery/useReactFunctionComponents: This is only for downward compatibility.
 abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends React.Component<TProps> {
 	private initCommands: Nullable<(Cmd<TMessage> | undefined)[]> | undefined;
 	private readonly componentName: string;
