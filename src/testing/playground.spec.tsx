@@ -1,7 +1,7 @@
-import { render, type RenderResult } from "@testing-library/react";
+import { type RenderResult, render } from "@testing-library/react";
 import type { JSX } from "react";
 import { cmd } from "../cmd";
-import { errorHandler, errorMsg, type ErrorMessage } from "../ErrorHandling";
+import { type ErrorMessage, errorHandler, errorMsg } from "../ErrorHandling";
 import type { InitResult, UpdateMap } from "../Types";
 import { useElmish } from "../useElmish";
 import { getCreateUpdateArgs } from "./getCreateUpdateArgs";

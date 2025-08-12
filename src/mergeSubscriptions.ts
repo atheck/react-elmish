@@ -1,10 +1,10 @@
 import {
-	subscriptionIsFunctionArray,
 	type Dispatch,
 	type Message,
 	type Sub,
 	type Subscription,
 	type SubscriptionFunction,
+	subscriptionIsFunctionArray,
 } from "./Types";
 
 type MergedSubscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionFunction<TMessage>[];

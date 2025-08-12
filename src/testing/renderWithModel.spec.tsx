@@ -1,9 +1,9 @@
 /* eslint-disable testing-library/prefer-user-event */
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { JSX, ReactNode } from "react";
-import { renderWithModel } from ".";
 import { ElmComponent, useElmish } from "..";
 import type { InitResult, UpdateReturnType } from "../Types";
+import { renderWithModel } from ".";
 
 interface Message {
 	name: "click";

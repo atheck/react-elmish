@@ -1,6 +1,6 @@
 export { cmd } from "../cmd";
-export { errorMsg, type ErrorMessage } from "../ErrorHandling";
-export { init, type ElmOptions, type Logger } from "../Init";
+export { type ErrorMessage, errorMsg } from "../ErrorHandling";
+export { type ElmOptions, init, type Logger } from "../Init";
 export { mergeSubscriptions } from "../mergeSubscriptions";
 export type {
 	Cmd,
@@ -16,4 +16,4 @@ export type {
 	UpdateMap,
 	UpdateReturnType,
 } from "./Types";
-export { useElmish, type UseElmishOptions } from "./useElmish";
+export { type UseElmishOptions, useElmish } from "./useElmish";

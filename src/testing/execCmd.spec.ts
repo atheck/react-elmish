@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/nursery/noUselessUndefined: Tests only */
-import { execCmd } from ".";
 import { cmd } from "../cmd";
+import { execCmd } from ".";
 
 type Message = { name: "Msg1" } | { name: "Msg2" } | { name: "Error" };
 

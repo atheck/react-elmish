@@ -1,9 +1,9 @@
-import { render, type RenderResult } from "@testing-library/react";
+import { type RenderResult, render } from "@testing-library/react";
 import type { JSX } from "react";
 import { cmd } from "../../cmd";
-import { errorMsg, type ErrorMessage } from "../../ErrorHandling";
-import { renderWithModel } from "../../testing";
+import { type ErrorMessage, errorMsg } from "../../ErrorHandling";
 import type { InitResult } from "../../Types";
+import { renderWithModel } from "../../testing";
 import { errorHandler } from "../ErrorHandling";
 import type { UpdateMap } from "../Types";
 import { useElmish } from "../useElmish";

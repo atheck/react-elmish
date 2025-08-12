@@ -1,4 +1,4 @@
-import { render, type RenderResult } from "@testing-library/react";
+import { type RenderResult, render } from "@testing-library/react";
 import type { JSX } from "react";
 import { cmd } from "../cmd";
 import type { Cmd } from "../Types";

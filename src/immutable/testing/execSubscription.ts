@@ -1,5 +1,5 @@
 import type { Immutable } from "immer";
-import { subscriptionIsFunctionArray, type Dispatch, type Message } from "../../Types";
+import { type Dispatch, type Message, subscriptionIsFunctionArray } from "../../Types";
 import { execCmdWithDispatch } from "../../testing";
 import type { Subscription } from "../Types";
 

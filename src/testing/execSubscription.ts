@@ -1,5 +1,5 @@
 import type { Dispatch } from "react";
-import { subscriptionIsFunctionArray, type Message, type Subscription } from "../Types";
+import { type Message, type Subscription, subscriptionIsFunctionArray } from "../Types";
 import { execCmdWithDispatch } from "./execCmd";
 
 function execSubscription<TProps, TModel, TMessage extends Message>(

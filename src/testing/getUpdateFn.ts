@@ -1,6 +1,6 @@
-import type { Message, Nullable, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "../Types";
 import { createCallBase } from "../createCallBase";
 import { createDefer } from "../createDefer";
+import type { Message, Nullable, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "../Types";
 import { callUpdateMap } from "../useElmish";
 import { execCmd } from "./execCmd";
 

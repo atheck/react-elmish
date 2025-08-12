@@ -1,4 +1,4 @@
-import { produce, type Draft, type Immutable } from "immer";
+import { type Draft, type Immutable, produce } from "immer";
 import type { Message } from "../Types";
 import type { CallBaseFunction, UpdateFunctionOptions, UpdateReturnType } from "./Types";
 
