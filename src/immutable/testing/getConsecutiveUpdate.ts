@@ -3,6 +3,16 @@ import type { Message, Nullable } from "../../Types";
 import type { UpdateFunctionOptions, UpdateMap } from "../Types";
 import { getUpdateAndExecCmdFn } from "./getUpdateFn";
 
+/**
+ * Creates an update function out of an UpdateMap which executes all consecutive commands.
+ * @param updateMap The UpdateMap.
+ * @returns The created update function which can be used in tests.
+ * @example
+ * const consecutiveUpdate = getConsecutiveUpdateFn(update);
+ *
+ * // in your test:
+ * const model = await consecutiveUpdate(...args);
+ */
 function getConsecutiveUpdateFn<TProps, TModel, TMessage extends Message>(
 	updateMap: UpdateMap<TProps, TModel, TMessage>,
 ): (
