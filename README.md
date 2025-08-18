@@ -33,6 +33,7 @@ This library brings the elmish pattern to react.
   - [Testing the init function](#testing-the-init-function)
   - [Testing the update handler](#testing-the-update-handler)
   - [Combine update and execCmd](#combine-update-and-execcmd)
+  - [Testing consecutive updates](#testing-consecutive-updates)
   - [Testing subscriptions](#testing-subscriptions)
   - [UI Tests](#ui-tests)
 - [Redux Dev Tools](#redux-dev-tools)
@@ -525,7 +526,7 @@ const updateMap: UpdateMap<Props, Model, Message> = {
 
 ### Testing
 
-If you want to test your component with immutable data structures, you can use the `react-elmish/testing/immutable` module. This module provides the same functions as the normal testing module.
+If you want to test your component with immutable data structures, you can use the `react-elmish/testing/immutable` module. This module provides the same functions as the normal [testing](#testing-1) module.
 
 ## Setup
 
@@ -990,6 +991,7 @@ To test your **update** handler you can use some helper functions in `react-elmi
 | `initAndExecCmd` | Calls the `init` function with the provided props and executes the returned commands. |
 | `getUpdateFn` | Returns an `update` function for your update map object. |
 | `getUpdateAndExecCmdFn` | Returns an `update` function for your update map object, which immediately executes the command. |
+| `getConsecutiveUpdateFn` | Returns an `update` function for your update map object, which runs all consecutive commands until only the model gets updated or nothing happens. |
 | `getCreateUpdateArgs` | Creates a factory function to create a message, a model, and props in a test. |
 | `createUpdateArgsFactory` | This is an alternative for `getCreateUpdateArgs`. Creates a factory function to create a message, a model, and props in a test. |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
@@ -1083,6 +1085,35 @@ it("returns the correct cmd", async () => {
     expect(messages).toEqual([Msg.asyncTestSuccess()])
 });
 ...
+```
+
+### Testing consecutive updates
+
+If you want to test multiple `update` functions which are called in a row, you can use the `getConsecutiveUpdateFn` function. This function returns an `update` function that runs all consecutive commands until only the model gets updated or nothing happens.
+
+You may have something like this in your `update` map:
+
+"load message -> load function -> loaded message -> filter message -> filter function -> filtered message"
+
+Then the `consecutiveUpdateFn` will execute all these commands in a row and return the final model after all commands have been executed.
+
+```ts
+import { getConsecutiveUpdateFn, createUpdateArgsFactory } from "react-elmish/testing";
+import { init, Msg } from "./MyComponent";
+
+const createUpdateArgs = createUpdateArgsFactory(init, () => ({ /* initial props */ }));
+const consecutiveUpdateFn = getConsecutiveUpdateFn(updateMap);
+
+it("updates the model and executes all commands", async () => {
+    // arrange
+    const args = createUpdateArgs(Msg.load(), { /* optionally override model here */ }, { /* optionally override props here */ }, { /* optionally override options here */ });
+
+    // act
+    const newModel = await consecutiveUpdateFn(...args);
+
+    // assert
+    expect(newModel).toStrictEqual({ /* what you expect in the model */ });
+});
 ```
 
 ### Testing subscriptions
