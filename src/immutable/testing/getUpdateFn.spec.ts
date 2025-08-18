@@ -1,3 +1,4 @@
+import type { Nullable } from "../../Types";
 import type { UpdateMap } from "../Types";
 import { getUpdateFn } from "./getUpdateFn";
 
@@ -5,10 +6,10 @@ type Message = { name: "foo" } | { name: "bar" } | { name: "foobar" };
 
 interface Model {
 	foo: string;
-	bar: {
+	bar: Nullable<{
 		foo: string;
 		bar: number;
-	} | null;
+	}>;
 	foobar: string[];
 }
 

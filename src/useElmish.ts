@@ -1,22 +1,29 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useCallback, useEffect, useRef, useState } from "react";
-import { execCmd, logMessage, modelHasChanged } from "./Common";
+import { useCallback, useRef, useState } from "react";
+import {
+	execCmd,
+	getDispatch,
+	logMessage,
+	modelHasChanged,
+	runInit,
+	useIsMounted,
+	useRedux,
+	useReInit,
+	useSubscription,
+} from "./Common";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
 import { Services } from "./Init";
-import { isReduxDevToolsEnabled, type ReduxDevTools } from "./reduxDevTools";
-import {
-	type Dispatch,
-	type InitFunction,
-	type Message,
-	type Nullable,
-	type Subscription,
-	subscriptionIsFunctionArray,
-	type UpdateFunction,
-	type UpdateFunctionOptions,
-	type UpdateMap,
-	type UpdateReturnType,
+import type {
+	Dispatch,
+	InitFunction,
+	Message,
+	Nullable,
+	Subscription,
+	UpdateFunction,
+	UpdateFunctionOptions,
+	UpdateMap,
+	UpdateReturnType,
 } from "./Types";
 
 /**
@@ -73,141 +80,67 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	update,
 	subscription,
 }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
-	let running = false;
-	const buffer: TMessage[] = [];
-	let currentModel: Partial<TModel> = {};
-
-	const firstCallRef = useRef(true);
 	const [model, setModel] = useState<Nullable<TModel>>(null);
 	const propsRef = useRef(props);
-	const isMountedRef = useRef(true);
+	const devToolsRef = useRedux(name, setModel);
+	const isMountedRef = useIsMounted();
 
-	const devTools = useRef<ReduxDevTools | null>(null);
-
-	useEffect(() => {
-		let reduxUnsubscribe: (() => void) | undefined;
-
-		if (Services.enableDevTools === true && isReduxDevToolsEnabled(window)) {
-			// eslint-disable-next-line no-underscore-dangle
-			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name, serialize: { options: true } });
-
-			reduxUnsubscribe = devTools.current.subscribe((message) => {
-				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-					setModel(JSON.parse(message.state) as TModel);
-				}
-			});
-		}
-
-		isMountedRef.current = true;
-
-		return () => {
-			isMountedRef.current = false;
-
-			reduxUnsubscribe?.();
-		};
-	}, [name]);
-
-	let initializedModel = model;
+	let currentModel = model;
 
 	if (propsRef.current !== props) {
 		propsRef.current = props;
 	}
 
 	const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
-	const dispatch = useCallback(
-		fakeOptions?.dispatch ??
-			((msg: TMessage): void => {
-				if (running) {
-					buffer.push(msg);
 
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const dispatch = useCallback(
+		getDispatch(
+			handleMessage,
+			() => {
+				if (!isMountedRef.current) {
 					return;
 				}
 
-				running = true;
+				setModel((prevModel) => {
+					const updatedModel = { ...prevModel, ...currentModel };
 
-				let nextMsg: TMessage | undefined = msg;
-				let modified = false;
+					Services.logger?.debug("Update model for", name, updatedModel);
 
-				do {
-					if (handleMessage(nextMsg)) {
-						modified = true;
-					}
-
-					if (devTools.current) {
-						devTools.current.send(nextMsg.name, { ...initializedModel, ...currentModel });
-					}
-
-					nextMsg = buffer.shift();
-				} while (nextMsg);
-
-				running = false;
-
-				if (isMountedRef.current && modified) {
-					setModel((prevModel) => {
-						const updatedModel = { ...prevModel, ...currentModel };
-
-						Services.logger?.debug("Update model for", name, updatedModel);
-
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We always have a full model here
-						return updatedModel as TModel;
-					});
-				}
-			}),
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We always have a full model here
+					return updatedModel as TModel;
+				});
+			},
+			(msg) => {
+				devToolsRef.current?.send(msg.name, { ...currentModel });
+			},
+			fakeOptions?.dispatch,
+		),
 		[],
 	);
 
-	if (!initializedModel) {
-		const [initModel, ...initCommands] = fakeOptions?.model ? [fakeOptions.model] : init(props);
+	let initializedModel = currentModel;
 
-		initializedModel = initModel;
-		setModel(initializedModel);
+	initializedModel ??= runInit(
+		name,
+		init,
+		props,
+		(initModel) => {
+			currentModel = initModel;
+			setModel(currentModel);
+		},
+		dispatch,
+		devToolsRef.current,
+		fakeOptions?.model,
+	);
 
-		devTools.current?.init(initializedModel);
-
-		Services.logger?.debug("Initial model for", name, initializedModel);
-
-		execCmd(dispatch, ...initCommands);
-	}
-
-	useEffect(() => {
-		if (firstCallRef.current) {
-			firstCallRef.current = false;
-
-			return;
-		}
-
-		setModel(null);
-		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
-	}, reInitOn ?? []);
-
-	useEffect(() => {
-		if (subscription) {
-			const subscriptionResult = subscription(initializedModel, props);
-
-			if (subscriptionIsFunctionArray(subscriptionResult)) {
-				const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((destructor) => destructor !== undefined);
-
-				return function combinedDestructor() {
-					for (const destructor of destructors) {
-						destructor();
-					}
-				};
-			}
-
-			const [subCmd, destructor] = subscriptionResult;
-
-			execCmd(dispatch, subCmd);
-
-			return destructor;
-		}
-		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
-	}, reInitOn ?? []);
+	useReInit(setModel, reInitOn);
+	useSubscription(subscription, initializedModel, props, dispatch, reInitOn);
 
 	return [initializedModel, dispatch];
 
 	function handleMessage(nextMsg: TMessage): boolean {
-		if (!initializedModel) {
+		if (!currentModel) {
 			return false;
 		}
 
@@ -215,7 +148,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		logMessage(name, nextMsg);
 
-		const updatedModel = { ...initializedModel, ...currentModel };
+		const updatedModel = { ...currentModel } as TModel;
 
 		const [defer, getDeferred] = createDefer<TModel, TMessage>();
 		const callBase = createCallBase(nextMsg, updatedModel, propsRef.current, { defer });

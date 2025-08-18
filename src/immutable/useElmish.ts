@@ -1,11 +1,9 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { castImmutable, type Draft, enablePatches, freeze, type Immutable, produce } from "immer";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { execCmd, logMessage } from "../Common";
+import { useCallback, useRef, useState } from "react";
+import { execCmd, getDispatch, logMessage, runInit, useIsMounted, useRedux, useReInit, useSubscription } from "../Common";
 import { getFakeOptionsOnce } from "../fakeOptions";
 import { Services } from "../Init";
-import { isReduxDevToolsEnabled, type ReduxDevTools } from "../reduxDevTools";
-import { type Cmd, type Dispatch, type InitFunction, type Message, type Nullable, subscriptionIsFunctionArray } from "../Types";
+import type { Cmd, Dispatch, InitFunction, Message, Nullable } from "../Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import type { Subscription, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
@@ -64,39 +62,10 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	update,
 	subscription,
 }: UseElmishOptions<TProps, TModel, TMessage>): [Immutable<TModel>, Dispatch<TMessage>] {
-	let running = false;
-	const buffer: TMessage[] = [];
-
-	const firstCallRef = useRef(true);
 	const [model, setModel] = useState<Nullable<Immutable<TModel>>>(null);
 	const propsRef = useRef(props);
-	const isMountedRef = useRef(true);
-
-	const devTools = useRef<ReduxDevTools | null>(null);
-
-	useEffect(() => {
-		let reduxUnsubscribe: (() => void) | undefined;
-
-		if (Services.enableDevTools === true && isReduxDevToolsEnabled(window)) {
-			// eslint-disable-next-line no-underscore-dangle
-			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name, serialize: { options: true } });
-
-			reduxUnsubscribe = devTools.current.subscribe((message) => {
-				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-					setModel(JSON.parse(message.state) as Immutable<TModel>);
-				}
-			});
-		}
-
-		isMountedRef.current = true;
-
-		return () => {
-			isMountedRef.current = false;
-
-			reduxUnsubscribe?.();
-		};
-	}, [name]);
+	const devToolsRef = useRedux(name, setModel);
+	const isMountedRef = useIsMounted();
 
 	let currentModel = model;
 
@@ -105,96 +74,53 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	}
 
 	const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
-	const dispatch = useCallback(
-		fakeOptions?.dispatch ??
-			((msg: TMessage): void => {
-				if (running) {
-					buffer.push(msg);
 
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const dispatch = useCallback(
+		getDispatch(
+			handleMessage,
+			() => {
+				if (!isMountedRef.current) {
 					return;
 				}
 
-				running = true;
+				setModel(() => {
+					Services.logger?.debug("Update model for", name, currentModel);
 
-				let nextMsg: TMessage | undefined = msg;
-				let modified = false;
-
-				do {
-					if (handleMessage(nextMsg)) {
-						modified = true;
-					}
-
-					if (devTools.current) {
-						devTools.current.send(nextMsg.name, currentModel);
-					}
-
-					nextMsg = buffer.shift();
-				} while (nextMsg);
-
-				running = false;
-
-				if (isMountedRef.current && modified) {
-					setModel(() => {
-						Services.logger?.debug("Update model for", name, currentModel);
-
-						return currentModel;
-					});
-				}
-			}),
+					return currentModel;
+				});
+			},
+			(msg) => {
+				devToolsRef.current?.send(msg.name, currentModel);
+			},
+			fakeOptions?.dispatch,
+		),
 		[],
 	);
 
-	let initializedModel = model;
+	let initializedModel = currentModel;
 
 	if (!initializedModel) {
 		enablePatches();
 
-		const [initModel, ...initCommands] = fakeOptions?.model ? [fakeOptions.model] : init(props);
-
-		initializedModel = castImmutable(freeze(initModel, true));
-		currentModel = initializedModel;
-		setModel(initializedModel);
-
-		devTools.current?.init(initializedModel);
-
-		Services.logger?.debug("Initial model for", name, initializedModel);
-
-		execCmd(dispatch, ...initCommands);
+		initializedModel = castImmutable(
+			runInit(
+				name,
+				init,
+				props,
+				(initModel) => {
+					currentModel = castImmutable(freeze(initModel, true));
+					setModel(currentModel);
+				},
+				dispatch,
+				devToolsRef.current,
+				fakeOptions?.model,
+			),
+		);
 	}
 
-	useEffect(() => {
-		if (firstCallRef.current) {
-			firstCallRef.current = false;
-
-			return;
-		}
-
-		setModel(null);
-		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
-	}, reInitOn ?? []);
-
-	useEffect(() => {
-		if (subscription) {
-			const subscriptionResult = subscription(initializedModel, props);
-
-			if (subscriptionIsFunctionArray(subscriptionResult)) {
-				const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((destructor) => destructor !== undefined);
-
-				return function combinedDestructor() {
-					for (const destructor of destructors) {
-						destructor();
-					}
-				};
-			}
-
-			const [subCmd, destructor] = subscriptionResult;
-
-			execCmd(dispatch, subCmd);
-
-			return destructor;
-		}
-		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
-	}, reInitOn ?? []);
+	useReInit(setModel, reInitOn);
+	useSubscription(subscription, initializedModel, props, dispatch, reInitOn);
 
 	return [initializedModel, dispatch];
 
