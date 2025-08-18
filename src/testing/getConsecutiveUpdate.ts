@@ -30,7 +30,7 @@ function getConsecutiveUpdateFn<TProps, TModel, TMessage extends Message>(
 			const currentMessages: Nullable<TMessage>[] = [];
 
 			for (const nextMsg of messages) {
-				// biome-ignore lint/nursery/noAwaitInLoop: We need to await each update sequentially
+				// biome-ignore lint/performance/noAwaitInLoops: We need to await each update sequentially
 				const [updatedModel, newMessages] = await updatedAndExecFn(nextMsg, currentModel, props, optionsTemplate);
 
 				currentModel = { ...currentModel, ...updatedModel };
