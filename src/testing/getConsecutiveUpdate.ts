@@ -1,7 +1,7 @@
 import type { Message, Nullable, UpdateFunctionOptions, UpdateMap } from "../Types";
 import { getUpdateAndExecCmdFn } from "./getUpdateFn";
 
-function getChainedUpdateFn<TProps, TModel, TMessage extends Message>(
+function getConsecutiveUpdateFn<TProps, TModel, TMessage extends Message>(
 	updateMap: UpdateMap<TProps, TModel, TMessage>,
 ): (
 	msg: TMessage,
@@ -9,7 +9,7 @@ function getChainedUpdateFn<TProps, TModel, TMessage extends Message>(
 	props: TProps,
 	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
 ) => Promise<Partial<TModel>> {
-	return async function chainedUpdateFn(msg, model, props, optionsTemplate): Promise<Partial<TModel>> {
+	return async function consecutiveUpdateFn(msg, model, props, optionsTemplate): Promise<Partial<TModel>> {
 		let messages: TMessage[] = [msg];
 		let currentModel = model;
 		let totalUpdatedModel: Partial<TModel> = {};
@@ -36,4 +36,4 @@ function getChainedUpdateFn<TProps, TModel, TMessage extends Message>(
 	};
 }
 
-export { getChainedUpdateFn };
+export { getConsecutiveUpdateFn };

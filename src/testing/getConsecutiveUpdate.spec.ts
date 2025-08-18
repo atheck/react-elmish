@@ -1,6 +1,6 @@
 import { cmd } from "../cmd";
 import type { InitResult, UpdateMap } from "../Types";
-import { getChainedUpdateFn } from "./getChainedUpdate";
+import { getConsecutiveUpdateFn } from "./getConsecutiveUpdate";
 
 interface Model {
 	value1: string;
@@ -69,12 +69,12 @@ async function doSomething(): Promise<void> {
 	// does nothing
 }
 
-describe("getChainedUpdate", () => {
-	const chainedUpdate = getChainedUpdateFn(update);
+describe("getConsecutiveUpdate", () => {
+	const consecutiveUpdate = getConsecutiveUpdateFn(update);
 
 	it("executes all messages and returns the correct end state", async () => {
 		// act
-		const model = await chainedUpdate(Msg.first(), init()[0], {});
+		const model = await consecutiveUpdate(Msg.first(), init()[0], {});
 
 		// assert
 		expect(model).toStrictEqual<Model>({ value1: "1", value2: "2", value3: "3" });
@@ -82,7 +82,7 @@ describe("getChainedUpdate", () => {
 
 	it("executes all messages and returns the correct end state including deferred values", async () => {
 		// act
-		const model = await chainedUpdate(Msg.firstWithDefer(), init()[0], {});
+		const model = await consecutiveUpdate(Msg.firstWithDefer(), init()[0], {});
 
 		// assert
 		expect(model).toStrictEqual<Model>({ value1: "1", value2: "2", value3: "3" });
@@ -93,7 +93,7 @@ describe("getChainedUpdate", () => {
 		const initialModel: Model = { value1: "0", value2: "0", value3: "0" };
 
 		// act
-		const model = await chainedUpdate(Msg.jumpToThird(), initialModel, {});
+		const model = await consecutiveUpdate(Msg.jumpToThird(), initialModel, {});
 
 		// assert
 		expect(model).toStrictEqual<Partial<Model>>({ value3: "3" });
@@ -101,7 +101,7 @@ describe("getChainedUpdate", () => {
 
 	it("works with async operations", async () => {
 		// act
-		const model = await chainedUpdate(Msg.somethingAsync(), init()[0], {});
+		const model = await consecutiveUpdate(Msg.somethingAsync(), init()[0], {});
 
 		// assert
 		expect(model).toStrictEqual<Partial<Model>>({ value1: "async", value3: "3" });
