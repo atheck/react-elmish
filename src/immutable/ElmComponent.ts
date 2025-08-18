@@ -25,7 +25,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	private readonly buffer: TMessage[] = [];
 	private running = false;
 	private mounted = false;
-	// biome-ignore lint/nursery/useReadonlyClassProperties: This is a false positive
+	// biome-ignore lint/style/useReadonlyClassProperties: This is a false positive
 	private currentModel: Immutable<TModel>;
 
 	/**
