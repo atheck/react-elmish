@@ -45,7 +45,7 @@
   "homepage": "https://github.com/atheck/react-elmish",
   "repository": {
     "type": "git",
-    "url": "https://github.com/atheck/react-elmish.git"
+    "url": "git+https://github.com/atheck/react-elmish.git"
   },
   "keywords": [
     "react",
