@@ -23,5 +23,5 @@
         "jest"
     ]
   },
-  "include": ["src", "tests"]
+  "include": ["src", "jestSetup.ts"]
 }

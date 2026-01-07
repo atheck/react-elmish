@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "npm run build:types && npm run build:js",
-    "build:types": "tsc --emitDeclarationOnly --project ./src/tsconfig.build.json",
+    "build:types": "tsc --emitDeclarationOnly --project ./tsconfig.build.json",
     "build:js": "babel src --out-dir dist --extensions \".ts,.tsx\" --ignore \"./**/*.spec.ts\",\"./**/*.spec.tsx\" --source-maps inline",
     "test": "jest --coverage",
     "test:watch": "jest --watch --coverage",
