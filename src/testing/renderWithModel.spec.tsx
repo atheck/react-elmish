@@ -71,7 +71,7 @@ describe("renderWithModel", () => {
 		renderWithModel(() => render(<TestComponent />), model);
 
 		// assert
-		expect(screen.getByText("It works")).not.toBeNull();
+		expect(screen.getByText("It works")).toBeInTheDocument();
 	});
 
 	it("uses the provided fake dispatch with a function component", async () => {
@@ -98,7 +98,7 @@ describe("renderWithModel", () => {
 		renderWithModel(() => render(<TestClassComponent />), model);
 
 		// assert
-		expect(screen.getByText("It works")).not.toBeNull();
+		expect(screen.getByText("It works")).toBeInTheDocument();
 	});
 
 	it("uses the provided fake dispatch with a class component", async () => {

@@ -16,7 +16,7 @@ import type { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Typ
  * @template TMessage The type of the messages.
  * @template TProps The type of the props.
  */
-// biome-ignore lint/nursery/useReactFunctionComponents: This is only for downward compatibility.
+// biome-ignore lint/style/useReactFunctionComponents: This is only for downward compatibility.
 abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends React.Component<TProps> {
 	private initCommands: Nullable<(Cmd<TMessage> | undefined)[]> | undefined;
 	private readonly componentName: string;

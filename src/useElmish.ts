@@ -93,7 +93,6 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 	const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const dispatch = useCallback(
 		getDispatch(
 			handleMessage,

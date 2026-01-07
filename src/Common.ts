@@ -98,10 +98,8 @@ function useSubscription<TProps, TModel, TMessage extends Message>(
 
 			return destructor;
 		}
-		/* eslint-disable react-hooks/exhaustive-deps */
 		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
 	}, reInitOn ?? []);
-	/* eslint-enable react-hooks/exhaustive-deps */
 }
 
 function useReInit(setModel: (model: null) => void, reInitOn: unknown[] | undefined): void {
@@ -115,10 +113,8 @@ function useReInit(setModel: (model: null) => void, reInitOn: unknown[] | undefi
 		}
 
 		setModel(null);
-		/* eslint-disable react-hooks/exhaustive-deps */
 		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
 	}, reInitOn ?? []);
-	/* eslint-enable react-hooks/exhaustive-deps */
 }
 
 function getDispatch<TMessage extends Message>(
