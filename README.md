@@ -18,6 +18,7 @@ This library brings the elmish pattern to react.
   - [Working with external sources of events](#working-with-external-sources-of-events)
   - [Cleanup subscriptions](#cleanup-subscriptions)
 - [Re-Initialize the component](#re-initialize-the-component)
+- [Dispose / Cleanup](#dispose--cleanup)
 - [Immutability](#immutability)
   - [Testing](#testing)
 - [Setup](#setup)
@@ -475,6 +476,43 @@ const [model, dispatch] = useElmish({ name: "ReInit", props, init, update, subsc
 ```
 
 This will re-initialize the component whenever the `changingValue` prop changes. The `init` function is called again, and the model is reset to the initial state. Also the subscription is re-created.
+
+## Dispose / Cleanup
+
+If your component sets up resources during `init` (e.g. WebSocket connections, timers, or other handles stored in the model), you can provide a `dispose` function to clean them up when the component unmounts.
+
+The `dispose` function receives the current model, so you can access any state needed for cleanup:
+
+```ts
+function dispose(model: Model): void {
+    model.connection?.close();
+}
+```
+
+Pass it to the `useElmish` hook:
+
+```tsx
+const [model, dispatch] = useElmish({ name: "App", props, init, update, dispose });
+```
+
+Or to a class component via the fourth constructor parameter:
+
+```tsx
+class App extends ElmComponent<Model, Message, Props> {
+    constructor(props: Props) {
+        super(props, init, "App", dispose);
+    }
+
+    // ...
+}
+```
+
+The `dispose` function is called:
+
+- When the component is **unmounted**.
+- When `reInitOn` dependencies **change** (before the new `init` call), cleaning up the old session.
+
+> **Note**: The `dispose` function does not receive a `dispatch` function. It is intended purely for side-effect cleanup, not for dispatching messages, since the component is being torn down.
 
 ## Immutability
 

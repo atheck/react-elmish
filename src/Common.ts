@@ -4,6 +4,7 @@ import { isReduxDevToolsEnabled, type ReduxDevTools } from "./reduxDevTools";
 import {
 	type Cmd,
 	type Dispatch,
+	type DisposeFunction,
 	type InitFunction,
 	type Message,
 	type Nullable,
@@ -178,4 +179,23 @@ function runInit<TModel, TProps, TMessage extends Message>(
 	return initModel;
 }
 
-export { execCmd, logMessage, modelHasChanged, useRedux, useIsMounted, useSubscription, useReInit, getDispatch, runInit };
+function useDispose<TModel>(
+	dispose: DisposeFunction<TModel> | undefined,
+	model: TModel,
+	reInitOn: unknown[] | undefined,
+): void {
+	const modelRef = useRef(model);
+
+	modelRef.current = model;
+
+	useEffect(() => {
+		if (dispose) {
+			return () => {
+				dispose(modelRef.current);
+			};
+		}
+		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to run dispose when the reInitOn dependencies change or on unmount
+	}, reInitOn ?? []);
+}
+
+export { execCmd, logMessage, modelHasChanged, useRedux, useIsMounted, useSubscription, useReInit, useDispose, getDispatch, runInit };

@@ -4,7 +4,7 @@ import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
 import { Services } from "./Init";
-import type { Cmd, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
+import type { Cmd, DisposeFunction, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
 
 /**
  * Abstract class for a react class component using the Elmish pattern.
@@ -32,7 +32,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	 * @param name The name of the component.
 	 * @memberof ElmComponent
 	 */
-	public constructor(props: TProps, init: InitFunction<TProps, TModel, TMessage>, name: string) {
+	public constructor(props: TProps, init: InitFunction<TProps, TModel, TMessage>, name: string, private readonly disposeHandler?: DisposeFunction<TModel>) {
 		super(props);
 
 		const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
@@ -70,6 +70,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	 * @memberof ElmComponent
 	 */
 	public componentWillUnmount(): void {
+		this.disposeHandler?.(this.currentModel);
 		this.mounted = false;
 	}
 

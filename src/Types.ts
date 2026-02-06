@@ -87,6 +87,8 @@ type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?] | Subscriptio
 type SubscriptionFunction<TMessage> = (dispatch: Dispatch<TMessage>) => (() => void) | undefined;
 type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionResult<TMessage>;
 
+type DisposeFunction<TModel> = (model: TModel) => void;
+
 function subscriptionIsFunctionArray(subscription: SubscriptionResult<unknown>): subscription is SubscriptionFunction<unknown>[] {
 	return typeof subscription[0] === "function";
 }
@@ -96,6 +98,7 @@ export type {
 	Cmd,
 	DeferFunction,
 	Dispatch,
+	DisposeFunction,
 	FallbackHandler,
 	InitFunction,
 	InitResult,

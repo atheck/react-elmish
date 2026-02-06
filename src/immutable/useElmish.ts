@@ -1,9 +1,9 @@
 import { castImmutable, type Draft, enablePatches, freeze, type Immutable, produce } from "immer";
 import { useCallback, useRef, useState } from "react";
-import { execCmd, getDispatch, logMessage, runInit, useIsMounted, useRedux, useReInit, useSubscription } from "../Common";
+import { execCmd, getDispatch, logMessage, runInit, useDispose, useIsMounted, useRedux, useReInit, useSubscription } from "../Common";
 import { getFakeOptionsOnce } from "../fakeOptions";
 import { Services } from "../Init";
-import type { Cmd, Dispatch, InitFunction, Message, Nullable } from "../Types";
+import type { Cmd, Dispatch, DisposeFunction, InitFunction, Message, Nullable } from "../Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import type { Subscription, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
@@ -45,6 +45,13 @@ interface UseElmishOptions<TProps, TModel, TMessage extends Message> {
 	 * @type {(UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>)}
 	 */
 	subscription?: Subscription<TProps, TModel, TMessage>;
+	/**
+	 * The optional `dispose` function. Called when the component unmounts
+	 * or when `reInitOn` dependencies change, with the current model.
+	 * Use this for cleanup side effects such as closing connections or clearing timers.
+	 * @type {DisposeFunction<Immutable<TModel>>}
+	 */
+	dispose?: DisposeFunction<Immutable<TModel>>;
 }
 
 /**
@@ -61,6 +68,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	init,
 	update,
 	subscription,
+	dispose,
 }: UseElmishOptions<TProps, TModel, TMessage>): [Immutable<TModel>, Dispatch<TMessage>] {
 	const [model, setModel] = useState<Nullable<Immutable<TModel>>>(null);
 	const propsRef = useRef(props);
@@ -120,6 +128,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 	useReInit(setModel, reInitOn);
 	useSubscription(subscription, initializedModel, props, dispatch, reInitOn);
+	useDispose(dispose, initializedModel, reInitOn);
 
 	return [initializedModel, dispatch];
 

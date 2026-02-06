@@ -5,6 +5,7 @@ import {
 	logMessage,
 	modelHasChanged,
 	runInit,
+	useDispose,
 	useIsMounted,
 	useRedux,
 	useReInit,
@@ -16,6 +17,7 @@ import { getFakeOptionsOnce } from "./fakeOptions";
 import { Services } from "./Init";
 import type {
 	Dispatch,
+	DisposeFunction,
 	InitFunction,
 	Message,
 	Nullable,
@@ -63,6 +65,13 @@ interface UseElmishOptions<TProps, TModel, TMessage extends Message> {
 	 * @type {(UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>)}
 	 */
 	subscription?: Subscription<TProps, TModel, TMessage>;
+	/**
+	 * The optional `dispose` function. Called when the component unmounts
+	 * or when `reInitOn` dependencies change, with the current model.
+	 * Use this for cleanup side effects such as closing connections or clearing timers.
+	 * @type {DisposeFunction<TModel>}
+	 */
+	dispose?: DisposeFunction<TModel>;
 }
 
 /**
@@ -79,6 +88,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	init,
 	update,
 	subscription,
+	dispose,
 }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
 	const [model, setModel] = useState<Nullable<TModel>>(null);
 	const propsRef = useRef(props);
@@ -135,6 +145,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 	useReInit(setModel, reInitOn);
 	useSubscription(subscription, initializedModel, props, dispatch, reInitOn);
+	useDispose(dispose, initializedModel, reInitOn);
 
 	return [initializedModel, dispatch];
 

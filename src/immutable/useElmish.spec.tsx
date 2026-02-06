@@ -21,6 +21,7 @@ interface Props {
 		options: UpdateFunctionOptions<Props, Model, Message>,
 	) => UpdateReturnType<Message>;
 	subscription?: (model: Model) => SubscriptionResult<Message>;
+	dispose?: (model: Model) => void;
 	reInitOn?: unknown[];
 }
 
@@ -226,6 +227,90 @@ describe("useElmish", () => {
 		expect(init).toHaveBeenLastCalledWith(props);
 	});
 
+	it("calls the dispose function on unmount with the current model", () => {
+		// arrange
+		const mockDispose = jest.fn();
+		const [initModel] = defaultInit();
+		const props: Props = {
+			init: () => defaultInit(),
+			update: defaultUpdate,
+			dispose: mockDispose,
+		};
+
+		// act
+		const api = renderComponent(props);
+
+		api.unmount();
+
+		// assert
+		expect(mockDispose).toHaveBeenCalledTimes(1);
+		expect(mockDispose).toHaveBeenCalledWith(initModel);
+	});
+
+	it("does not fail when dispose is not provided", () => {
+		// arrange
+		const props: Props = {
+			init: () => defaultInit(),
+			update: defaultUpdate,
+		};
+
+		// act
+		const api = renderComponent(props);
+
+		// assert
+		expect(() => api.unmount()).not.toThrow();
+	});
+
+	it("calls the dispose function when reInitOn changes", () => {
+		// arrange
+		const mockDispose = jest.fn();
+		let props: Props = {
+			init: () => defaultInit(),
+			update: defaultUpdate,
+			dispose: mockDispose,
+			reInitOn: [1],
+		};
+
+		// act
+		const api = renderComponent(props);
+
+		expect(mockDispose).not.toHaveBeenCalled();
+
+		props = { ...props, reInitOn: [2] };
+		api.rerender(<TestComponent {...props} />);
+
+		// assert
+		expect(mockDispose).toHaveBeenCalledTimes(1);
+	});
+
+	it("calls dispose before init when reInitOn changes", () => {
+		// arrange
+		const callOrder: string[] = [];
+		const mockDispose = jest.fn(() => {
+			callOrder.push("dispose");
+		});
+		const init = jest.fn(() => {
+			callOrder.push("init");
+
+			return defaultInit();
+		});
+		let props: Props = {
+			init,
+			update: defaultUpdate,
+			dispose: mockDispose,
+			reInitOn: [1],
+		};
+
+		// act
+		const api = renderComponent(props);
+
+		props = { ...props, reInitOn: [2] };
+		api.rerender(<TestComponent {...props} />);
+
+		// assert
+		expect(callOrder).toStrictEqual(["init", "dispose", "init"]);
+	});
+
 	it("calls the subscription function again when reInitOn changes", () => {
 		// arrange
 		const mockDestructor = jest.fn();
@@ -257,12 +342,13 @@ describe("useElmish", () => {
 });
 
 function TestComponent(props: Props): JSX.Element {
-	const { init, update, subscription, reInitOn } = props;
+	const { init, update, subscription, dispose, reInitOn } = props;
 	const [model] = useElmish({
 		props,
 		init,
 		update,
 		subscription,
+		dispose,
 		reInitOn,
 		name: "Test",
 	});

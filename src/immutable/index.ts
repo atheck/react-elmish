@@ -5,6 +5,7 @@ export { mergeSubscriptions } from "../mergeSubscriptions";
 export type {
 	Cmd,
 	Dispatch,
+	DisposeFunction,
 	InitResult,
 	Message,
 	SubscriptionResult,
