@@ -85,6 +85,7 @@ function base(): UpdateReturnType<Model, Message> {
 	return [{ value1: "base" }];
 }
 
+// biome-ignore lint/suspicious/useAwait: Only for testing purpose
 async function doSomething(): Promise<number> {
 	return 1;
 }

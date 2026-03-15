@@ -1,4 +1,3 @@
-/** biome-ignore-all lint/nursery/noUselessUndefined: Tests only */
 import { cmd } from "../cmd";
 import { execCmd } from ".";
 
@@ -90,6 +89,7 @@ describe("execCmd", () => {
 
 	it("executes all ofPromise commands, fail", async () => {
 		// arrange
+		// biome-ignore lint/suspicious/useAwait: Only for testing purpose.
 		const asyncFunc = async (): Promise<void> => {
 			throw new Error("error");
 		};
@@ -127,6 +127,7 @@ describe("execCmd", () => {
 
 	it("resolves for async attempt, fail", async () => {
 		// arrange
+		// biome-ignore lint/suspicious/useAwait: Only for testing purpose.
 		const asyncFunc = async (): Promise<void> => {
 			throw new Error("error");
 		};
@@ -157,6 +158,7 @@ describe("execCmd", () => {
 
 	it("does not throw when async perform fails", async () => {
 		// arrange
+		// biome-ignore lint/suspicious/useAwait: Only for testing purpose.
 		const asyncFunc = async (): Promise<void> => {
 			throw new Error("fail");
 		};

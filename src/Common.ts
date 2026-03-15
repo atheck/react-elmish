@@ -84,7 +84,7 @@ function useSubscription<TProps, TModel, TMessage extends Message>(
 			const subscriptionResult = subscription(model, props);
 
 			if (subscriptionIsFunctionArray(subscriptionResult)) {
-				const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((destructor) => destructor !== undefined);
+				const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((current) => current !== undefined);
 
 				return function combinedDestructor() {
 					for (const destructor of destructors) {
@@ -179,11 +179,7 @@ function runInit<TModel, TProps, TMessage extends Message>(
 	return initModel;
 }
 
-function useDispose<TModel>(
-	dispose: DisposeFunction<TModel> | undefined,
-	model: TModel,
-	reInitOn: unknown[] | undefined,
-): void {
+function useDispose<TModel>(dispose: DisposeFunction<TModel> | undefined, model: TModel, reInitOn: unknown[] | undefined): void {
 	const modelRef = useRef(model);
 
 	modelRef.current = model;
@@ -198,4 +194,15 @@ function useDispose<TModel>(
 	}, reInitOn ?? []);
 }
 
-export { execCmd, logMessage, modelHasChanged, useRedux, useIsMounted, useSubscription, useReInit, useDispose, getDispatch, runInit };
+export {
+	execCmd,
+	getDispatch,
+	logMessage,
+	modelHasChanged,
+	runInit,
+	useDispose,
+	useIsMounted,
+	useRedux,
+	useReInit,
+	useSubscription,
+};

@@ -32,7 +32,12 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	 * @param name The name of the component.
 	 * @memberof ElmComponent
 	 */
-	public constructor(props: TProps, init: InitFunction<TProps, TModel, TMessage>, name: string, private readonly disposeHandler?: DisposeFunction<TModel>) {
+	public constructor(
+		props: TProps,
+		init: InitFunction<TProps, TModel, TMessage>,
+		name: string,
+		private readonly disposeHandler?: DisposeFunction<TModel>,
+	) {
 		super(props);
 
 		const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();

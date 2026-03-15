@@ -74,7 +74,7 @@ describe("renderWithModel", () => {
 		expect(screen.getByText("It works")).toBeInTheDocument();
 	});
 
-	it("uses the provided fake dispatch with a function component", async () => {
+	it("uses the provided fake dispatch with a function component", () => {
 		// arrange
 		const model: Model = { value: "" };
 		const mockDispatch = jest.fn();
@@ -101,7 +101,7 @@ describe("renderWithModel", () => {
 		expect(screen.getByText("It works")).toBeInTheDocument();
 	});
 
-	it("uses the provided fake dispatch with a class component", async () => {
+	it("uses the provided fake dispatch with a class component", () => {
 		// arrange
 		const model: Model = { value: "" };
 		const mockDispatch = jest.fn();

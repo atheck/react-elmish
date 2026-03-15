@@ -5,6 +5,9 @@
 	],
 	"linter": {
 		"rules": {
+			"nursery": {
+				"noShadow": "off"
+			},
 			"performance": {
 				"noBarrelFile": "off"
 			}

@@ -95,7 +95,7 @@ describe("Playground", () => {
 	});
 
 	describe("doubleDefer", () => {
-		it("computes the values", async () => {
+		it("computes the values", () => {
 			const args = getUpdateArgs(Msg.doubleDefer());
 
 			const [model, ...commands] = updateFn(...args);

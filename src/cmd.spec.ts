@@ -11,6 +11,7 @@ async function asyncResolve(): Promise<void> {
 	// Does nothing
 }
 
+// biome-ignore lint/suspicious/useAwait: Only for testing purpose.
 async function asyncReject(): Promise<void> {
 	throw new Error("error");
 }
@@ -265,7 +266,7 @@ describe("cmd", () => {
 			expect(message.name).toBe("success");
 		});
 
-		it("ignores the error for a sync task", async () => {
+		it("ignores the error for a sync task", () => {
 			// arrange
 			const result = cmd.ofSuccess(syncError, successMsg);
 
@@ -276,7 +277,7 @@ describe("cmd", () => {
 			expect(succeeds).not.toThrow();
 		});
 
-		it("ignores the error for an async task", async () => {
+		it("ignores the error for an async task", () => {
 			// arrange
 			const result = cmd.ofSuccess(asyncReject, successMsg);
 
@@ -420,7 +421,7 @@ describe("cmd", () => {
 			expect(task).toHaveBeenCalledTimes(1);
 		});
 
-		it("ignores the error for a sync task", async () => {
+		it("ignores the error for a sync task", () => {
 			// arrange
 			const result = cmd.ofNone(syncError);
 
@@ -431,7 +432,7 @@ describe("cmd", () => {
 			expect(succeeds).not.toThrow();
 		});
 
-		it("ignores the error for an async task", async () => {
+		it("ignores the error for an async task", () => {
 			// arrange
 			const result = cmd.ofNone(asyncReject);
 
