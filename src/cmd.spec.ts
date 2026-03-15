@@ -1,4 +1,5 @@
 import { cmd } from "./cmd";
+import { noop } from "./noop";
 import type { Cmd } from "./Types";
 
 type Message = { name: "none" } | { name: "success" } | { name: "error" };
@@ -66,6 +67,16 @@ describe("cmd", () => {
 			expect(batchedCommands).toHaveLength(2);
 			expect(dispatch).toHaveBeenNthCalledWith(1, { name: "success" });
 			expect(dispatch).toHaveBeenNthCalledWith(2, { name: "error" });
+		});
+	});
+
+	describe("ofMsg", () => {
+		it("returns an empty command for noop", () => {
+			// act
+			const result = cmd.ofMsg(noop());
+
+			// assert
+			expect(result).toHaveLength(0);
 		});
 	});
 
@@ -146,6 +157,56 @@ describe("cmd", () => {
 			// assert
 			expect(message.name).toBe("error");
 		});
+
+		it("does not dispatch when ofSuccess returns noop for a sync task", () => {
+			// arrange
+			const dispatch = jest.fn();
+			const result = cmd.ofEither(syncSuccess, () => noop(), errorMsg);
+
+			// act
+			result[0]?.(dispatch);
+
+			// assert
+			expect(dispatch).not.toHaveBeenCalled();
+		});
+
+		it("does not dispatch when ofSuccess returns noop for an async task", async () => {
+			// arrange
+			const dispatch = jest.fn();
+			const result = cmd.ofEither(asyncResolve, () => noop(), errorMsg);
+
+			// act
+			result[0]?.(dispatch);
+			await Promise.resolve();
+
+			// assert
+			expect(dispatch).not.toHaveBeenCalled();
+		});
+
+		it("does not dispatch when ofError returns noop for a sync task", () => {
+			// arrange
+			const dispatch = jest.fn();
+			const result = cmd.ofEither(syncError, successMsg, () => noop());
+
+			// act
+			result[0]?.(dispatch);
+
+			// assert
+			expect(dispatch).not.toHaveBeenCalled();
+		});
+
+		it("does not dispatch when ofError returns noop for an async task", async () => {
+			// arrange
+			const dispatch = jest.fn();
+			const result = cmd.ofEither(asyncReject, successMsg, () => noop());
+
+			// act
+			result[0]?.(dispatch);
+			await Promise.resolve();
+
+			// assert
+			expect(dispatch).not.toHaveBeenCalled();
+		});
 	});
 
 	describe("ofSuccess", () => {
@@ -225,6 +286,31 @@ describe("cmd", () => {
 			// assert
 			expect(succeeds).not.toThrow();
 		});
+
+		it("does not dispatch when ofSuccess returns noop for a sync task", () => {
+			// arrange
+			const dispatch = jest.fn();
+			const result = cmd.ofSuccess(syncSuccess, () => noop());
+
+			// act
+			result[0]?.(dispatch);
+
+			// assert
+			expect(dispatch).not.toHaveBeenCalled();
+		});
+
+		it("does not dispatch when ofSuccess returns noop for an async task", async () => {
+			// arrange
+			const dispatch = jest.fn();
+			const result = cmd.ofSuccess(asyncResolve, () => noop());
+
+			// act
+			result[0]?.(dispatch);
+			await Promise.resolve();
+
+			// assert
+			expect(dispatch).not.toHaveBeenCalled();
+		});
 	});
 
 	describe("ofError", () => {
@@ -281,6 +367,31 @@ describe("cmd", () => {
 
 			// assert
 			expect(message.name).toBe("error");
+		});
+
+		it("does not dispatch when ofError returns noop for a sync task", () => {
+			// arrange
+			const dispatch = jest.fn();
+			const result = cmd.ofError(syncError, () => noop());
+
+			// act
+			result[0]?.(dispatch);
+
+			// assert
+			expect(dispatch).not.toHaveBeenCalled();
+		});
+
+		it("does not dispatch when ofError returns noop for an async task", async () => {
+			// arrange
+			const dispatch = jest.fn();
+			const result = cmd.ofError(asyncReject, () => noop());
+
+			// act
+			result[0]?.(dispatch);
+			await Promise.resolve();
+
+			// assert
+			expect(dispatch).not.toHaveBeenCalled();
 		});
 	});
 

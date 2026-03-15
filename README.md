@@ -14,6 +14,7 @@ This library brings the elmish pattern to react.
   - [Call an async function](#call-an-async-function)
   - [Dispatch a command from `init`](#dispatch-a-command-from-init)
   - [Dispatching multiple commands](#dispatching-multiple-commands)
+  - [Ignoring a result conditionally with `noop`](#ignoring-a-result-conditionally-with-noop)
 - [Subscriptions](#subscriptions)
   - [Working with external sources of events](#working-with-external-sources-of-events)
   - [Cleanup subscriptions](#cleanup-subscriptions)
@@ -379,6 +380,24 @@ To dispatch more than one command from `init` or `update` you can either use the
 ```ts
 return [{}, cmd.ofMsg(Msg.loadData()), cmd.ofEither(doStuff, Msg.success, Msg.error)];
 ```
+
+### Ignoring a result conditionally with `noop`
+
+Sometimes the result of an async operation determines whether a message should be dispatched at all. Instead of defining a dedicated "do nothing" message in every component, you can use the built-in `noop()` function:
+
+```ts
+import { cmd, noop } from "react-elmish";
+
+{
+    load() {
+        return [{}, cmd.ofEither(fetchData, (result) => result ? Msg.loaded(result) : noop(), Msg.error)];
+    },
+}
+```
+
+When `noop()` is returned from a callback, the dispatch is silently skipped — no message is sent through the update system. This means you do not need to add a `noop` entry to your message type or `UpdateMap`.
+
+`noop()` can be returned from the callback of `cmd.ofMsg`, `cmd.ofEither`, `cmd.ofSuccess`, and `cmd.ofError`.
 
 ## Subscriptions
 

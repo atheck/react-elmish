@@ -1,3 +1,4 @@
+import { isNoop, type NoopMessage } from "./noop";
 import type { Cmd, Dispatch, FallbackHandler, Message, Sub } from "./Types";
 
 const cmd = {
@@ -5,7 +6,11 @@ const cmd = {
 	 * Creates a command out of a specific message.
 	 * @param {TMessage} msg The specific message.
 	 */
-	ofMsg<TMessage extends Message>(msg: TMessage): Cmd<TMessage> {
+	ofMsg<TMessage extends Message>(msg: TMessage | NoopMessage): Cmd<TMessage> {
+		if (isNoop(msg)) {
+			return [];
+		}
+
 		return [(dispatch) => dispatch(msg)];
 	},
 
@@ -34,8 +39,8 @@ const cmd = {
 	 */
 	ofEither<TSuccessMessage extends Message, TErrorMessage extends Message, TArgs extends unknown[], TReturn>(
 		task: (...args: TArgs) => TReturn,
-		ofSuccess: (result: Awaited<TReturn>) => TSuccessMessage,
-		ofError: (error: Error) => TErrorMessage,
+		ofSuccess: (result: Awaited<TReturn>) => TSuccessMessage | NoopMessage,
+		ofError: (error: Error) => TErrorMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TSuccessMessage | TErrorMessage> {
 		const bind = (dispatch: Dispatch<TSuccessMessage | TErrorMessage>): void => {
@@ -43,12 +48,28 @@ const cmd = {
 				const taskResult = task(...args);
 
 				Promise.resolve(taskResult)
-					.then((result) => dispatch(ofSuccess(result)))
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
-					.catch((ex: unknown) => dispatch(ofError(ex as Error)));
+					.then((result) => {
+						const msg = ofSuccess(result);
+
+						if (!isNoop(msg)) {
+							dispatch(msg);
+						}
+					})
+					.catch((ex: unknown) => {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
+						const msg = ofError(ex as Error);
+
+						if (!isNoop(msg)) {
+							dispatch(msg);
+						}
+					});
 			} catch (ex: unknown) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
-				dispatch(ofError(ex as Error));
+				const msg = ofError(ex as Error);
+
+				if (!isNoop(msg)) {
+					dispatch(msg);
+				}
 			}
 		};
 
@@ -63,7 +84,7 @@ const cmd = {
 	 */
 	ofSuccess<TSuccessMessage extends Message, TArgs extends unknown[], TReturn>(
 		task: (...args: TArgs) => TReturn,
-		ofSuccess: (result: Awaited<TReturn>) => TSuccessMessage,
+		ofSuccess: (result: Awaited<TReturn>) => TSuccessMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TSuccessMessage> {
 		const bind = (dispatch: Dispatch<TSuccessMessage>, fallback: FallbackHandler = defaultFallbackHandler): void => {
@@ -71,7 +92,13 @@ const cmd = {
 				const taskResult = task(...args);
 
 				Promise.resolve(taskResult)
-					.then((result) => dispatch(ofSuccess(result)))
+					.then((result) => {
+						const msg = ofSuccess(result);
+
+						if (!isNoop(msg)) {
+							dispatch(msg);
+						}
+					})
 					.catch(() => fallback());
 			} catch {
 				fallback();
@@ -89,7 +116,7 @@ const cmd = {
 	 */
 	ofError<TErrorMessage extends Message, TArgs extends unknown[]>(
 		task: (...args: TArgs) => unknown,
-		ofError: (error: Error) => TErrorMessage,
+		ofError: (error: Error) => TErrorMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TErrorMessage> {
 		const bind = (dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): void => {
@@ -98,11 +125,21 @@ const cmd = {
 
 				Promise.resolve(taskResult)
 					.then(() => fallback?.())
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
-					.catch((ex: unknown) => dispatch(ofError(ex as Error)));
+					.catch((ex: unknown) => {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
+						const msg = ofError(ex as Error);
+
+						if (!isNoop(msg)) {
+							dispatch(msg);
+						}
+					});
 			} catch (ex: unknown) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
-				dispatch(ofError(ex as Error));
+				const msg = ofError(ex as Error);
+
+				if (!isNoop(msg)) {
+					dispatch(msg);
+				}
 			}
 		};
 

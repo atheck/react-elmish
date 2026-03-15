@@ -3,6 +3,7 @@ export { ElmComponent } from "./ElmComponent";
 export { type ErrorMessage, errorHandler, errorMsg, handleError } from "./ErrorHandling";
 export { type ElmOptions, init, type Logger } from "./Init";
 export { mergeSubscriptions } from "./mergeSubscriptions";
+export { type NoopMessage, noop } from "./noop";
 export type {
 	Cmd,
 	Dispatch,
