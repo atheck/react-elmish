@@ -22,8 +22,10 @@ function renderWithModel<TMessage extends Message, TResult>(
 
 	const result = render();
 
-	// eslint-disable-next-line unicorn/prefer-await -- We need to reset the fake options after the rendering.
+	/* eslint-disable unicorn/prefer-await -- We need to reset the fake options after the rendering. */
+	// biome-ignore lint/nursery/noFloatingPromises: No async function
 	Promise.resolve(result).then(() => setFakeOptions(null));
+	/* eslint-enable unicorn/prefer-await */
 
 	return result;
 }
