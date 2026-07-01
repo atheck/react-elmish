@@ -28,19 +28,25 @@ interface RenderWithModelConfig<TModel, TMessage extends Message> extends Render
 	model: TModel;
 }
 
-let currentFakeOptions: Nullable<RenderWithModelConfig<unknown, Message>>;
+interface FakeState {
+	currentFakeOptions: Nullable<RenderWithModelConfig<unknown, Message>>;
+}
+
+const State: FakeState = {
+	currentFakeOptions: null,
+};
 
 function setFakeOptions<TModel extends object, TMessage extends Message>(
 	options: Nullable<RenderWithModelConfig<TModel, TMessage>>,
 ): void {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We must cast the type here.
-	currentFakeOptions = options as RenderWithModelConfig<unknown, Message>;
+	State.currentFakeOptions = options as RenderWithModelConfig<unknown, Message>;
 }
 
 function getFakeOptionsOnce<TModel, TMessage extends Message>(): Nullable<RenderWithModelConfig<TModel, TMessage>> {
-	const temp = currentFakeOptions;
+	const temp = State.currentFakeOptions;
 
-	currentFakeOptions = null;
+	State.currentFakeOptions = null;
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We must cast the type here.
 	return temp as RenderWithModelConfig<TModel, TMessage>;

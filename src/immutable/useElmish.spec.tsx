@@ -353,6 +353,7 @@ function TestComponent(props: Props): JSX.Element {
 		name: "Test",
 	});
 
+	// eslint-disable-next-line react/globals, unicorn/no-top-level-assignment-in-function -- Test only.
 	componentModel = model;
 
 	return <div />;

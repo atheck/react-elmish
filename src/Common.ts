@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useRef } from "react";
+import { type RefObject, useEffect, useLayoutEffect, useRef } from "react";
 import { Services } from "./Init";
 import { isReduxDevToolsEnabled, type ReduxDevTools } from "./reduxDevTools";
 import {
@@ -33,16 +33,16 @@ function execCmd<TMessage>(dispatch: Dispatch<TMessage>, ...commands: (Cmd<TMess
 
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- We need to type Model.
 function useRedux<TModel>(name: string, setModel: (model: TModel) => void): RefObject<Nullable<ReduxDevTools>> {
-	const devTools = useRef<Nullable<ReduxDevTools>>(null);
+	const devToolsRef = useRef<Nullable<ReduxDevTools>>(null);
 
 	useEffect(() => {
 		let reduxUnsubscribe: (() => void) | undefined;
 
 		if (Services.enableDevTools === true && isReduxDevToolsEnabled(window)) {
 			// eslint-disable-next-line no-underscore-dangle
-			devTools.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name, serialize: { options: true } });
+			devToolsRef.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name, serialize: { options: true } });
 
-			reduxUnsubscribe = devTools.current.subscribe((message) => {
+			reduxUnsubscribe = devToolsRef.current.subscribe((message) => {
 				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
 					setModel(JSON.parse(message.state) as TModel);
@@ -55,7 +55,7 @@ function useRedux<TModel>(name: string, setModel: (model: TModel) => void): RefO
 		};
 	}, [name, setModel]);
 
-	return devTools;
+	return devToolsRef;
 }
 
 function useIsMounted(): RefObject<boolean> {
@@ -80,25 +80,27 @@ function useSubscription<TProps, TModel, TMessage extends Message>(
 	reInitOn: unknown[] | undefined,
 ): void {
 	useEffect(() => {
-		if (subscription) {
-			const subscriptionResult = subscription(model, props);
-
-			if (subscriptionIsFunctionArray(subscriptionResult)) {
-				const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((current) => current !== undefined);
-
-				return function combinedDestructor() {
-					for (const destructor of destructors) {
-						destructor();
-					}
-				};
-			}
-
-			const [subCmd, destructor] = subscriptionResult;
-
-			execCmd(dispatch, subCmd);
-
-			return destructor;
+		if (!subscription) {
+			return;
 		}
+
+		const subscriptionResult = subscription(model, props);
+
+		if (subscriptionIsFunctionArray(subscriptionResult)) {
+			const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((current) => current !== undefined);
+
+			return function combinedDestructor() {
+				for (const destructor of destructors) {
+					destructor();
+				}
+			};
+		}
+
+		const [subCmd, destructor] = subscriptionResult;
+
+		execCmd(dispatch, subCmd);
+
+		return destructor;
 		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
 	}, reInitOn ?? []);
 }
@@ -148,6 +150,7 @@ function getDispatch<TMessage extends Message>(
 
 				callDevTools?.(nextMsg);
 
+				// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
 				nextMsg = buffer.shift();
 			} while (nextMsg);
 
@@ -166,13 +169,13 @@ function runInit<TModel, TProps, TMessage extends Message>(
 	props: TProps,
 	setModel: (model: TModel) => void,
 	dispatch: Dispatch<TMessage>,
-	devTools: Nullable<ReduxDevTools>,
+	getDevTools: () => Nullable<ReduxDevTools>,
 	fakeModel: TModel | undefined,
 ): TModel {
 	const [initModel, ...initCommands] = fakeModel ? [fakeModel] : initFn(props);
 
 	setModel(initModel);
-	devTools?.init(initModel);
+	getDevTools()?.init(initModel);
 	Services.logger?.debug("Initial model for", name, initModel);
 	execCmd(dispatch, ...initCommands);
 
@@ -182,7 +185,9 @@ function runInit<TModel, TProps, TMessage extends Message>(
 function useDispose<TModel>(dispose: DisposeFunction<TModel> | undefined, model: TModel, reInitOn: unknown[] | undefined): void {
 	const modelRef = useRef(model);
 
-	modelRef.current = model;
+	useLayoutEffect(() => {
+		modelRef.current = model;
+	});
 
 	useEffect(() => {
 		if (dispose) {

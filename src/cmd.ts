@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-await -- We can't use async functions here. */
 import { isNoop, type NoopMessage } from "./noop";
 import type { Cmd, Dispatch, FallbackHandler, Message, Sub } from "./Types";
 

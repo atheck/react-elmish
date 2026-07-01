@@ -1,9 +1,12 @@
 export { cmd } from "./cmd";
 export { ElmComponent } from "./ElmComponent";
-export { type ErrorMessage, errorHandler, errorMsg, handleError } from "./ErrorHandling";
-export { type ElmOptions, init, type Logger } from "./Init";
+export type { ErrorMessage } from "./ErrorHandling";
+export { errorHandler, errorMsg, handleError } from "./ErrorHandling";
+export type { ElmOptions, Logger } from "./Init";
+export { init } from "./Init";
 export { mergeSubscriptions } from "./mergeSubscriptions";
-export { type NoopMessage, noop } from "./noop";
+export type { NoopMessage } from "./noop";
+export { noop } from "./noop";
 export type {
 	Cmd,
 	Dispatch,
@@ -17,4 +20,5 @@ export type {
 	UpdateMap,
 	UpdateReturnType,
 } from "./Types";
-export { type UseElmishOptions, useElmish } from "./useElmish";
+export type { UseElmishOptions } from "./useElmish";
+export { useElmish } from "./useElmish";

@@ -6,6 +6,7 @@ import { createDefer } from "../createDefer";
 import type { UpdateFunctionOptions, UpdateMap } from "../Types";
 import { callUpdateMap } from "../useElmish";
 
+// eslint-disable-next-line unicorn/no-top-level-side-effects
 enablePatches();
 
 /**
@@ -107,13 +108,17 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>): Partial<TModel> {
 	const diff: Partial<TModel> = {};
 
-	/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-	/* eslint-disable @typescript-eslint/no-dynamic-delete */
 	for (const patch of patches) {
 		// biome-ignore lint/style/noNonNullAssertion: The path is always defined
-		const path = patch.path[0]!;
+		handleOp(patch.op, patch.path[0]!);
+	}
 
-		switch (patch.op) {
+	return diff;
+
+	function handleOp(op: Patch["op"], path: string | number): void {
+		/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+		/* eslint-disable @typescript-eslint/no-dynamic-delete */
+		switch (op) {
 			case "replace": {
 				// @ts-expect-error
 				diff[path] = model[path];
@@ -133,11 +138,9 @@ function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>):
 				break;
 			}
 		}
+		/* eslint-enable @typescript-eslint/no-dynamic-delete */
+		/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 	}
-	/* eslint-enable @typescript-eslint/no-dynamic-delete */
-	/* eslint-enable @typescript-eslint/no-unsafe-assignment */
-
-	return diff;
 }
 
 export { getUpdateAndExecCmdFn, getUpdateFn };

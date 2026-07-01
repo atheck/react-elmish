@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
 	execCmd,
 	getDispatch,
@@ -97,9 +97,9 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 	let currentModel = model;
 
-	if (propsRef.current !== props) {
+	useLayoutEffect(() => {
 		propsRef.current = props;
-	}
+	});
 
 	const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
 
@@ -139,7 +139,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			setModel(currentModel);
 		},
 		dispatch,
-		devToolsRef.current,
+		() => devToolsRef.current,
 		fakeOptions?.model,
 	);
 

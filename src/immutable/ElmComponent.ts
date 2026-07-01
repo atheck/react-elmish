@@ -87,7 +87,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	 * @type {Readonly<TModel>}
 	 * @memberof ElmComponent
 	 */
-	// eslint-disable-next-line react/no-unused-class-component-methods -- We need it internally.
+	// eslint-disable-next-line react/no-unused-class-component-members -- We need it internally.
 	public get model(): Immutable<TModel> {
 		return this.currentModel;
 	}
@@ -126,6 +126,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
 			execCmd(this.dispatch, ...commands, ...deferredCommands);
 
+			// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
 			nextMsg = this.buffer.shift();
 		} while (nextMsg);
 
