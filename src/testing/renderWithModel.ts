@@ -22,7 +22,8 @@ function renderWithModel<TMessage extends Message, TResult>(
 
 	const result = render();
 
-	setFakeOptions(null);
+	// eslint-disable-next-line unicorn/prefer-await -- We need to reset the fake options after the rendering.
+	Promise.resolve(result).then(() => setFakeOptions(null));
 
 	return result;
 }
