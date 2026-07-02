@@ -7,4 +7,5 @@ export { execSubscription } from "./execSubscription";
 export { getConsecutiveUpdateFn } from "./getConsecutiveUpdate";
 export type { ModelAndPropsFactory } from "./getCreateUpdateArgs";
 export { getCreateModelAndProps, getCreateUpdateArgs } from "./getCreateUpdateArgs";
+export type { Update } from "./getUpdateFn";
 export { getUpdateAndExecCmdFn, getUpdateFn } from "./getUpdateFn";

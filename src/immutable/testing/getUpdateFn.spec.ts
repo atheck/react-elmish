@@ -1,6 +1,7 @@
+import { cmd } from "../../cmd";
 import type { Nullable } from "../../Types";
-import type { UpdateMap } from "../Types";
-import { getUpdateFn } from "./getUpdateFn";
+import type { UpdateFunction, UpdateMap } from "../Types";
+import { getUpdateAndExecCmdFn, getUpdateFn } from "./getUpdateFn";
 
 type Message = { name: "foo" } | { name: "bar" } | { name: "foobar" };
 
@@ -68,6 +69,58 @@ describe("getUpdateFn", () => {
 			const [updatedModel] = updateFn({ name: "foobar" }, { ...initialModel }, {});
 
 			expect(updatedModel).toStrictEqual({ foobar: ["bar"] });
+		});
+	});
+
+	describe("update function", () => {
+		const update: UpdateFunction<Props, Model, Message> = (model, msg) => {
+			switch (msg.name) {
+				case "foo":
+					model.foo = "bar";
+
+					return [];
+				case "bar":
+					model.bar = { foo: "bar", bar: 1 };
+
+					return [];
+				case "foobar":
+					model.foobar.push("bar");
+
+					return [cmd.ofMsg({ name: "foo" })];
+			}
+		};
+
+		it("computes the diff from an update function", () => {
+			const updateFn = getUpdateFn(update);
+
+			const [updatedModel] = updateFn({ name: "bar" }, { ...initialModel }, {});
+
+			expect(updatedModel).toStrictEqual({ bar: { foo: "bar", bar: 1 } });
+		});
+
+		it("computes the diff for an in-place array update from an update function", () => {
+			const updateFn = getUpdateFn(update);
+
+			const [updatedModel] = updateFn({ name: "foobar" }, { ...initialModel }, {});
+
+			expect(updatedModel).toStrictEqual({ foobar: ["bar"] });
+		});
+
+		it("returns the commands from an update function", () => {
+			const updateFn = getUpdateFn(update);
+
+			const [, ...commands] = updateFn({ name: "foobar" }, { ...initialModel }, {});
+
+			expect(commands).toHaveLength(1);
+		});
+
+		it("executes the commands with getUpdateAndExecCmdFn", async () => {
+			const updateAndExecCmd = getUpdateAndExecCmdFn(update);
+
+			const [updatedModel, messages] = await updateAndExecCmd({ name: "foobar" }, { ...initialModel }, {});
+
+			expect(updatedModel).toStrictEqual({ foobar: ["bar"] });
+			expect(messages).toStrictEqual([{ name: "foo" }]);
 		});
 	});
 });

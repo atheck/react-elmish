@@ -1,11 +1,11 @@
 import type { Immutable } from "immer";
 import type { Message, Nullable } from "../../Types";
-import type { UpdateFunctionOptions, UpdateMap } from "../Types";
-import { getUpdateAndExecCmdFn } from "./getUpdateFn";
+import type { UpdateFunctionOptions } from "../Types";
+import { getUpdateAndExecCmdFn, type Update } from "./getUpdateFn";
 
 /**
- * Creates an update function out of an UpdateMap which executes all consecutive commands.
- * @param updateMap The UpdateMap.
+ * Creates an update function out of an UpdateMap or an update function which executes all consecutive commands.
+ * @param update The UpdateMap or update function.
  * @returns The created update function which can be used in tests.
  * @example
  * const consecutiveUpdate = getConsecutiveUpdateFn(update);
@@ -14,7 +14,7 @@ import { getUpdateAndExecCmdFn } from "./getUpdateFn";
  * const model = await consecutiveUpdate(...args);
  */
 function getConsecutiveUpdateFn<TProps, TModel, TMessage extends Message>(
-	updateMap: UpdateMap<TProps, TModel, TMessage>,
+	update: Update<TProps, TModel, TMessage>,
 ): (
 	msg: TMessage,
 	model: Immutable<TModel>,
@@ -26,7 +26,7 @@ function getConsecutiveUpdateFn<TProps, TModel, TMessage extends Message>(
 		let currentModel = model;
 		let totalUpdatedModel: Partial<TModel> = {};
 
-		const updatedAndExecFn = getUpdateAndExecCmdFn(updateMap);
+		const updatedAndExecFn = getUpdateAndExecCmdFn(update);
 
 		while (messages.length > 0) {
 			const currentMessages: Nullable<TMessage>[] = [];

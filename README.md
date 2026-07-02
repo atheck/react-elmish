@@ -583,7 +583,19 @@ const updateMap: UpdateMap<Props, Model, Message> = {
 
 ### Testing
 
-If you want to test your component with immutable data structures, you can use the `react-elmish/testing/immutable` module. This module provides the same functions as the normal [testing](#testing-1) module.
+If you want to test your component with immutable data structures, you can use the `react-elmish/immutable/testing` module. This module provides the same functions as the normal [testing](#testing-1) module.
+
+Immutable `update` handlers mutate a draft instead of returning a partial model, so they cannot be invoked directly in a test. Therefore `getUpdateFn`, `getUpdateAndExecCmdFn`, and `getConsecutiveUpdateFn` accept both an `UpdateMap` and an update function. They apply the handler to a draft and return the resulting model diff together with the commands:
+
+```ts
+import { getUpdateFn } from "react-elmish/immutable/testing";
+import { update } from "./MyComponent";
+
+const updateFn = getUpdateFn(update);
+
+// Call the update function in the test
+const [model, cmd] = updateFn(msg, model, props);
+```
 
 ## Setup
 

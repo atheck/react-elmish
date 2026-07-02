@@ -3,15 +3,22 @@ import type { Cmd, Message, Nullable } from "../../Types";
 import { execCmd } from "../../testing";
 import { createCallBase } from "../createCallBase";
 import { createDefer } from "../createDefer";
-import type { UpdateFunctionOptions, UpdateMap } from "../Types";
+import type { UpdateFunction, UpdateFunctionOptions, UpdateMap } from "../Types";
 import { callUpdateMap } from "../useElmish";
 
 // eslint-disable-next-line unicorn/no-top-level-side-effects
 enablePatches();
 
 /**
- * Creates an update function out of an UpdateMap.
- * @param updateMap The UpdateMap.
+ * An UpdateMap or an update function, as accepted by the test helpers.
+ */
+type Update<TProps, TModel, TMessage extends Message> =
+	| UpdateMap<TProps, TModel, TMessage>
+	| UpdateFunction<TProps, TModel, TMessage>;
+
+/**
+ * Creates an update function out of an UpdateMap or an update function.
+ * @param update The UpdateMap or update function.
  * @returns The created update function which can be used in tests.
  * @example
  * const updateFn = getUpdateFn(update);
@@ -20,7 +27,7 @@ enablePatches();
  * const [model, cmd] = updateFn(...args);
  */
 function getUpdateFn<TProps, TModel, TMessage extends Message>(
-	updateMap: UpdateMap<TProps, TModel, TMessage>,
+	update: Update<TProps, TModel, TMessage>,
 ): (
 	msg: TMessage,
 	model: Immutable<TModel>,
@@ -42,7 +49,7 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
 		const updatedModel = produce(
 			model,
 			(draft: Draft<TModel>) => {
-				commands.push(...callUpdateMap(updateMap, msg, draft, props, options));
+				commands.push(...callUpdate(update, msg, draft, props, options));
 			},
 			(patches) => {
 				recordedPatches.push(...patches);
@@ -57,8 +64,8 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
 }
 
 /**
- * Creates an update function out of an UpdateMap which immediately executes the command.
- * @param updateMap The UpdateMap.
+ * Creates an update function out of an UpdateMap or an update function which immediately executes the command.
+ * @param update The UpdateMap or update function.
  * @returns The created update function which can be used in tests.
  * @example
  * const updateAndExecCmd = getUpdateAndExecCmdFn(update);
@@ -67,7 +74,7 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
  * const [model, messages] = await updateAndExecCmd(...args);
  */
 function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
-	updateMap: UpdateMap<TProps, TModel, TMessage>,
+	update: Update<TProps, TModel, TMessage>,
 ): (
 	msg: TMessage,
 	model: Immutable<TModel>,
@@ -89,7 +96,7 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 		const updatedModel = produce(
 			model,
 			(draft: Draft<TModel>) => {
-				commands.push(...callUpdateMap(updateMap, msg, draft, props, options));
+				commands.push(...callUpdate(update, msg, draft, props, options));
 			},
 			(patches) => {
 				recordedPatches.push(...patches);
@@ -103,6 +110,20 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 
 		return [diff, messages];
 	};
+}
+
+function callUpdate<TProps, TModel, TMessage extends Message>(
+	update: Update<TProps, TModel, TMessage>,
+	msg: TMessage,
+	draft: Draft<TModel>,
+	props: TProps,
+	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
+): (Cmd<TMessage> | undefined)[] {
+	if (typeof update === "function") {
+		return update(draft, msg, props, options);
+	}
+
+	return callUpdateMap(update, msg, draft, props, options);
 }
 
 function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>): Partial<TModel> {
@@ -142,5 +163,7 @@ function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>):
 		/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 	}
 }
+
+export type { Update };
 
 export { getUpdateAndExecCmdFn, getUpdateFn };
