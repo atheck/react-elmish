@@ -5,6 +5,9 @@
 	],
 	"linter": {
 		"rules": {
+			"nursery": {
+				"noMisleadingReturnType": "off"
+			},
 			"performance": {
 				"noBarrelFile": "off"
 			},

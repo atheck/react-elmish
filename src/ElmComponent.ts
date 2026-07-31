@@ -132,7 +132,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
 		this.running = false;
 
-		if (this.mounted && modified) {
+		if (modified && this.mounted) {
 			Services.logger?.debug("Update model for", this.componentName, this.currentModel);
 			this.forceUpdate();
 		}
