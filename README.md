@@ -3,7 +3,7 @@
 ![Build](https://github.com/atheck/react-elmish/actions/workflows/release.yml/badge.svg)
 ![npm](https://img.shields.io/npm/v/react-elmish)
 
-This library brings the elmish pattern to react.
+This library brings the Elm architecture (Model-Update-View) to React.
 
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
@@ -31,6 +31,7 @@ This library brings the elmish pattern to react.
   - [With an `UpdateMap`](#with-an-updatemap)
   - [With an update function](#with-an-update-function)
   - [Merge multiple subscriptions](#merge-multiple-subscriptions)
+- [Extending react-elmish](#extending-react-elmish)
 - [Testing](#testing-1)
   - [Testing the init function](#testing-the-init-function)
   - [Testing the update handler](#testing-the-update-handler)
@@ -44,11 +45,16 @@ This library brings the elmish pattern to react.
   - [From v2.x to v3.x](#from-v2x-to-v3x)
   - [From v3.x to v4.x](#from-v3x-to-v4x)
   - [From v6.x to v7.x](#from-v6x-to-v7x)
+  - [From v7.x to v8.x](#from-v7x-to-v8x)
+  - [From v8.x to v9.x](#from-v8x-to-v9x)
+  - [From v9.x to v10.x](#from-v9x-to-v10x)
 - [VS Code Snippets Extension](#vs-code-snippets-extension)
 
 ## Installation
 
 `npm install react-elmish`
+
+Requires React `>=16.8.0 <20` as a peer dependency.
 
 ## Basic Usage
 
@@ -140,7 +146,7 @@ export const update = (model: Model, msg: Msg, props: Props): UpdateReturnType<M
 };
 ```
 
-> **Note:** If you are using **typescript** and **typescript-eslint** you should enable the [switch-exhaustive-check](https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/switch-exhaustiveness-check.md) rule.
+> **Note:** If you are using **TypeScript** and **typescript-eslint**, you should enable the [switch-exhaustive-check](https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/switch-exhaustiveness-check.md) rule.
 
 **App.tsx:**
 
@@ -175,7 +181,7 @@ You can also write the component as a **class component**:
 
 ```tsx
 // Import everything from the App.ts
-import { Model, Message, Props, init, update, Msg } as Shared from "../App";
+import { Model, Message, Props, init, update, Msg } from "../App";
 // Import the ElmComponent which extends React.Component
 import { ElmComponent } from "react-elmish";
 import React from "react";
@@ -205,6 +211,7 @@ class App extends ElmComponent<Model, Message, Props> {
             </div>
         );
     }
+}
 ```
 
 > **Note**: When using a class component, you can only use an `update` function. Class components do not support `UpdateMap`s.
@@ -249,7 +256,7 @@ In the **render** method you can add another button to increment the value by 10
 
 ```tsx
 ...
-<button onClick={() => this.dispatch(Shared.Msg.increment(10))}>Increment by 10</button>
+<button onClick={() => this.dispatch(Msg.increment(10))}>Increment by 10</button>
 ...
 ```
 
@@ -273,7 +280,7 @@ You can call one of the functions of that object:
 | `cmd.ofSuccess` | Same as `ofEither` but ignores the error case. |
 | `cmd.ofError` | Same as `ofEither` but ignores the success case. |
 | `cmd.ofNone` | Same as `ofEither` but ignores both, the success case and the error case. |
-| `cmd.ofSub` | Use this function to trigger a command in a subscription. |
+| `cmd.ofSub` | Wraps a subscriber function as a `Cmd`, mainly useful when implementing custom subscriptions. |
 
 ### Dispatch a message
 
@@ -341,18 +348,18 @@ and handle the messages in the **update** function:
     // ...
     loadSettings () {
         // Create a command out of the async function with the provided arguments
-        // If loadSettings resolves it dispatches "SettingsLoaded"
-        // If it fails it dispatches "Error"
+        // If loadSettings resolves, it dispatches "settingsLoaded"
+        // If it fails, it dispatches "error"
         // The return type of loadSettings must fit Msg.settingsLoaded
         return [{}, cmd.ofEither(loadSettings, Msg.settingsLoaded, Msg.error, "firstArg", 123)];
     },
 
-    settingsLoaded () {
-        return [{ settings: msg.settings }];
+    settingsLoaded ({ settings }) {
+        return [{ settings }];
     },
 
-    error () {
-        return handleError(msg.error);
+    error ({ error }) {
+        return handleError(error);
     },
     // ...
 };
@@ -397,7 +404,7 @@ import { cmd, noop } from "react-elmish";
 
 When `noop()` is returned from a callback, the dispatch is silently skipped — no message is sent through the update system. This means you do not need to add a `noop` entry to your message type or `UpdateMap`.
 
-`noop()` can be returned from the callback of `cmd.ofMsg`, `cmd.ofEither`, `cmd.ofSuccess`, and `cmd.ofError`.
+`noop()` can be passed directly to `cmd.ofMsg`, or returned from the mapping callback of `cmd.ofEither`, `cmd.ofSuccess`, and `cmd.ofError`.
 
 ## Subscriptions
 
@@ -439,7 +446,7 @@ const update: UpdateMap<Props, Model, Message> = {
 Then we write our `subscription` function:
 
 ```ts
-function subscription (model: Model): SubscriptionResult<Message> {
+function subscription (model: Model, props: Props): SubscriptionResult<Message> {
     const sub = (dispatch: Dispatch<Message>) => {
         setInterval(() => dispatch(Msg.timer(new Date())), 1000);
     }
@@ -448,7 +455,7 @@ function subscription (model: Model): SubscriptionResult<Message> {
 }
 ```
 
-This function gets the initialized model as parameter and returns a function that gets the `dispatch` function as parameter. This function is called when the component is mounted.
+This function gets the initialized model and the props as parameters, and returns a function that gets the `dispatch` function as a parameter. This function is called when the component is mounted.
 
 Because the return type of the `subscription` function is an array, you can define and return multiple functions.
 
@@ -465,7 +472,7 @@ In the solution above `setInterval` will trigger events even if the component is
 Let's rewrite our `subscription` function:
 
 ```ts
-function subscription (model: Model): SubscriptionResult<Message> {
+function subscription (model: Model, props: Props): SubscriptionResult<Message> {
     const sub = (dispatch: Dispatch<Message>) => {
         const timer = setInterval(() => dispatch(Msg.timer(new Date())), 1000);
 
@@ -687,7 +694,7 @@ The **handleError** function then calls your error handling middleware.
 If you want to use `componentDidMount` or `componentWillUnmount` in a class component, don't forget to call the base class implementation of it as the **ElmComponent** is using them internally.
 
 ```ts
-class App extends ElmComponent<Shared.Model, Shared.Message, Shared.Props> {
+class App extends ElmComponent<Model, Message, Props> {
     ...
     componentDidMount() {
         super.componentDidMount();
@@ -708,7 +715,7 @@ In a functional component you can use the **useEffect** hook as normal.
 
 ## Deferring model updates and messages
 
-Sometimes you want to always dispatch a message or update the model in all cases. You can use the `defer` function from the `options` parameter to do this. The `options` parameter is the fourth parameter of the `update` function.
+Sometimes you want to unconditionally dispatch a message or update the model, regardless of the branch taken in your handler. You can use the `defer` function from the `options` parameter to do this. The `options` parameter is the fourth parameter of the `update` function.
 
 Without the `defer` function, you would have to return the model and the command in all cases:
 
@@ -752,7 +759,7 @@ The `defer` function can be called multiple times. Model updates and commands ar
 
 Since each component has its own model and messages, communication with parent components is done via callback functions.
 
-To inform the parent component about some action, let's say to close a dialog form, you do the following:
+To inform the parent component about some action — for example, to close a dialog form — do the following:
 
 1. Create a message
 
@@ -836,15 +843,15 @@ export function init (): Model {
 export const update: UpdateMap<Props, Model, Message> = {
     loadSettings () {
         return [{}, cmd.ofEither(loadSettings, Msg.settingsLoaded, Msg.error)];
-    }
+    },
 
     settingsLoaded ({ settings }) {
         return [{ settings }];
-    }
+    },
 
     error ({ error }) {
         return handleError(error);
-    }
+    },
 };
 
 async function loadSettings (): Promise<Settings> {
@@ -855,7 +862,7 @@ async function loadSettings (): Promise<Settings> {
 
 > **Note**: This module has no **View**.
 
-Now let's integrate the **LoadSettings** module in our component:
+Now let's integrate the **LoadSettings** module into our component:
 
 ```ts Composition.ts
 // Import the LoadSettings module
@@ -1044,12 +1051,25 @@ If you use composition and thus have multiple subscriptions, you can merge them 
 import { mergeSubscriptions } from "react-elmish";
 import * as LoadSettings from "./LoadSettings";
 
-function localSubscription (model: Model): SubscriptionResult<Message> {
+function localSubscription (model: Model, props: Props): SubscriptionResult<Message> {
     // ...
 }
 
 const subscription = mergeSubscriptions(LoadSettings.subscription, localSubscription);
 ```
+
+## Extending react-elmish
+
+`react-elmish` and `react-elmish/immutable` build `defer` and `callBase` internally and pass them to your `update` function or `UpdateMap` through the `options` parameter. If you are writing your own abstraction on top of `react-elmish` (for example, a custom hook or a helper library), you can create the same `defer` and `callBase` functions yourself using the `react-elmish/extend` (or `react-elmish/immutable/extend`) package:
+
+```ts
+import { createCallBase, createDefer } from "react-elmish/extend";
+
+const [defer, getDeferred] = createDefer<Model, Message>();
+const callBase = createCallBase(msg, model, props, { defer });
+```
+
+This package also re-exports the `UpdateFunction` and `UpdateMapFunction` types. Most applications will never need this package directly, since `useElmish` and `ElmComponent` already wire this up for you.
 
 ## Testing
 
@@ -1063,7 +1083,9 @@ To test your **update** handler you can use some helper functions in `react-elmi
 | `getConsecutiveUpdateFn` | Returns an `update` function for your update map object, which runs all consecutive commands until only the model gets updated or nothing happens. |
 | `getCreateUpdateArgs` | Creates a factory function to create a message, a model, and props in a test. |
 | `createUpdateArgsFactory` | This is an alternative for `getCreateUpdateArgs`. Creates a factory function to create a message, a model, and props in a test. |
+| `getCreateModelAndProps` | Creates a factory function to create a model and props, which can be passed to an `update` or `subscription` function in a test. |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
+| `execSubscription` | Executes a `subscription` function with a fake dispatch function and returns its combined dispose function. |
 
 ### Testing the init function
 
@@ -1127,7 +1149,7 @@ it("returns the correct model and cmd", async () => {
 
 With `execCmd` you can execute all commands in a test scenario. All functions are called and awaited. The function returns all new messages (success or error messages).
 
-It also resolves for `attempt` functions if the called functions succeed. And it rejects for `perform` functions if the called functions fail.
+For commands created with `cmd.ofSuccess` or `cmd.ofError`, the "ignored" side (the error case for `ofSuccess`, the success case for `ofError`) does not dispatch any message. In that case `execCmd` resolves that command's slot with `null` instead of throwing or rejecting.
 
 ### Combine update and execCmd
 
@@ -1297,6 +1319,24 @@ Because the legacy `useElmish` and `useElmishMap` have been removed, you have to
 The function `createCmd` has been removed. Instead, import the `cmd` object.
 
 The test function `getOfMsgParams` has been removed. Use `execCmd` instead, or use the `getUpdateAndExecCmdFn` function and use the returned `update` function. To test the `init` function, use `initAndExecCmd`.
+
+### From v7.x to v8.x
+
+Commands created with `cmd.ofSuccess` no longer throw or reject when the task fails; they now resolve silently instead. If your tests use `execCmd` (or `getUpdateAndExecCmdFn`) to assert on that failure case, update them to expect no dispatched message (`execCmd` resolves that command's slot with `null`) instead of a rejection.
+
+### From v8.x to v9.x
+
+The deprecated `ofFunc` object, including its `attempt` and `perform` functions, has been removed. Use `cmd.ofEither`, `cmd.ofSuccess`, and `cmd.ofError` instead — they support both synchronous and asynchronous functions.
+
+### From v9.x to v10.x
+
+Testing utilities are no longer available from the root `react-elmish` package. Import them from `react-elmish/testing` instead (or `react-elmish/immutable/testing` for the immutable variant):
+
+```ts
+import { execCmd, getUpdateFn, initAndExecCmd } from "react-elmish/testing";
+```
+
+This version also introduces an immutable variant of the library built on Immer, available under `react-elmish/immutable` and `react-elmish/immutable/testing`. See [Immutability](#immutability).
 
 ## VS Code Snippets Extension
 
