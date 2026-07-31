@@ -14,6 +14,7 @@ export type {
 	Message,
 	SubscriptionResult,
 } from "../Types";
+export { ElmComponent } from "./ElmComponent";
 export { errorHandler, handleError } from "./ErrorHandling";
 export type {
 	Subscription,

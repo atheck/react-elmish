@@ -21,6 +21,7 @@ This library brings the Elm architecture (Model-Update-View) to React.
 - [Re-Initialize the component](#re-initialize-the-component)
 - [Dispose / Cleanup](#dispose--cleanup)
 - [Immutability](#immutability)
+  - [Class component](#class-component)
   - [Testing](#testing)
 - [Setup](#setup)
 - [Error handling](#error-handling)
@@ -587,6 +588,53 @@ const updateMap: UpdateMap<Props, Model, Message> = {
     },
 };
 ```
+
+### Class component
+
+`react-elmish/immutable` also exports an immutable **ElmComponent**. It works the same way as the [class component](#basic-usage) described above, except `this.model` returns an immutable model, and the model passed to your `update` function is a mutable Immer draft, so you write directly to it instead of returning a partial model:
+
+```tsx
+import { ElmComponent } from "react-elmish/immutable";
+import React from "react";
+
+function update(model: Model, msg: Message): UpdateReturnType<Message> {
+    switch (msg.name) {
+        case "increment":
+            model.value += 1;
+
+            return [];
+
+        case "decrement":
+            model.value -= 1;
+
+            return [];
+    }
+}
+
+class App extends ElmComponent<Model, Message, Props> {
+    constructor(props: Props) {
+        super(props, init, "App");
+    }
+
+    update = update;
+
+    render(): React.ReactNode {
+        const { value } = this.model;
+
+        return (
+            <div>
+                <p>{value}</p>
+                <button onClick={() => this.dispatch(Msg.increment())}>Increment</button>
+                <button onClick={() => this.dispatch(Msg.decrement())}>Decrement</button>
+            </div>
+        );
+    }
+}
+```
+
+> **Note**: Just like the non-immutable `ElmComponent`, the immutable one only supports an `update` function, not an `UpdateMap`.
+
+The fourth constructor parameter (`dispose`) works the same way as described in [Dispose / Cleanup](#dispose--cleanup); it receives the immutable model.
 
 ### Testing
 
