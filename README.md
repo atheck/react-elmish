@@ -5,6 +5,15 @@
 
 This library brings the Elm architecture (Model-Update-View) to React.
 
+## Demo
+
+A live demo with several runnable examples (basic `useElmish` counter, class-based `ElmComponent`, immutable/Immer counter, and an async command example) is available at:
+
+**[atheck.github.io/react-elmish](https://atheck.github.io/react-elmish/)**
+
+The source code for the demo lives in the [`demo/`](./demo) directory of this repository.
+
+- [Demo](#demo)
 - [Installation](#installation)
 - [Basic Usage](#basic-usage)
 - [More about messages](#more-about-messages)

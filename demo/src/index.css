@@ -1,0 +1,186 @@
+:root {
+	color-scheme: light dark;
+	font-family:
+		system-ui,
+		-apple-system,
+		Segoe UI,
+		Roboto,
+		sans-serif;
+}
+
+body {
+	margin: 0;
+	background: #f6f6f7;
+	color: #1a1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+	body {
+		background: #1a1a1a;
+		color: #f6f6f7;
+	}
+}
+
+.layout {
+	display: flex;
+	min-height: 100vh;
+}
+
+.sidebar {
+	width: 260px;
+	flex-shrink: 0;
+	padding: 24px 16px;
+	border-right: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.sidebar h1 {
+	font-size: 1.1rem;
+	margin: 0 0 4px;
+}
+
+.sidebar p {
+	font-size: 0.85rem;
+	opacity: 0.7;
+	margin: 0 0 20px;
+}
+
+.sidebar a.repo-link {
+	font-size: 0.85rem;
+}
+
+.nav {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.nav button {
+	width: 100%;
+	text-align: left;
+	padding: 8px 10px;
+	border: none;
+	border-radius: 6px;
+	background: transparent;
+	color: inherit;
+	font-size: 0.9rem;
+	cursor: pointer;
+}
+
+.nav button:hover {
+	background: rgba(128, 128, 128, 0.15);
+}
+
+.nav button[aria-current="page"] {
+	background: rgba(99, 102, 241, 0.2);
+	font-weight: 600;
+}
+
+.content {
+	flex: 1;
+	padding: 32px;
+	max-width: 720px;
+}
+
+.content h2 {
+	margin-top: 0;
+}
+
+.example button {
+	padding: 6px 14px;
+	margin-right: 8px;
+	border-radius: 6px;
+	border: 1px solid rgba(128, 128, 128, 0.4);
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.example button:hover {
+	background: rgba(128, 128, 128, 0.15);
+}
+
+.example .value {
+	font-size: 1.5rem;
+	font-weight: 600;
+	margin: 12px 0;
+}
+
+.example .hint {
+	font-size: 0.85rem;
+	opacity: 0.7;
+	max-width: 480px;
+}
+
+.message-log {
+	margin-top: 32px;
+	border: 1px solid rgba(128, 128, 128, 0.3);
+	border-radius: 8px;
+	padding: 16px;
+}
+
+.message-log-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.message-log-header h3 {
+	margin: 0;
+	font-size: 0.95rem;
+}
+
+.message-log-header button {
+	padding: 4px 10px;
+	border-radius: 6px;
+	border: 1px solid rgba(128, 128, 128, 0.4);
+	background: transparent;
+	color: inherit;
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+.message-log-header button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.message-log-empty {
+	font-size: 0.85rem;
+	opacity: 0.7;
+	margin: 12px 0 0;
+}
+
+.message-log-list {
+	list-style: none;
+	margin: 12px 0 0;
+	padding: 0;
+	max-height: 240px;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.message-log-list li {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	font-size: 0.85rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.message-log-name {
+	font-weight: 600;
+	color: rgb(99, 102, 241);
+	flex-shrink: 0;
+}
+
+.message-log-payload {
+	margin: 0;
+	white-space: pre-wrap;
+	word-break: break-all;
+	opacity: 0.8;
+}

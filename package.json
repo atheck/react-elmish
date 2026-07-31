@@ -4,15 +4,21 @@
   "description": "Elmish for React using Typescript",
   "author": "atheck",
   "license": "MIT",
+  "workspaces": [
+    "demo"
+  ],
   "scripts": {
     "build": "npm run build:types && npm run build:js",
     "build:types": "tsc --emitDeclarationOnly --project ./tsconfig.build.json",
     "build:js": "babel src --out-dir dist --extensions \".ts,.tsx\" --ignore \"./**/*.spec.ts\",\"./**/*.spec.tsx\" --source-maps inline",
     "test": "jest --coverage",
     "test:watch": "jest --watch --coverage",
-    "lint": "biome lint src --max-diagnostics 200 && npx eslint src",
+    "lint": "biome lint src demo/src --max-diagnostics 200 && npx eslint src demo/src",
     "update": "npx -y npm-check-updates -i --install never && npx -y npm-check-updates -i --target minor --install never && npx -y npm-check-updates -i --target patch --install never && npm update && npm audit signatures",
-    "semantic-release": "semantic-release"
+    "semantic-release": "semantic-release",
+    "demo:dev": "npm run build && npm run dev -w demo",
+    "demo:build": "npm run build && npm run build -w demo",
+    "demo:preview": "npm run preview -w demo"
   },
   "dependencies": {
     "immer": "11.1.10"
