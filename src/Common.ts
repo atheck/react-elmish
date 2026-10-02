@@ -44,7 +44,7 @@ function useRedux<TModel>(name: string, setModel: (model: TModel) => void): RefO
 
 			reduxUnsubscribe = devToolsRef.current.subscribe((message) => {
 				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+					// biome-ignore lint/nursery/noUnsafeTypeAssertion: We parse JSON here.
 					setModel(JSON.parse(message.state) as TModel);
 				}
 			});

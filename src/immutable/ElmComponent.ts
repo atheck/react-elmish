@@ -48,7 +48,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 			this.dispatch = fakeOptions.dispatch;
 		}
 
-		const [model, ...commands] = fakeOptions?.model ? [fakeOptions.model as TModel] : init(this.props);
+		const [model, ...commands] = fakeOptions?.model ? [fakeOptions.model] : init(this.props);
 
 		Services.logger?.debug("Initial model for", name, model);
 
@@ -65,10 +65,12 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	public componentDidMount(): void {
 		this.mounted = true;
 
-		if (this.initCommands) {
-			execCmd(this.dispatch, ...this.initCommands);
-			this.initCommands = null;
+		if (!this.initCommands) {
+			return;
 		}
+
+		execCmd(this.dispatch, ...this.initCommands);
+		this.initCommands = null;
 	}
 
 	/**
@@ -132,10 +134,12 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
 		this.running = false;
 
-		if (this.mounted) {
-			Services.logger?.debug("Update model for", this.componentName, this.currentModel);
-			this.forceUpdate();
+		if (!this.mounted) {
+			return;
 		}
+
+		Services.logger?.debug("Update model for", this.componentName, this.currentModel);
+		this.forceUpdate();
 	};
 
 	/**

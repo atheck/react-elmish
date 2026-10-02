@@ -93,6 +93,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 	const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
 
+	// biome-ignore-start lint/nursery/useReactCompiler: The dispatch function must be stable and intentionally captures the mutable model and refs.
 	const dispatch = useCallback(
 		getDispatch(
 			handleMessage,
@@ -135,6 +136,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			),
 		);
 	}
+	// biome-ignore-end lint/nursery/useReactCompiler: See above.
 
 	useReInit(setModel, reInitOn);
 	useSubscription(subscription, initializedModel, props, dispatch, reInitOn);

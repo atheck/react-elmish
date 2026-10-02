@@ -39,7 +39,7 @@ const State: FakeState = {
 function setFakeOptions<TModel extends object, TMessage extends Message>(
 	options: Nullable<RenderWithModelConfig<TModel, TMessage>>,
 ): void {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We must cast the type here.
+	// biome-ignore lint/nursery/noUnsafeTypeAssertion: We must cast the type here.
 	State.currentFakeOptions = options as RenderWithModelConfig<unknown, Message>;
 }
 
@@ -48,7 +48,7 @@ function getFakeOptionsOnce<TModel, TMessage extends Message>(): Nullable<Render
 
 	State.currentFakeOptions = null;
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We must cast the type here.
+	// biome-ignore lint/nursery/noUnsafeTypeAssertion: We must cast the type here.
 	return temp as RenderWithModelConfig<TModel, TMessage>;
 }
 

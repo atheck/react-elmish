@@ -103,6 +103,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 	const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
 
+	// biome-ignore-start lint/nursery/useReactCompiler: The dispatch function must be stable and intentionally captures the mutable model and refs.
 	const dispatch = useCallback(
 		getDispatch(
 			handleMessage,
@@ -116,7 +117,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 					Services.logger?.debug("Update model for", name, updatedModel);
 
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We always have a full model here
+					// biome-ignore lint/nursery/noUnsafeTypeAssertion: We always have a full model here.
 					return updatedModel as TModel;
 				});
 			},
@@ -142,6 +143,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		() => devToolsRef.current,
 		fakeOptions?.model,
 	);
+	// biome-ignore-end lint/nursery/useReactCompiler: See above.
 
 	useReInit(setModel, reInitOn);
 	useSubscription(subscription, initializedModel, props, dispatch, reInitOn);
@@ -158,7 +160,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		logMessage(name, nextMsg);
 
-		const updatedModel = { ...currentModel } as TModel;
+		const updatedModel: TModel = { ...currentModel };
 
 		const [defer, getDeferred] = createDefer<TModel, TMessage>();
 		const callBase = createCallBase(nextMsg, updatedModel, propsRef.current, { defer });

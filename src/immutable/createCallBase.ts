@@ -11,7 +11,7 @@ function createCallBase<TProps, TModel, TMessage extends Message>(
 	const callBase: CallBaseFunction<TModel, TProps, TMessage> = (fn) => {
 		const commands: UpdateReturnType<TMessage> = [];
 		const updatedModel = produce(model, (draft: Draft<TModel>) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- The current TMessage must be extended from Message
+			// biome-ignore lint/nursery/noUnsafeTypeAssertion: The current TMessage must be extended from Message.
 			commands.push(...(fn(msg, draft, props, { ...options, callBase }) as UpdateReturnType<TMessage>));
 		});
 

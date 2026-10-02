@@ -56,7 +56,7 @@ const cmd = {
 						}
 					})
 					.catch((ex: unknown) => {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
+						// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
 						const msg = ofError(ex as Error);
 
 						if (!isNoop(msg)) {
@@ -64,7 +64,7 @@ const cmd = {
 						}
 					});
 			} catch (ex: unknown) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
+				// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
 				const msg = ofError(ex as Error);
 
 				if (!isNoop(msg)) {
@@ -126,7 +126,7 @@ const cmd = {
 				Promise.resolve(taskResult)
 					.then(() => fallback?.())
 					.catch((ex: unknown) => {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
+						// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
 						const msg = ofError(ex as Error);
 
 						if (!isNoop(msg)) {
@@ -134,7 +134,7 @@ const cmd = {
 						}
 					});
 			} catch (ex: unknown) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- We only support Error types here.
+				// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
 				const msg = ofError(ex as Error);
 
 				if (!isNoop(msg)) {
