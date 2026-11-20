@@ -12,6 +12,8 @@ import {
 	type Subscription,
 } from "./Types";
 
+type InitCommands<TMessage> = (Cmd<TMessage> | undefined)[];
+
 function logMessage(name: string, msg: Message): void {
 	Services.logger?.info("Message from", name, msg.name);
 	Services.logger?.debug("Message from", name, msg);
@@ -133,19 +135,39 @@ function useSubscription<TProps, TModel, TMessage extends Message>(
 	}, [initCount]);
 }
 
+/**
+ * Resets the model when the `reInitOn` values change, so the component is initialized again.
+ * @param resetModel Resets the model.
+ * @param reInitOn The values which trigger a re-initialization.
+ */
 function useReInit(resetModel: () => void, reInitOn: unknown[] | undefined): void {
-	const firstCallRef = useRef(true);
+	const lastReInitOnRef = useRef(reInitOn);
 
 	useEffect(() => {
-		if (firstCallRef.current) {
-			firstCallRef.current = false;
+		const lastReInitOn = lastReInitOnRef.current;
 
+		lastReInitOnRef.current = reInitOn;
+
+		// The effect also runs when the component is mounted, and twice in StrictMode, without a change of the values.
+		if (areValuesEqual(lastReInitOn, reInitOn)) {
 			return;
 		}
 
 		resetModel();
 		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
 	}, reInitOn ?? []);
+}
+
+function areValuesEqual(first: unknown[] | undefined, second: unknown[] | undefined): boolean {
+	if (first === second) {
+		return true;
+	}
+
+	if (!(first && second) || first.length !== second.length) {
+		return false;
+	}
+
+	return first.every((value, index) => Object.is(value, second[index]));
 }
 
 function getDispatch<TMessage extends Message>(
@@ -201,23 +223,50 @@ function getDispatch<TMessage extends Message>(
 	);
 }
 
+/**
+ * Calls the init function (or uses the fake model) and passes the initial model and commands to `onInit`.
+ * The commands are not executed here, because this runs during render. Use `useInitCommands` to execute them.
+ * @returns The initial model.
+ */
 function runInit<TModel, TProps, TMessage extends Message>(
 	name: string,
 	initFn: InitFunction<TProps, TModel, TMessage>,
 	props: TProps,
-	setModel: (model: TModel) => void,
-	dispatch: Dispatch<TMessage>,
+	onInit: (model: TModel, commands: InitCommands<TMessage>) => void,
 	getDevTools: () => Nullable<ReduxDevTools>,
 	fakeModel: TModel | undefined,
 ): TModel {
 	const [initModel, ...initCommands] = fakeModel ? [fakeModel] : initFn(props);
 
-	setModel(initModel);
+	onInit(initModel, initCommands);
 	getDevTools()?.init(initModel);
 	Services.logger?.debug("Initial model for", name, initModel);
-	execCmd(dispatch, ...initCommands);
 
 	return initModel;
+}
+
+/**
+ * Executes the commands of the last (re-)initialization once, after the component has been rendered.
+ * @param dispatch The dispatch function.
+ * @param pendingInitCommandsRef The commands which have not been executed yet. They are reset after the execution.
+ * @param initCount The number of times the model has been initialized. A change triggers the execution.
+ */
+function useInitCommands<TMessage>(
+	dispatch: Dispatch<TMessage>,
+	pendingInitCommandsRef: RefObject<Nullable<InitCommands<TMessage>>>,
+	initCount: number,
+): void {
+	// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to execute the commands after a (re-)initialization
+	useEffect(() => {
+		const commands = pendingInitCommandsRef.current;
+
+		// Reset the commands, so they are not executed again, e.g. when StrictMode runs the effect twice.
+		pendingInitCommandsRef.current = null;
+
+		if (commands) {
+			execCmd(dispatch, ...commands);
+		}
+	}, [initCount]);
 }
 
 function useDispose<TModel>(dispose: DisposeFunction<TModel> | undefined, model: TModel, reInitOn: unknown[] | undefined): void {
@@ -237,6 +286,8 @@ function useDispose<TModel>(dispose: DisposeFunction<TModel> | undefined, model:
 	}, reInitOn ?? []);
 }
 
+export type { InitCommands };
+
 export {
 	execCmd,
 	getDispatch,
@@ -244,6 +295,7 @@ export {
 	logMessage,
 	runInit,
 	useDispose,
+	useInitCommands,
 	useIsMounted,
 	useRedux,
 	useReInit,

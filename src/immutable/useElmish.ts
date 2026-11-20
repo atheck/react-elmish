@@ -3,9 +3,11 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
 	execCmd,
 	getDispatch,
+	type InitCommands,
 	logMessage,
 	runInit,
 	useDispose,
+	useInitCommands,
 	useIsMounted,
 	useRedux,
 	useReInit,
@@ -95,6 +97,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	);
 	const isMountedRef = useIsMounted();
 	const initCountRef = useRef(0);
+	const pendingInitCommandsRef = useRef<Nullable<InitCommands<TMessage>>>(null);
 
 	useLayoutEffect(() => {
 		propsRef.current = props;
@@ -136,14 +139,14 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 				name,
 				init,
 				props,
-				(initModel) => {
+				(initModel, initCommands) => {
 					const frozenModel = castImmutable(freeze(initModel, true));
 
+					pendingInitCommandsRef.current = initCommands;
 					currentModelRef.current = frozenModel;
 					initCountRef.current++;
 					setModel(frozenModel);
 				},
-				dispatch,
 				() => devToolsRef.current,
 				fakeOptions?.model,
 			),
@@ -154,6 +157,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		currentModelRef.current = null;
 		setModel(null);
 	}, reInitOn);
+	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
+	useInitCommands(dispatch, pendingInitCommandsRef, initCountRef.current);
 	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
 	useSubscription(subscription, initializedModel, props, dispatch, initCountRef.current);
 	// biome-ignore-end lint/nursery/useReactCompiler: See above.
