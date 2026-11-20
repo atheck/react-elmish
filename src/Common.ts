@@ -31,29 +31,49 @@ function execCmd<TMessage>(dispatch: Dispatch<TMessage>, ...commands: (Cmd<TMess
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- We need to type Model.
-function useRedux<TModel>(name: string, setModel: (model: TModel) => void): RefObject<Nullable<ReduxDevTools>> {
+/**
+ * Connects the component to the Redux DevTools, if they are enabled.
+ * @param name The name of the component.
+ * @param getModel Returns the current model. It is sent to the DevTools when connecting.
+ * @param setModel Sets the current model, when the DevTools jump to another state.
+ * @returns A ref to the DevTools connection.
+ */
+function useRedux<TModel>(
+	name: string,
+	getModel: () => Nullable<TModel>,
+	setModel: (model: TModel) => void,
+): RefObject<Nullable<ReduxDevTools>> {
 	const devToolsRef = useRef<Nullable<ReduxDevTools>>(null);
+	const callbacksRef = useRef({ getModel, setModel });
+
+	useLayoutEffect(() => {
+		callbacksRef.current = { getModel, setModel };
+	});
 
 	useEffect(() => {
-		let reduxUnsubscribe: (() => void) | undefined;
-
-		if (Services.enableDevTools === true && isReduxDevToolsEnabled(window)) {
-			// eslint-disable-next-line no-underscore-dangle
-			devToolsRef.current = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name, serialize: { options: true } });
-
-			reduxUnsubscribe = devToolsRef.current.subscribe((message) => {
-				if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
-					// biome-ignore lint/nursery/noUnsafeTypeAssertion: We parse JSON here.
-					setModel(JSON.parse(message.state) as TModel);
-				}
-			});
+		if (!(Services.enableDevTools === true && isReduxDevToolsEnabled(window))) {
+			return;
 		}
 
+		// eslint-disable-next-line no-underscore-dangle
+		const devTools = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name, serialize: { options: true } });
+
+		devToolsRef.current = devTools;
+		// The model is initialized during the first render, before we are connected, so we send it now.
+		devTools.init(callbacksRef.current.getModel());
+
+		const reduxUnsubscribe = devTools.subscribe((message) => {
+			if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
+				// biome-ignore lint/nursery/noUnsafeTypeAssertion: We parse JSON here.
+				callbacksRef.current.setModel(JSON.parse(message.state) as TModel);
+			}
+		});
+
 		return () => {
-			reduxUnsubscribe?.();
+			reduxUnsubscribe();
+			devToolsRef.current = null;
 		};
-	}, [name, setModel]);
+	}, [name]);
 
 	return devToolsRef;
 }

@@ -82,9 +82,18 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 }: UseElmishOptions<TProps, TModel, TMessage>): [Immutable<TModel>, Dispatch<TMessage>] {
 	const [model, setModel] = useState<Nullable<Immutable<TModel>>>(null);
 	const propsRef = useRef(props);
-	const devToolsRef = useRedux(name, setModel);
-	const isMountedRef = useIsMounted();
 	const currentModelRef = useRef<Nullable<Immutable<TModel>>>(null);
+	const devToolsRef = useRedux<Immutable<TModel>>(
+		name,
+		() => currentModelRef.current,
+		(devToolsModel) => {
+			const frozenModel = freeze(devToolsModel, true);
+
+			currentModelRef.current = frozenModel;
+			setModel(frozenModel);
+		},
+	);
+	const isMountedRef = useIsMounted();
 	const initCountRef = useRef(0);
 
 	useLayoutEffect(() => {
