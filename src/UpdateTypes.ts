@@ -82,12 +82,7 @@ type UpdateFunction<TVariant extends Variant, TProps, TModel, TMessage extends M
  * Maps the names of the messages to their handlers.
  */
 type UpdateMap<TVariant extends Variant, TProps, TModel, TMessage extends Message> = {
-	[TMessageName in TMessage["name"]]: (
-		msg: TMessage & { name: TMessageName },
-		model: HandlerModel<TVariant, TModel>,
-		props: TProps,
-		options: UpdateFunctionOptions<TVariant, TProps, TModel, TMessage, TMessage & { name: TMessageName }>,
-	) => UpdateReturnType<TVariant, TModel, TMessage>;
+	[TMessageName in TMessage["name"]]: BaseHandler<TVariant, TModel, TProps, TMessage & { name: TMessageName }, TMessage>;
 };
 
 /**

@@ -2,8 +2,7 @@ import type { Immutable } from "immer";
 import type { Message } from "../../Types";
 import { execCmd } from "../../testing/execCmd";
 import { createConsecutiveUpdateFn } from "../../testing/getConsecutiveUpdate";
-import type { Update } from "../runUpdate";
-import type { UpdateFunctionOptions } from "../Types";
+import type { Update, UpdateFunctionOptions } from "../Types";
 import { runUpdateWithDiff } from "./getUpdateFn";
 
 /**

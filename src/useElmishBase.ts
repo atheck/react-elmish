@@ -108,9 +108,6 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 				Services.logger?.debug("Update model for", optionsRef.current.name, currentModelRef.current);
 				setModel(currentModelRef.current);
 			},
-			(msg) => {
-				devToolsRef.current?.send(msg.name, currentModelRef.current);
-			},
 			fakeOptions?.dispatch,
 		),
 	);
@@ -177,6 +174,7 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 		const isModified = updatedModel !== currentModel;
 
 		currentModelRef.current = updatedModel;
+		devToolsRef.current?.send(msg.name, updatedModel);
 
 		execCmd(initDispatchRef.current, ...commands);
 

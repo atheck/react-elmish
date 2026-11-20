@@ -2,7 +2,7 @@ import type { Immutable } from "immer";
 import type { Dispatch, DisposeFunction, Message } from "../Types";
 import { type UseElmishBaseOptions, useElmishBase } from "../useElmishBase";
 import { modelHandling } from "./runUpdate";
-import type { Subscription, UpdateFunction, UpdateMap } from "./Types";
+import type { Subscription, Update } from "./Types";
 
 /**
  * Options for the `useElmish` hook.
@@ -15,7 +15,7 @@ interface UseElmishOptions<TProps, TModel, TMessage extends Message> extends Use
 	/**
 	 * The `update` function or update map object.
 	 */
-	update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>;
+	update: Update<TProps, TModel, TMessage>;
 	/**
 	 * The optional `subscription` function.
 	 * It is called when the component is mounted and again whenever the `reInitOn` values change.

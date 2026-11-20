@@ -1,5 +1,5 @@
-import { runUpdate, type Update } from "../runUpdate";
-import type { Message, Nullable, UpdateFunctionOptions } from "../Types";
+import { runUpdate } from "../runUpdate";
+import type { Message, Nullable, Update, UpdateFunctionOptions } from "../Types";
 import { execCmd } from "./execCmd";
 
 /**

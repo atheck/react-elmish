@@ -1,8 +1,8 @@
 import { enablePatches, type Immutable, type Patch } from "immer";
 import type { Commands, Message, Nullable } from "../../Types";
 import { execCmd } from "../../testing/execCmd";
-import { runUpdate, type Update } from "../runUpdate";
-import type { UpdateFunctionOptions } from "../Types";
+import { runUpdate } from "../runUpdate";
+import type { Update, UpdateFunctionOptions } from "../Types";
 
 enablePatches();
 
@@ -101,6 +101,6 @@ function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>):
 	return diff as Partial<TModel>;
 }
 
-export type { Update } from "../runUpdate";
+export type { Update } from "../Types";
 
 export { getUpdateAndExecCmdFn, getUpdateFn, runUpdateWithDiff };

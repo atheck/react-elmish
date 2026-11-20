@@ -232,7 +232,6 @@ function createInitDispatch<TMessage extends Message>(
 function getDispatch<TMessage extends Message>(
 	handleMessage: (msg: TMessage) => boolean,
 	callSetModel: () => void,
-	callDevTools?: (msg: TMessage) => void,
 	fakeDispatch?: Dispatch<TMessage>,
 ): Dispatch<TMessage> {
 	let isRunning = false;
@@ -258,8 +257,6 @@ function getDispatch<TMessage extends Message>(
 					if (handleMessage(nextMsg)) {
 						isModified = true;
 					}
-
-					callDevTools?.(nextMsg);
 
 					// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
 					nextMsg = buffer.shift();

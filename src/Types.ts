@@ -72,6 +72,15 @@ type UpdateFunction<TProps, TModel, TMessage extends Message> = Variant.UpdateFu
 type UpdateMap<TProps, TModel, TMessage extends Message> = Variant.UpdateMap<"mutable", TProps, TModel, TMessage>;
 
 /**
+ * An UpdateMap or an update function.
+ * It is a union of the aliases above (and not of the generic variant types), so TypeScript can infer
+ * the type arguments from an `UpdateMap` or `UpdateFunction` passed to a generic function.
+ */
+type Update<TProps, TModel, TMessage extends Message> =
+	| UpdateFunction<TProps, TModel, TMessage>
+	| UpdateMap<TProps, TModel, TMessage>;
+
+/**
  * The return type of the `subscription` function.
  * @template TMessage The type of the messages discriminated union.
  */
@@ -103,6 +112,7 @@ export type {
 	Subscription,
 	SubscriptionFunction,
 	SubscriptionResult,
+	Update,
 	UpdateFunction,
 	UpdateFunctionOptions,
 	UpdateMap,

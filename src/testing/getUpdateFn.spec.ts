@@ -1,6 +1,6 @@
 import { cmd } from "../cmd";
 import type { UpdateMap } from "../Types";
-import { getUpdateFn } from "./getUpdateFn";
+import { getUpdateAndExecCmdFn, getUpdateFn } from "./getUpdateFn";
 
 type Message = { name: "foo" } | { name: "bar" };
 
@@ -89,5 +89,44 @@ describe("getUpdateFn", () => {
 		// assert
 		expect(updatedModel).toStrictEqual({});
 		expect(model).toStrictEqual({ foo: "", bar: "" });
+	});
+});
+
+describe("getUpdateAndExecCmdFn", () => {
+	it("returns the model changes and the messages of the executed commands, including the deferred ones", async () => {
+		// arrange
+		const updateAndExecCmdFn = getUpdateAndExecCmdFn<Props, Model, Message>({
+			...baseUpdateMap,
+			foo(_msg, _model, _props, { defer }) {
+				defer({ bar: "deferred" }, cmd.ofMsg({ name: "bar" }));
+
+				return [
+					{ foo: "updated" },
+					cmd.ofSuccess(
+						async () => "result",
+						() => ({ name: "foo" }),
+					),
+				];
+			},
+		});
+
+		// act
+		const [model, messages] = await updateAndExecCmdFn({ name: "foo" }, initialModel, {});
+
+		// assert
+		expect(model).toStrictEqual({ foo: "updated", bar: "deferred" });
+		expect(messages).toStrictEqual([{ name: "foo" }, { name: "bar" }]);
+	});
+
+	it("returns an empty array of messages if there are no commands", async () => {
+		// arrange
+		const updateAndExecCmdFn = getUpdateAndExecCmdFn(baseUpdateMap);
+
+		// act
+		const [model, messages] = await updateAndExecCmdFn({ name: "bar" }, initialModel, {});
+
+		// assert
+		expect(model).toStrictEqual({});
+		expect(messages).toStrictEqual([]);
 	});
 });

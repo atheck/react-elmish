@@ -1,14 +1,7 @@
-import { callUpdate, createUpdateOptions } from "./callUpdate";
 import { hasModelChanged } from "./Common";
+import { callUpdate, createUpdateOptions } from "./callUpdate";
 import { createDefer } from "./createDefer";
-import type { Commands, Message, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
-
-/**
- * An UpdateMap or an update function.
- */
-type Update<TProps, TModel, TMessage extends Message> =
-	| UpdateFunction<TProps, TModel, TMessage>
-	| UpdateMap<TProps, TModel, TMessage>;
+import type { Commands, Message, Update, UpdateFunctionOptions, UpdateReturnType } from "./Types";
 
 /**
  * Runs the update for a message, including the deferred model changes and commands.
@@ -64,7 +57,5 @@ function toStoredModel<TModel>(model: TModel): TModel {
  * The model handling of the mutable variant, used by `useElmish` and `ElmComponent`.
  */
 const modelHandling = { toStoredModel, updateModel };
-
-export type { Update };
 
 export { modelHandling, runUpdate };

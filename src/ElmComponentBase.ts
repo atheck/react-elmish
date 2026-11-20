@@ -1,5 +1,5 @@
 import React from "react";
-import { createInitDispatch, execCmd, getDispatch, logMessage, type ModelHandling } from "./Common";
+import { createInitDispatch, execCmd, getDispatch, logMessage, type ModelHandling, runInit } from "./Common";
 import { getFakeOptions } from "./fakeOptions";
 import { Services } from "./Init";
 import type { Commands, Dispatch, DisposeFunction, InitFunction, Message, Nullable } from "./Types";
@@ -44,9 +44,8 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 
 		this.#disposeHandler = disposeHandler;
 		this.#initialize = (): void => {
-			const [model, ...commands] = fakeOptions?.model ? [fakeOptions.model] : init(this.props);
-
-			Services.logger?.debug("Initial model for", name, model);
+			// Class components do not support the Redux DevTools.
+			const [model, commands] = runInit(name, init, this.props, () => null, fakeOptions?.model);
 
 			this.#currentModel = toStoredModel(model);
 			this.#initCommands = commands;
@@ -80,7 +79,6 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 				Services.logger?.debug("Update model for", name, this.#currentModel);
 				this.forceUpdate();
 			},
-			undefined,
 			fakeOptions?.dispatch,
 		);
 	}

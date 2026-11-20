@@ -1,5 +1,5 @@
 import { modelHandling } from "./runUpdate";
-import type { Dispatch, DisposeFunction, Message, Subscription, UpdateFunction, UpdateMap } from "./Types";
+import type { Dispatch, DisposeFunction, Message, Subscription, Update } from "./Types";
 import { type UseElmishBaseOptions, useElmishBase } from "./useElmishBase";
 
 /**
@@ -13,7 +13,7 @@ interface UseElmishOptions<TProps, TModel, TMessage extends Message> extends Use
 	/**
 	 * The `update` function or update map object.
 	 */
-	update: UpdateFunction<TProps, TModel, TMessage> | UpdateMap<TProps, TModel, TMessage>;
+	update: Update<TProps, TModel, TMessage>;
 	/**
 	 * The optional `subscription` function.
 	 * It is called when the component is mounted and again whenever the `reInitOn` values change.

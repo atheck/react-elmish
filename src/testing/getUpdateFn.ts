@@ -1,5 +1,5 @@
-import { runUpdate, type Update } from "../runUpdate";
-import type { Message, Nullable, UpdateFunctionOptions, UpdateReturnType } from "../Types";
+import { runUpdate } from "../runUpdate";
+import type { Message, Nullable, Update, UpdateFunctionOptions, UpdateReturnType } from "../Types";
 import { execCmd } from "./execCmd";
 
 type UpdateFn<TProps, TModel, TMessage extends Message> = (
@@ -53,6 +53,6 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 	};
 }
 
-export type { Update } from "../runUpdate";
+export type { Update } from "../Types";
 
 export { getUpdateAndExecCmdFn, getUpdateFn };

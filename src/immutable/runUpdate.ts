@@ -2,14 +2,7 @@ import { castImmutable, type Draft, freeze, type Immutable, type PatchListener, 
 import { callUpdate, createUpdateOptions } from "../callUpdate";
 import type { Commands, Message } from "../Types";
 import { createDefer } from "./createDefer";
-import type { UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
-
-/**
- * An UpdateMap or an update function.
- */
-type Update<TProps, TModel, TMessage extends Message> =
-	| UpdateFunction<TProps, TModel, TMessage>
-	| UpdateMap<TProps, TModel, TMessage>;
+import type { Update, UpdateFunctionOptions, UpdateReturnType } from "./Types";
 
 /**
  * Runs the update for a message on a draft of the model, including the deferred commands.
@@ -56,7 +49,5 @@ function toStoredModel<TModel>(model: TModel): Immutable<TModel> {
  * The model handling of the immutable variant, used by `useElmish` and `ElmComponent`.
  */
 const modelHandling = { toStoredModel, updateModel: runUpdate };
-
-export type { Update };
 
 export { modelHandling, runUpdate };

@@ -1,5 +1,5 @@
 export type { RenderWithModelOptions } from "../../fakeOptions";
-export { execCmd, initAndExecCmd, renderWithModel } from "../../testing";
+export { execCmd, execCmdWithDispatch, initAndExecCmd, renderWithModel } from "../../testing";
 export { createModelAndProps } from "./createModelAndProps";
 export type { UpdateArgsFactory } from "./createUpdateArgsFactory";
 export { createUpdateArgsFactory } from "./createUpdateArgsFactory";
