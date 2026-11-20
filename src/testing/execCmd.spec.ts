@@ -1,9 +1,9 @@
 import { cmd } from "../cmd";
 import { execCmd } from ".";
 
-type Message = { name: "Msg1" } | { name: "Msg2" } | { name: "Error" };
-
 describe("execCmd", () => {
+	type Message = { name: "Msg1" } | { name: "Msg2" } | { name: "Error" };
+
 	it("returns an empty array without a cmd", async () => {
 		// act
 		const messages = await execCmd();

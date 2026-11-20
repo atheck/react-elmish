@@ -6,10 +6,10 @@ import {
 	type Dispatch,
 	type DisposeFunction,
 	type InitFunction,
+	isSubscriptionFunctionArray,
 	type Message,
 	type Nullable,
 	type Subscription,
-	subscriptionIsFunctionArray,
 } from "./Types";
 
 function logMessage(name: string, msg: Message): void {
@@ -19,7 +19,7 @@ function logMessage(name: string, msg: Message): void {
 	Services.dispatchMiddleware?.(msg);
 }
 
-function modelHasChanged<TModel>(currentModel: TModel, model: Partial<TModel>): boolean {
+function hasModelChanged<TModel>(currentModel: TModel, model: Partial<TModel>): boolean {
 	return !Object.is(model, currentModel) && Object.getOwnPropertyNames(model).length > 0;
 }
 
@@ -86,7 +86,7 @@ function useSubscription<TProps, TModel, TMessage extends Message>(
 
 		const subscriptionResult = subscription(model, props);
 
-		if (subscriptionIsFunctionArray(subscriptionResult)) {
+		if (isSubscriptionFunctionArray(subscriptionResult)) {
 			const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((current) => current !== undefined);
 
 			return function combinedDestructor() {
@@ -126,26 +126,26 @@ function getDispatch<TMessage extends Message>(
 	callDevTools?: (msg: TMessage) => void,
 	fakeDispatch?: Dispatch<TMessage>,
 ): Dispatch<TMessage> {
-	let running = false;
+	let isRunning = false;
 	const buffer: TMessage[] = [];
 
 	return (
 		fakeDispatch ??
 		((msg: TMessage): void => {
-			if (running) {
+			if (isRunning) {
 				buffer.push(msg);
 
 				return;
 			}
 
-			running = true;
+			isRunning = true;
 
 			let nextMsg: TMessage | undefined = msg;
-			let modified = false;
+			let isModified = false;
 
 			do {
 				if (handleMessage(nextMsg)) {
-					modified = true;
+					isModified = true;
 				}
 
 				callDevTools?.(nextMsg);
@@ -154,9 +154,9 @@ function getDispatch<TMessage extends Message>(
 				nextMsg = buffer.shift();
 			} while (nextMsg);
 
-			running = false;
+			isRunning = false;
 
-			if (modified) {
+			if (isModified) {
 				callSetModel();
 			}
 		})
@@ -202,8 +202,8 @@ function useDispose<TModel>(dispose: DisposeFunction<TModel> | undefined, model:
 export {
 	execCmd,
 	getDispatch,
+	hasModelChanged,
 	logMessage,
-	modelHasChanged,
 	runInit,
 	useDispose,
 	useIsMounted,

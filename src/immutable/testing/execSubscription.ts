@@ -1,5 +1,5 @@
 import type { Immutable } from "immer";
-import { type Dispatch, type Message, subscriptionIsFunctionArray } from "../../Types";
+import { type Dispatch, isSubscriptionFunctionArray, type Message } from "../../Types";
 import { execCmdWithDispatch } from "../../testing";
 import type { Subscription } from "../Types";
 
@@ -19,7 +19,7 @@ function execSubscription<TProps, TModel, TMessage extends Message>(
 
 	const subscriptionResult = subscription(model, props);
 
-	if (subscriptionIsFunctionArray(subscriptionResult)) {
+	if (isSubscriptionFunctionArray(subscriptionResult)) {
 		const disposers = subscriptionResult.map((sub) => sub(dispatch)).filter((disposer) => disposer !== undefined);
 
 		return () => {

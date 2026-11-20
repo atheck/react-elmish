@@ -11,9 +11,4 @@ export default defineConfig({
 	optimizeDeps: {
 		include: ["react-elmish", "react-elmish/immutable"],
 	},
-	build: {
-		commonjsOptions: {
-			include: [/react-elmish/, /node_modules/],
-		},
-	},
 });

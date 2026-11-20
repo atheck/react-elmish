@@ -77,7 +77,7 @@ class TestComponent extends ElmComponent<Model, Message, Props> {
 
 	public update = this.props.update;
 
-	// biome-ignore lint/nursery/useThisInClassMethods: Test only.
+	// biome-ignore lint/style/useThisInClassMethods: Test only.
 	public override render(): JSX.Element {
 		return <div />;
 	}
@@ -94,7 +94,7 @@ class DisposeTestComponent extends ElmComponent<Model, Message, DisposeProps> {
 
 	public update = this.props.update;
 
-	// biome-ignore lint/nursery/useThisInClassMethods: Test only.
+	// biome-ignore lint/style/useThisInClassMethods: Test only.
 	public override render(): JSX.Element {
 		return <div />;
 	}

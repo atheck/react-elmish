@@ -2,8 +2,8 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
 	execCmd,
 	getDispatch,
+	hasModelChanged,
 	logMessage,
-	modelHasChanged,
 	runInit,
 	useDispose,
 	useIsMounted,
@@ -156,7 +156,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			return false;
 		}
 
-		let modified = false;
+		let isModified = false;
 
 		logMessage(name, nextMsg);
 
@@ -169,15 +169,15 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		const [deferredModel, deferredCommands] = getDeferred();
 
-		if (modelHasChanged(currentModel, { ...deferredModel, ...newModel })) {
+		if (hasModelChanged(currentModel, { ...deferredModel, ...newModel })) {
 			currentModel = { ...currentModel, ...deferredModel, ...newModel };
 
-			modified = true;
+			isModified = true;
 		}
 
 		execCmd(dispatch, ...commands, ...deferredCommands);
 
-		return modified;
+		return isModified;
 	}
 }
 

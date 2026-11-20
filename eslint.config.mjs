@@ -6,6 +6,8 @@ export default [
 	{
 		rules: {
 			"unicorn/consistent-boolean-name": "off",
+			"unicorn/consistent-class-member-order": "off",
+			"unicorn/prefer-options-parameter": "off",
 			"unicorn/prefer-type-literal-last": "off",
 			"react/no-class-component": "off",
 		},

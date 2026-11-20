@@ -6,7 +6,6 @@ import { createDefer } from "../createDefer";
 import type { UpdateFunction, UpdateFunctionOptions, UpdateMap } from "../Types";
 import { callUpdateMap } from "../useElmish";
 
-// eslint-disable-next-line unicorn/no-top-level-side-effects
 enablePatches();
 
 /**
@@ -138,7 +137,6 @@ function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>):
 
 	function handleOp(op: Patch["op"], path: string | number): void {
 		/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-		/* eslint-disable @typescript-eslint/no-dynamic-delete */
 		switch (op) {
 			case "replace": {
 				// @ts-expect-error
@@ -154,12 +152,12 @@ function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>):
 			}
 			case "remove": {
 				// @ts-expect-error
+				// biome-ignore lint/nursery/noDynamicDelete: This for testing purposes.
 				delete diff[path];
 
 				break;
 			}
 		}
-		/* eslint-enable @typescript-eslint/no-dynamic-delete */
 		/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 	}
 }

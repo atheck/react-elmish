@@ -154,7 +154,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		const [defer, getDeferred] = createDefer<TMessage>();
 		const callBase = createCallBase<TProps, TModel, TMessage>(nextMsg, currentModel, propsRef.current, { defer });
 
-		const [modified, updatedModel, ...commands] = callUpdate(update, nextMsg, currentModel, propsRef.current, {
+		const [isModified, updatedModel, ...commands] = callUpdate(update, nextMsg, currentModel, propsRef.current, {
 			defer,
 			callBase,
 		});
@@ -165,7 +165,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		execCmd(dispatch, ...commands, ...deferredCommands);
 
-		return modified;
+		return isModified;
 	}
 }
 
@@ -177,7 +177,7 @@ function callUpdate<TProps, TModel, TMessage extends Message>(
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ): [boolean, Immutable<TModel>, ...(Cmd<TMessage> | undefined)[]] {
 	const commands: (Cmd<TMessage> | undefined)[] = [];
-	let modified = false;
+	let isModified = false;
 	const updatedModel = produce(
 		model,
 		(draft: Draft<TModel>) => {
@@ -190,11 +190,11 @@ function callUpdate<TProps, TModel, TMessage extends Message>(
 			commands.push(...callUpdateMap(update, msg, draft, props, options));
 		},
 		(patches) => {
-			modified = patches.length > 0;
+			isModified = patches.length > 0;
 		},
 	);
 
-	return [modified, updatedModel, ...commands];
+	return [isModified, updatedModel, ...commands];
 }
 
 function callUpdateMap<TProps, TModel, TMessage extends Message>(

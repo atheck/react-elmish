@@ -1,5 +1,5 @@
 import React from "react";
-import { execCmd, logMessage, modelHasChanged } from "./Common";
+import { execCmd, hasModelChanged, logMessage } from "./Common";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import { getFakeOptionsOnce } from "./fakeOptions";
@@ -107,7 +107,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 		this.running = true;
 
 		let nextMsg: TMessage | undefined = msg;
-		let modified = false;
+		let isModified = false;
 
 		do {
 			const currentMessage = nextMsg;
@@ -121,9 +121,9 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
 			const [deferredModel, deferredCommands] = getDeferred();
 
-			if (modelHasChanged(this.currentModel, { ...deferredModel, ...model })) {
+			if (hasModelChanged(this.currentModel, { ...deferredModel, ...model })) {
 				this.currentModel = { ...this.currentModel, ...deferredModel, ...model };
-				modified = true;
+				isModified = true;
 			}
 
 			execCmd(this.dispatch, ...commands, ...deferredCommands);
@@ -134,7 +134,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
 		this.running = false;
 
-		if (!(modified && this.mounted)) {
+		if (!(isModified && this.mounted)) {
 			return;
 		}
 

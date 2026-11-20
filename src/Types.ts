@@ -89,7 +89,7 @@ type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => 
 
 type DisposeFunction<TModel> = (model: TModel) => void;
 
-function subscriptionIsFunctionArray(subscription: SubscriptionResult<unknown>): subscription is SubscriptionFunction<unknown>[] {
+function isSubscriptionFunctionArray(subscription: SubscriptionResult<unknown>): subscription is SubscriptionFunction<unknown>[] {
 	return typeof subscription[0] === "function";
 }
 
@@ -116,4 +116,4 @@ export type {
 	UpdateReturnType,
 };
 
-export { subscriptionIsFunctionArray };
+export { isSubscriptionFunctionArray };

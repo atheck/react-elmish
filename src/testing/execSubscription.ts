@@ -1,5 +1,5 @@
 import type { Dispatch } from "react";
-import { type Message, type Subscription, subscriptionIsFunctionArray } from "../Types";
+import { isSubscriptionFunctionArray, type Message, type Subscription } from "../Types";
 import { execCmdWithDispatch } from "./execCmd";
 
 function execSubscription<TProps, TModel, TMessage extends Message>(
@@ -18,7 +18,7 @@ function execSubscription<TProps, TModel, TMessage extends Message>(
 
 	const subscriptionResult = subscription(model, props);
 
-	if (subscriptionIsFunctionArray(subscriptionResult)) {
+	if (isSubscriptionFunctionArray(subscriptionResult)) {
 		const disposers = subscriptionResult.map((sub) => sub(dispatch)).filter((disposer) => disposer !== undefined);
 
 		return () => {

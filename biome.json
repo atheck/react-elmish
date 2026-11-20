@@ -6,6 +6,7 @@
 	"linter": {
 		"rules": {
 			"nursery": {
+				"noDisabledAttribute": "off",
 				"noMisleadingReturnType": "off"
 			},
 			"performance": {
