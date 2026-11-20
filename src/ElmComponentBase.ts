@@ -32,9 +32,13 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 	 */
 	public readonly dispatch: Dispatch<TMessage>;
 
-	private initCommands: Nullable<(Cmd<TMessage> | undefined)[]>;
-	private mounted = false;
-	private currentModel: TStoredModel;
+	readonly #disposeHandler: DisposeFunction<TStoredModel> | undefined;
+	readonly #initialize: () => void;
+	#initCommands: Nullable<(Cmd<TMessage> | undefined)[]> = null;
+	#isMounted = false;
+	#isDisposed = false;
+	// Assigned by #initialize, which is called in the constructor.
+	#currentModel!: TStoredModel;
 
 	protected constructor(
 		props: TProps,
@@ -42,37 +46,43 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 		name: string,
 		toStoredModel: (model: TModel) => TStoredModel,
 		updateModel: UpdateModelFunction<TProps, TStoredModel, TMessage, TUpdate>,
-		private readonly disposeHandler?: DisposeFunction<TStoredModel>,
+		disposeHandler?: DisposeFunction<TStoredModel>,
 	) {
 		super(props);
 
 		const fakeOptions = getFakeOptions<TModel, TMessage>(name);
-		const [model, ...commands] = fakeOptions?.model ? [fakeOptions.model] : init(this.props);
 
-		Services.logger?.debug("Initial model for", name, model);
+		this.#disposeHandler = disposeHandler;
+		this.#initialize = (): void => {
+			const [model, ...commands] = fakeOptions?.model ? [fakeOptions.model] : init(this.props);
 
-		this.currentModel = toStoredModel(model);
-		this.initCommands = commands;
+			Services.logger?.debug("Initial model for", name, model);
+
+			this.#currentModel = toStoredModel(model);
+			this.#initCommands = commands;
+		};
+
+		this.#initialize();
 
 		this.dispatch = getDispatch(
 			(msg: TMessage): boolean => {
 				logMessage(name, msg);
 
-				const [updatedModel, ...updateCommands] = updateModel(this.update, msg, this.currentModel, this.props);
-				const isModified = updatedModel !== this.currentModel;
+				const [updatedModel, ...updateCommands] = updateModel(this.update, msg, this.#currentModel, this.props);
+				const isModified = updatedModel !== this.#currentModel;
 
-				this.currentModel = updatedModel;
+				this.#currentModel = updatedModel;
 
 				execCmd(this.dispatch, ...updateCommands);
 
 				return isModified;
 			},
 			() => {
-				if (!this.mounted) {
+				if (!this.#isMounted) {
 					return;
 				}
 
-				Services.logger?.debug("Update model for", name, this.currentModel);
+				Services.logger?.debug("Update model for", name, this.#currentModel);
 				this.forceUpdate();
 			},
 			undefined,
@@ -86,14 +96,22 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 	 * @memberof ElmComponent
 	 */
 	public componentDidMount(): void {
-		this.mounted = true;
+		this.#isMounted = true;
 
-		if (!this.initCommands) {
-			return;
+		// When React mounts the component again (e.g. in StrictMode) after the model has been disposed, we initialize it again.
+		if (this.#isDisposed) {
+			this.#isDisposed = false;
+			this.#initialize();
+			this.forceUpdate();
 		}
 
-		execCmd(this.dispatch, ...this.initCommands);
-		this.initCommands = null;
+		const initCommands = this.#initCommands;
+
+		this.#initCommands = null;
+
+		if (initCommands) {
+			execCmd(this.dispatch, ...initCommands);
+		}
 	}
 
 	/**
@@ -102,8 +120,14 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 	 * @memberof ElmComponent
 	 */
 	public componentWillUnmount(): void {
-		this.disposeHandler?.(this.currentModel);
-		this.mounted = false;
+		this.#isMounted = false;
+
+		if (!this.#disposeHandler) {
+			return;
+		}
+
+		this.#disposeHandler(this.#currentModel);
+		this.#isDisposed = true;
 	}
 
 	/**
@@ -113,7 +137,7 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 	 */
 	// eslint-disable-next-line react/no-unused-class-component-members -- We need it internally.
 	public get model(): TStoredModel {
-		return this.currentModel;
+		return this.#currentModel;
 	}
 
 	/**

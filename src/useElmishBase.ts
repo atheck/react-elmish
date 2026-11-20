@@ -10,6 +10,7 @@ import {
 	useIsMounted,
 	useRedux,
 	useReInit,
+	useRemount,
 	useSubscription,
 } from "./Common";
 import { getFakeOptions } from "./fakeOptions";
@@ -81,7 +82,8 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 	updateModel,
 }: UseElmishBaseParams<TProps, TModel, TStoredModel, TMessage>): [TStoredModel, Dispatch<TMessage>] {
 	const [model, setModel] = useState<Nullable<TStoredModel>>(null);
-	const propsRef = useRef(props);
+	// The dispatch function is created once, so it reads the current values of the options through these refs.
+	const optionsRef = useRef({ name, props, updateModel });
 	const currentModelRef = useRef<Nullable<TStoredModel>>(null);
 	const devToolsRef = useRedux(
 		name,
@@ -97,9 +99,10 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 	const isMountedRef = useIsMounted();
 	const initCountRef = useRef(0);
 	const pendingInitCommandsRef = useRef<Nullable<InitCommands<TMessage>>>(null);
+	const isDisposedRef = useRef(false);
 
 	useLayoutEffect(() => {
-		propsRef.current = props;
+		optionsRef.current = { name, props, updateModel };
 	});
 
 	// Only a component that is initializing may use the fake options of renderWithModel.
@@ -114,7 +117,7 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 					return;
 				}
 
-				Services.logger?.debug("Update model for", name, currentModelRef.current);
+				Services.logger?.debug("Update model for", optionsRef.current.name, currentModelRef.current);
 				setModel(currentModelRef.current);
 			},
 			(msg) => {
@@ -132,6 +135,7 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 		const initModel = toStoredModel(rawInitModel);
 
 		pendingInitCommandsRef.current = initCommands;
+		isDisposedRef.current = false;
 		currentModelRef.current = initModel;
 		initCountRef.current++;
 		setModel(initModel);
@@ -139,16 +143,28 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 	}
 	/* eslint-enable react/refs */
 
-	useReInit(() => {
+	const resetModel = (): void => {
 		currentModelRef.current = null;
 		setModel(null);
-	}, reInitOn);
+	};
+
+	useReInit(resetModel, reInitOn);
+	// When React mounts the component again (e.g. in StrictMode) after the model has been disposed, we initialize it again.
+	useRemount(() => {
+		if (!isDisposedRef.current) {
+			return;
+		}
+
+		resetModel();
+	});
 	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
 	useInitCommands(dispatch, pendingInitCommandsRef, initCountRef.current);
 	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
 	useSubscription(subscription, initializedModel, props, dispatch, initCountRef.current);
 	// biome-ignore-end lint/nursery/useReactCompiler: See above.
-	useDispose(dispose, initializedModel, reInitOn);
+	useDispose(dispose, initializedModel, reInitOn, () => {
+		isDisposedRef.current = true;
+	});
 
 	return [initializedModel, dispatch];
 
@@ -159,9 +175,11 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 			return false;
 		}
 
-		logMessage(name, msg);
+		const options = optionsRef.current;
 
-		const [updatedModel, ...commands] = updateModel(currentModel, msg, propsRef.current);
+		logMessage(options.name, msg);
+
+		const [updatedModel, ...commands] = options.updateModel(currentModel, msg, options.props);
 		const isModified = updatedModel !== currentModel;
 
 		currentModelRef.current = updatedModel;

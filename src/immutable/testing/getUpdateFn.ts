@@ -62,41 +62,28 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 	};
 }
 
+/**
+ * Computes the changed top level properties of the model from the patches of an update.
+ * A removed top level property is included with the value `undefined`.
+ * @param patches The patches of the update.
+ * @param model The updated model.
+ * @returns The changed top level properties.
+ */
 function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>): Partial<TModel> {
-	const diff: Partial<TModel> = {};
+	const diff: Record<PropertyKey, unknown> = {};
+	// biome-ignore lint/nursery/noUnsafeTypeAssertion: The model is always an object.
+	const updatedModel = model as Record<PropertyKey, unknown>;
 
-	for (const patch of patches) {
-		// biome-ignore lint/style/noNonNullAssertion: The path is always defined
-		handleOp(patch.op, patch.path[0]!);
+	for (const { op, path } of patches) {
+		// biome-ignore lint/style/noNonNullAssertion: The patches of an object always have a path.
+		const key = path[0]!;
+
+		// A patch of a nested value changes the top level property, even if the nested value has been removed.
+		diff[key] = op === "remove" && path.length === 1 ? undefined : updatedModel[key];
 	}
 
-	return diff;
-
-	function handleOp(op: Patch["op"], path: string | number): void {
-		/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-		switch (op) {
-			case "replace": {
-				// @ts-expect-error
-				diff[path] = model[path];
-
-				break;
-			}
-			case "add": {
-				// @ts-expect-error
-				diff[path] = model[path];
-
-				break;
-			}
-			case "remove": {
-				// @ts-expect-error
-				// biome-ignore lint/nursery/noDynamicDelete: This for testing purposes.
-				delete diff[path];
-
-				break;
-			}
-		}
-		/* eslint-enable @typescript-eslint/no-unsafe-assignment */
-	}
+	// biome-ignore lint/nursery/noUnsafeTypeAssertion: The diff only contains properties of the model.
+	return diff as Partial<TModel>;
 }
 
 export type { Update } from "../runUpdate";

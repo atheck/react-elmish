@@ -277,7 +277,19 @@ function useInitCommands<TMessage>(
 	}, [initCount]);
 }
 
-function useDispose<TModel>(dispose: DisposeFunction<TModel> | undefined, model: TModel, reInitOn: unknown[] | undefined): void {
+/**
+ * Calls the dispose function with the current model when the component unmounts or the `reInitOn` values change.
+ * @param dispose The dispose function.
+ * @param model The current model.
+ * @param reInitOn The values which trigger a re-initialization.
+ * @param onDisposed Is called after the dispose function has been called.
+ */
+function useDispose<TModel>(
+	dispose: DisposeFunction<TModel> | undefined,
+	model: TModel,
+	reInitOn: unknown[] | undefined,
+	onDisposed: () => void,
+): void {
 	const modelRef = useRef(model);
 
 	useLayoutEffect(() => {
@@ -288,10 +300,34 @@ function useDispose<TModel>(dispose: DisposeFunction<TModel> | undefined, model:
 		if (dispose) {
 			return () => {
 				dispose(modelRef.current);
+				onDisposed();
 			};
 		}
 		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to run dispose when the reInitOn dependencies change or on unmount
 	}, reInitOn ?? []);
+}
+
+/**
+ * Calls `onRemount` when React mounts the component again after it has been unmounted, e.g. in StrictMode.
+ * @param onRemount Is called on every mount except the first one.
+ */
+function useRemount(onRemount: () => void): void {
+	const isFirstMountRef = useRef(true);
+	const onRemountRef = useRef(onRemount);
+
+	useLayoutEffect(() => {
+		onRemountRef.current = onRemount;
+	});
+
+	useEffect(() => {
+		if (isFirstMountRef.current) {
+			isFirstMountRef.current = false;
+
+			return;
+		}
+
+		onRemountRef.current();
+	}, []);
 }
 
 export type { InitCommands };
@@ -308,5 +344,6 @@ export {
 	useIsMounted,
 	useRedux,
 	useReInit,
+	useRemount,
 	useSubscription,
 };

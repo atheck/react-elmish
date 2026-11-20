@@ -1,6 +1,7 @@
 import { cmd } from "../../cmd";
 import type { Nullable } from "../../Types";
 import type { UpdateFunction, UpdateMap } from "../Types";
+import { getConsecutiveUpdateFn } from "./getConsecutiveUpdate";
 import { getUpdateAndExecCmdFn, getUpdateFn } from "./getUpdateFn";
 
 type Message = { name: "foo" } | { name: "bar" } | { name: "foobar" };
@@ -165,6 +166,63 @@ describe("getUpdateFn", () => {
 
 			expect(updatedModel).toStrictEqual({ foobar: ["bar"] });
 			expect(messages).toStrictEqual([{ name: "foo" }]);
+		});
+	});
+
+	describe("removed properties", () => {
+		type RemoveMessage = { name: "removeSelection" } | { name: "removeNested" } | { name: "checkSelection" };
+
+		interface RemoveModel {
+			selection?: string;
+			nested: { value?: string; other: number };
+			hasSelection?: boolean;
+		}
+
+		const removeUpdateMap: UpdateMap<Props, RemoveModel, RemoveMessage> = {
+			removeSelection(_msg, model) {
+				// biome-ignore lint/performance/noDelete: We test the removal of a property.
+				delete model.selection;
+
+				return [cmd.ofMsg({ name: "checkSelection" })];
+			},
+			removeNested(_msg, model) {
+				// biome-ignore lint/performance/noDelete: We test the removal of a property.
+				delete model.nested.value;
+
+				return [];
+			},
+			checkSelection(_msg, model) {
+				model.hasSelection = model.selection !== undefined;
+
+				return [];
+			},
+		};
+
+		const createModel = (): RemoveModel => ({ selection: "selected", nested: { value: "value", other: 1 } });
+
+		it("includes a removed property with the value undefined", () => {
+			const updateFn = getUpdateFn(removeUpdateMap);
+
+			const [updatedModel] = updateFn({ name: "removeSelection" }, createModel(), {});
+
+			expect(updatedModel).toStrictEqual({ selection: undefined });
+			expect(updatedModel).toHaveProperty("selection");
+		});
+
+		it("includes the whole top level property when a nested property is removed", () => {
+			const updateFn = getUpdateFn(removeUpdateMap);
+
+			const [updatedModel] = updateFn({ name: "removeNested" }, createModel(), {});
+
+			expect(updatedModel).toStrictEqual({ nested: { other: 1 } });
+		});
+
+		it("passes the removal of a property to the consecutive updates", async () => {
+			const consecutiveUpdate = getConsecutiveUpdateFn(removeUpdateMap);
+
+			const updatedModel = await consecutiveUpdate({ name: "removeSelection" }, createModel(), {});
+
+			expect(updatedModel).toStrictEqual({ selection: undefined, hasSelection: false });
 		});
 	});
 });
