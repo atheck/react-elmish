@@ -290,7 +290,7 @@ You can call one of the functions of that object:
 | `cmd.ofSuccess` | Same as `ofEither` but ignores the error case. |
 | `cmd.ofError` | Same as `ofEither` but ignores the success case. |
 | `cmd.ofNone` | Same as `ofEither` but ignores both, the success case and the error case. |
-| `cmd.ofSub` | Wraps a subscriber function as a `Cmd`, mainly useful when implementing custom subscriptions. |
+| `cmd.ofSub` | Wraps a subscriber function as a `Cmd`, mainly useful when implementing custom subscriptions. If it dispatches asynchronously, let it return a promise (see [Testing the update handler](#testing-the-update-handler)). |
 
 ### Dispatch a message
 
@@ -968,10 +968,31 @@ const update: UpdateMap<Props, Model, Message> = {
 
     settingsLoaded (_msg, _model, _props, { defer, callBase }) {
         // Use defer and callBase to execute the original handler function:
-        defer(...callBase(LoadSettings.settingsLoaded));
+        defer(...callBase(LoadSettings.update.settingsLoaded));
 
         // Do additional stuff
         return [{ /* ... */ }];
+    }
+};
+```
+
+This works the same way with `react-elmish/immutable`, if the reused module uses it as well. There, `callBase` runs the original handler on the same draft as your handler, so its changes to the model are kept, and it returns the commands of the original handler:
+
+```ts
+import { type UpdateMap } from "react-elmish/immutable";
+// The LoadSettings module also uses the UpdateMap of react-elmish/immutable here
+import * as LoadSettings from "./LoadSettings";
+
+const update: UpdateMap<Props, Model, Message> = {
+    ...LoadSettings.update,
+
+    settingsLoaded (_msg, model, _props, { defer, callBase }) {
+        defer(...callBase(LoadSettings.update.settingsLoaded));
+
+        // Do additional stuff
+        model.settingsLoadedAt = new Date();
+
+        return [];
     }
 };
 ```
@@ -1126,6 +1147,21 @@ const [defer, getDeferred] = createDefer<Model, Message>();
 const callBase = createCallBase(msg, model, props, { defer });
 ```
 
+With `react-elmish/immutable/extend`, `createCallBase` takes the Immer draft the update is working on instead of the model, so create it inside the `produce` recipe:
+
+```ts
+import { produce } from "immer";
+import { createCallBase, createDefer } from "react-elmish/immutable/extend";
+
+const [defer, getDeferred] = createDefer<Message>();
+
+const updatedModel = produce(model, (draft) => {
+    const callBase = createCallBase(msg, draft, props, { defer });
+
+    // Call your update handler with { defer, callBase }
+});
+```
+
 This package also re-exports the `UpdateFunction` and `UpdateMapFunction` types. Most applications will never need this package directly, since `useElmish` and `ElmComponent` already wire this up for you.
 
 ## Testing
@@ -1204,9 +1240,19 @@ it("returns the correct model and cmd", async () => {
 });
 ```
 
-With `execCmd` you can execute all commands in a test scenario. All functions are called and awaited. The function returns all new messages (success or error messages).
+With `execCmd` you can execute all commands in a test scenario. All functions are called and awaited. The function returns all dispatched messages (success or error messages) in order. If a command dispatches several messages, all of them are returned.
 
-For commands created with `cmd.ofSuccess` or `cmd.ofError`, the "ignored" side (the error case for `ofSuccess`, the success case for `ofError`) does not dispatch any message. In that case `execCmd` resolves that command's slot with `null` instead of throwing or rejecting.
+A command is finished when it returns, or, if it returns a promise, when that promise is settled. The commands of `cmd` (`ofEither`, `ofSuccess`, …) handle this for you. If you write your own subscriber with `cmd.ofSub` that dispatches asynchronously, let it return a promise, e.g. by using an async function. Otherwise `execCmd` doesn't wait for its messages:
+
+```ts
+const command = cmd.ofSub<Message>(async (dispatch) => {
+    const data = await loadData();
+
+    dispatch(Msg.dataLoaded(data));
+});
+```
+
+A command that does not dispatch any message resolves its slot with `null`. This is for example the case for the "ignored" side of `cmd.ofSuccess` (the error case) and `cmd.ofError` (the success case).
 
 ### Combine update and execCmd
 
@@ -1325,7 +1371,9 @@ it("dispatches the correct message", async () => {
 });
 ```
 
-This works for function components using the `useElmish` hook and class components.
+This works for function components using the `useElmish` hook and class components, also inside React's `StrictMode`.
+
+The fake model is used by the first component that is initialized while the render function runs (identified by its `name`), usually the component you render. Its child components are initialized with their own `init` function.
 
 ## Redux Dev Tools
 
@@ -1394,6 +1442,12 @@ import { execCmd, getUpdateFn, initAndExecCmd } from "react-elmish/testing";
 ```
 
 This version also introduces an immutable variant of the library built on Immer, available under `react-elmish/immutable` and `react-elmish/immutable/testing`. See [Immutability](#immutability).
+
+### From v10.x to v11.x
+
+- **Immutable `callBase`**: In `react-elmish/immutable`, `callBase` now returns only the commands of the original handler instead of `[model, commands]`. The original handler runs on the same draft as your handler, so its changes to the model are kept. Use it like in the non-immutable variant: `defer(...callBase(handler))`. See [Composition](#with-an-updatemap).
+- **`createCallBase` of `react-elmish/immutable/extend`**: The second parameter is now the Immer draft instead of the model. Create `callBase` inside the `produce` recipe. See [Extending react-elmish](#extending-react-elmish).
+- **`execCmd` in tests**: A command is finished when it returns, or when the promise it returns is settled. A custom subscriber created with `cmd.ofSub` which dispatches later from a callback (e.g. `setTimeout`) without returning a promise is no longer awaited. Let it return a promise, e.g. by using an async function. This also applies to `initAndExecCmd`, `getUpdateAndExecCmdFn`, and `getConsecutiveUpdateFn`. If a command dispatches several messages, all of them are returned now instead of only the first one. See [Testing the update handler](#testing-the-update-handler).
 
 ## VS Code Snippets Extension
 
