@@ -64,7 +64,7 @@ function updateModel<TProps, TModel, TMessage extends Message>(
 ): [TModel, ...Commands<TMessage>] {
 	const [changes, ...commands] = runUpdate(update, msg, { ...model }, props);
 
-	return [hasModelChanged(model, changes) ? { ...model, ...changes } : model, ...commands];
+	return [hasModelChanged(changes) ? { ...model, ...changes } : model, ...commands];
 }
 
 export type { Update };

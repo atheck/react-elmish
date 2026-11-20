@@ -19,8 +19,14 @@ function logMessage(name: string, msg: Message): void {
 	Services.dispatchMiddleware?.(msg);
 }
 
-function hasModelChanged<TModel>(currentModel: TModel, model: Partial<TModel>): boolean {
-	return !Object.is(model, currentModel) && Object.getOwnPropertyNames(model).length > 0;
+/**
+ * Checks if an update returned model changes.
+ * Every returned property counts as a change, even if its value is the same, so a nested value which was modified in place is rendered, too.
+ * @param changes The model changes returned by an update.
+ * @returns Whether there are model changes.
+ */
+function hasModelChanged<TModel>(changes: Partial<TModel>): boolean {
+	return Object.getOwnPropertyNames(changes).length > 0;
 }
 
 function execCmd<TMessage>(dispatch: Dispatch<TMessage>, ...commands: Commands<TMessage>): void {
