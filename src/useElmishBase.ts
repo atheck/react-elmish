@@ -2,7 +2,6 @@ import { useLayoutEffect, useRef, useState } from "react";
 import {
 	execCmd,
 	getDispatch,
-	type InitCommands,
 	logMessage,
 	runInit,
 	useDispose,
@@ -15,7 +14,7 @@ import {
 } from "./Common";
 import { getFakeOptions } from "./fakeOptions";
 import { Services } from "./Init";
-import type { Cmd, Dispatch, DisposeFunction, InitFunction, Message, Nullable, Subscription } from "./Types";
+import type { Commands, Dispatch, DisposeFunction, InitFunction, Message, Nullable, Subscription } from "./Types";
 
 /**
  * The options of the `useElmish` hook, which are the same for the mutable and the immutable variant.
@@ -57,7 +56,7 @@ interface ModelHandling<TProps, TModel, TStoredModel, TMessage extends Message> 
 	 * Runs the update for a message.
 	 * @returns The updated model (the same reference, if nothing has changed) and the commands.
 	 */
-	updateModel: (model: TStoredModel, msg: TMessage, props: TProps) => [TStoredModel, ...(Cmd<TMessage> | undefined)[]];
+	updateModel: (model: TStoredModel, msg: TMessage, props: TProps) => [TStoredModel, ...Commands<TMessage>];
 }
 
 interface UseElmishBaseParams<TProps, TModel, TStoredModel, TMessage extends Message>
@@ -98,7 +97,7 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 	);
 	const isMountedRef = useIsMounted();
 	const initCountRef = useRef(0);
-	const pendingInitCommandsRef = useRef<Nullable<InitCommands<TMessage>>>(null);
+	const pendingInitCommandsRef = useRef<Nullable<Commands<TMessage>>>(null);
 	const isDisposedRef = useRef(false);
 
 	useLayoutEffect(() => {

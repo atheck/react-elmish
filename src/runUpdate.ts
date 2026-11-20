@@ -1,7 +1,7 @@
 import { hasModelChanged } from "./Common";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
-import type { Cmd, Message, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
+import type { Commands, Message, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
 
 /**
  * An UpdateMap or an update function.
@@ -61,7 +61,7 @@ function updateModel<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: TModel,
 	props: TProps,
-): [TModel, ...(Cmd<TMessage> | undefined)[]] {
+): [TModel, ...Commands<TMessage>] {
 	const [changes, ...commands] = runUpdate(update, msg, { ...model }, props);
 
 	return [hasModelChanged(model, changes) ? { ...model, ...changes } : model, ...commands];

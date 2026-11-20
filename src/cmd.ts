@@ -51,27 +51,15 @@ const cmd = {
 
 				return Promise.resolve(taskResult)
 					.then((result) => {
-						const msg = ofSuccess(result);
-
-						if (!isNoop(msg)) {
-							dispatch(msg);
-						}
+						dispatchUnlessNoop(dispatch, ofSuccess(result));
 					})
 					.catch((ex: unknown) => {
 						// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
-						const msg = ofError(ex as Error);
-
-						if (!isNoop(msg)) {
-							dispatch(msg);
-						}
+						dispatchUnlessNoop(dispatch, ofError(ex as Error));
 					});
 			} catch (ex: unknown) {
 				// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
-				const msg = ofError(ex as Error);
-
-				if (!isNoop(msg)) {
-					dispatch(msg);
-				}
+				dispatchUnlessNoop(dispatch, ofError(ex as Error));
 			}
 		};
 
@@ -98,11 +86,7 @@ const cmd = {
 
 				return Promise.resolve(taskResult)
 					.then((result) => {
-						const msg = ofSuccess(result);
-
-						if (!isNoop(msg)) {
-							dispatch(msg);
-						}
+						dispatchUnlessNoop(dispatch, ofSuccess(result));
 					})
 					.catch(() => fallback());
 			} catch {
@@ -132,19 +116,11 @@ const cmd = {
 					.then(() => fallback?.())
 					.catch((ex: unknown) => {
 						// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
-						const msg = ofError(ex as Error);
-
-						if (!isNoop(msg)) {
-							dispatch(msg);
-						}
+						dispatchUnlessNoop(dispatch, ofError(ex as Error));
 					});
 			} catch (ex: unknown) {
 				// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
-				const msg = ofError(ex as Error);
-
-				if (!isNoop(msg)) {
-					dispatch(msg);
-				}
+				dispatchUnlessNoop(dispatch, ofError(ex as Error));
 			}
 		};
 
@@ -175,6 +151,12 @@ const cmd = {
 		return [bind];
 	},
 };
+
+function dispatchUnlessNoop<TMessage extends Message>(dispatch: Dispatch<TMessage>, msg: TMessage | NoopMessage): void {
+	if (!isNoop(msg)) {
+		dispatch(msg);
+	}
+}
 
 function defaultFallbackHandler(): void {
 	// blank

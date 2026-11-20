@@ -1,6 +1,7 @@
-import { castImmutable, freeze, type Immutable } from "immer";
+import type { Immutable } from "immer";
 import type { Message } from "../../Types";
 import type { UpdateFunctionOptions } from "../Types";
+import { getCreateUpdateArgs } from "./getCreateUpdateArgs";
 
 type UpdateArgsFactory<TProps, TModel, TMessage extends Message> = (
 	msg: TMessage,
@@ -24,28 +25,7 @@ function createUpdateArgsFactory<TProps, TModel, TMessage extends Message>(
 	initModel: () => TModel,
 	initProps: () => TProps,
 ): UpdateArgsFactory<TProps, TModel, TMessage> {
-	return function createUpdateArgs(
-		msg: TMessage,
-		modelTemplate?: Partial<TModel>,
-		propsTemplate?: Partial<TProps>,
-		optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-	): [TMessage, Immutable<TModel>, TProps, Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>?] {
-		const model = castImmutable(
-			freeze(
-				{
-					...initModel(),
-					...modelTemplate,
-				},
-				true,
-			),
-		);
-		const props = {
-			...initProps(),
-			...propsTemplate,
-		};
-
-		return [msg, model, props, optionsTemplate];
-	};
+	return getCreateUpdateArgs<TProps, TModel, TMessage>(() => [initModel()], initProps);
 }
 
 export type { UpdateArgsFactory };

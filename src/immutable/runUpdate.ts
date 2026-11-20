@@ -1,5 +1,5 @@
 import { type Draft, type Immutable, type PatchListener, produce } from "immer";
-import type { Cmd, Message } from "../Types";
+import type { Commands, Message } from "../Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import type { UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
@@ -44,7 +44,7 @@ function runUpdate<TProps, TModel, TMessage extends Message>(
 	props: TProps,
 	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
 	patchListener?: PatchListener,
-): [Immutable<TModel>, ...(Cmd<TMessage> | undefined)[]] {
+): [Immutable<TModel>, ...Commands<TMessage>] {
 	const [defer, getDeferred] = createDefer<TMessage>();
 	const commands: UpdateReturnType<TMessage> = [];
 

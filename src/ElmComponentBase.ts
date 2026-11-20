@@ -2,7 +2,7 @@ import React from "react";
 import { execCmd, getDispatch, logMessage } from "./Common";
 import { getFakeOptions } from "./fakeOptions";
 import { Services } from "./Init";
-import type { Cmd, Dispatch, DisposeFunction, InitFunction, Message, Nullable } from "./Types";
+import type { Commands, Dispatch, DisposeFunction, InitFunction, Message, Nullable } from "./Types";
 
 /**
  * Runs the update for a message.
@@ -13,7 +13,7 @@ type UpdateModelFunction<TProps, TStoredModel, TMessage extends Message, TUpdate
 	msg: TMessage,
 	model: TStoredModel,
 	props: TProps,
-) => [TStoredModel, ...(Cmd<TMessage> | undefined)[]];
+) => [TStoredModel, ...Commands<TMessage>];
 
 /**
  * The implementation of `ElmComponent`, shared by the mutable and the immutable variant.
@@ -34,7 +34,7 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 
 	readonly #disposeHandler: DisposeFunction<TStoredModel> | undefined;
 	readonly #initialize: () => void;
-	#initCommands: Nullable<(Cmd<TMessage> | undefined)[]> = null;
+	#initCommands: Nullable<Commands<TMessage>> = null;
 	#isMounted = false;
 	#isDisposed = false;
 	// Assigned by #initialize, which is called in the constructor.

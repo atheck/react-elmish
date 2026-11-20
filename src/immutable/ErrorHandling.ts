@@ -1,5 +1,4 @@
-import type { ErrorMessage } from "../ErrorHandling";
-import { Services } from "../Init";
+import { type ErrorMessage, reportError } from "../ErrorHandling";
 import type { UpdateReturnType } from "./Types";
 
 /**
@@ -31,10 +30,7 @@ function errorHandler<TMessage>(): {
  * @param {Error} error The error.
  */
 function handleError<TMessage>(error: Error): UpdateReturnType<TMessage> {
-	if (Services.errorMiddleware) {
-		Services.errorMiddleware(error);
-	}
-	Services.logger?.error(error);
+	reportError(error);
 
 	return [];
 }

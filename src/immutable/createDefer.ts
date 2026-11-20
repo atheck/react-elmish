@@ -1,8 +1,8 @@
-import type { Cmd, Message } from "../Types";
+import type { Commands, Message } from "../Types";
 import type { DeferFunction } from "./Types";
 
-function createDefer<TMessage extends Message>(): [DeferFunction<TMessage>, () => (Cmd<TMessage> | undefined)[]] {
-	const deferredCommands: (Cmd<TMessage> | undefined)[] = [];
+function createDefer<TMessage extends Message>(): [DeferFunction<TMessage>, () => Commands<TMessage>] {
+	const deferredCommands: Commands<TMessage> = [];
 
 	const defer: DeferFunction<TMessage> = (...tempDeferredCommands) => {
 		deferredCommands.push(...tempDeferredCommands);

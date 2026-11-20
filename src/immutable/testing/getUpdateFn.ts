@@ -1,5 +1,5 @@
 import { enablePatches, type Immutable, type Patch } from "immer";
-import type { Cmd, Message, Nullable } from "../../Types";
+import type { Commands, Message, Nullable } from "../../Types";
 import { execCmd } from "../../testing/execCmd";
 import { runUpdate, type Update } from "../runUpdate";
 import type { UpdateFunctionOptions } from "../Types";
@@ -11,7 +11,7 @@ type UpdateFn<TProps, TModel, TMessage extends Message> = (
 	model: Immutable<TModel>,
 	props: TProps,
 	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-) => [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]];
+) => [Partial<TModel>, ...Commands<TMessage>];
 
 type UpdateAndExecCmdFn<TProps, TModel, TMessage extends Message> = (
 	...args: Parameters<UpdateFn<TProps, TModel, TMessage>>

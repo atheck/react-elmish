@@ -1,6 +1,6 @@
 import type { Draft } from "immer";
 import type { Message } from "../Types";
-import type { CallBaseFunction, UpdateFunctionOptions } from "./Types";
+import type { BaseHandler, CallBaseFunction, DeferFunction, UpdateFunctionOptions, UpdateReturnType } from "./Types";
 
 /**
  * Creates the `callBase` function for an update handler.
@@ -17,9 +17,14 @@ function createCallBase<TProps, TModel, TMessage extends Message>(
 	props: TProps,
 	options: Omit<UpdateFunctionOptions<TProps, TModel, TMessage>, "callBase">,
 ): CallBaseFunction<TModel, TProps, TMessage> {
-	const callBase: CallBaseFunction<TModel, TProps, TMessage> = (fn) =>
-		// biome-ignore lint/nursery/noUnsafeTypeAssertion: The options are typed as never in CallBaseFunction, so the base handler may declare its own options type.
-		fn(msg, draft, props, { ...options, callBase } as never);
+	const callBase = <TBaseMessage extends Message>(
+		fn: BaseHandler<TModel, TProps, TMessage, TBaseMessage>,
+	): UpdateReturnType<TBaseMessage> => {
+		// biome-ignore lint/nursery/noUnsafeTypeAssertion: The base handler defers its own messages, which must be part of the messages of the calling component.
+		const defer = options.defer as unknown as DeferFunction<TBaseMessage>;
+
+		return fn(msg, draft, props, { ...options, defer, callBase });
+	};
 
 	return callBase;
 }

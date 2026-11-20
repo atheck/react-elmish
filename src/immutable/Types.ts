@@ -1,19 +1,29 @@
 import type { Draft, Immutable } from "immer";
-import type { Cmd, Message, SubscriptionResult } from "../Types";
+import type { Commands, Message, SubscriptionResult } from "../Types";
 
 /**
  * Type for the return value of the `update` function.
  */
-type UpdateReturnType<TMessage> = (Cmd<TMessage> | undefined)[];
+type UpdateReturnType<TMessage> = Commands<TMessage>;
 
-type DeferFunction<TMessage> = (...commands: (Cmd<TMessage> | undefined)[]) => void;
+type DeferFunction<TMessage> = (...commands: Commands<TMessage>) => void;
 /**
  * Calls the handler of a base module with the current message, draft, props, and options.
  * The returned commands keep the message type of the base handler, so they can only be used
  * (e.g. passed to `defer`) if the base messages are part of the messages of the calling component.
  */
 type CallBaseFunction<TModel, TProps, TMessage extends Message> = <TBaseMessage extends Message>(
-	fn: (msg: TMessage, model: Draft<TModel>, props: TProps, options: never) => UpdateReturnType<TBaseMessage>,
+	fn: BaseHandler<TModel, TProps, TMessage, TBaseMessage>,
+) => UpdateReturnType<TBaseMessage>;
+
+/**
+ * A handler of a base module which can be called with `callBase`.
+ */
+type BaseHandler<TModel, TProps, TMessage extends Message, TBaseMessage extends Message> = (
+	msg: TMessage,
+	model: Draft<TModel>,
+	props: TProps,
+	options: UpdateFunctionOptions<TProps, TModel, TBaseMessage, TMessage>,
 ) => UpdateReturnType<TBaseMessage>;
 
 type UpdateMapFunction<TProps, TModel, TMessage extends Message> = (
@@ -54,6 +64,7 @@ type Subscription<TProps, TModel, TMessage extends Message> = (
 ) => SubscriptionResult<TMessage>;
 
 export type {
+	BaseHandler,
 	CallBaseFunction,
 	DeferFunction,
 	Subscription,

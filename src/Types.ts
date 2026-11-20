@@ -18,6 +18,11 @@ type Sub<TMsg> = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => void;
 type Cmd<TMessage> = Sub<TMessage>[];
 
 /**
+ * A list of commands. `undefined` entries are allowed and ignored, so commands can be added conditionally.
+ */
+type Commands<TMessage> = (Cmd<TMessage> | undefined)[];
+
+/**
  * Creates a MsgSource type.
  */
 interface MsgSource<TSource extends string> {
@@ -27,23 +32,33 @@ interface MsgSource<TSource extends string> {
 /**
  * The return type of the `init` function.
  */
-type InitResult<TModel, TMessage> = [TModel, ...(Cmd<TMessage> | undefined)[]];
+type InitResult<TModel, TMessage> = [TModel, ...Commands<TMessage>];
 
 type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TModel, TMessage>;
 
 /**
  * Type for the return value of the `update` function.
  */
-type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]];
+type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...Commands<TMessage>];
 
-type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: (Cmd<TMessage> | undefined)[]) => void;
+type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: Commands<TMessage>) => void;
 /**
  * Calls the handler of a base module with the current message, model, props, and options.
  * The returned commands keep the message type of the base handler, so they can only be used
  * (e.g. passed to `defer`) if the base messages are part of the messages of the calling component.
  */
 type CallBaseFunction<TModel, TProps, TMessage extends Message> = <TBaseMessage extends Message>(
-	fn: (msg: TMessage, model: TModel, props: TProps, options: never) => UpdateReturnType<TModel, TBaseMessage>,
+	fn: BaseHandler<TModel, TProps, TMessage, TBaseMessage>,
+) => UpdateReturnType<TModel, TBaseMessage>;
+
+/**
+ * A handler of a base module which can be called with `callBase`.
+ */
+type BaseHandler<TModel, TProps, TMessage extends Message, TBaseMessage extends Message> = (
+	msg: TMessage,
+	model: TModel,
+	props: TProps,
+	options: UpdateFunctionOptions<TProps, TModel, TBaseMessage, TMessage>,
 ) => UpdateReturnType<TModel, TBaseMessage>;
 
 type UpdateMapFunction<TProps, TModel, TMessage extends Message> = (
@@ -94,8 +109,10 @@ function isSubscriptionFunctionArray(subscription: SubscriptionResult<unknown>):
 }
 
 export type {
+	BaseHandler,
 	CallBaseFunction,
 	Cmd,
+	Commands,
 	DeferFunction,
 	Dispatch,
 	DisposeFunction,

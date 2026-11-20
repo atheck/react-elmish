@@ -1,4 +1,4 @@
-import type { Cmd, Nullable, Sub } from "../Types";
+import type { Commands, Nullable, Sub } from "../Types";
 import { isPromiseLike } from "./isPromiseLike";
 
 /**
@@ -7,7 +7,7 @@ import { isPromiseLike } from "./isPromiseLike";
  * @param cmd The command to process.
  * @returns The array of dispatched messages in order, with `null` for every command which did not dispatch a message.
  */
-async function execCmd<TMessage>(...commands: (Cmd<TMessage> | undefined)[]): Promise<Nullable<TMessage>[]> {
+async function execCmd<TMessage>(...commands: Commands<TMessage>): Promise<Nullable<TMessage>[]> {
 	const subs = commands.filter((cmd) => cmd !== undefined).flat();
 	const results = await Promise.all(subs.map(execSub));
 

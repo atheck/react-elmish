@@ -2,7 +2,7 @@ import { type RefObject, useEffect, useLayoutEffect, useRef } from "react";
 import { Services } from "./Init";
 import { isReduxDevToolsEnabled, type ReduxDevTools } from "./reduxDevTools";
 import {
-	type Cmd,
+	type Commands,
 	type Dispatch,
 	type DisposeFunction,
 	type InitFunction,
@@ -11,8 +11,6 @@ import {
 	type Nullable,
 	type Subscription,
 } from "./Types";
-
-type InitCommands<TMessage> = (Cmd<TMessage> | undefined)[];
 
 function logMessage(name: string, msg: Message): void {
 	Services.logger?.info("Message from", name, msg.name);
@@ -25,7 +23,7 @@ function hasModelChanged<TModel>(currentModel: TModel, model: Partial<TModel>): 
 	return !Object.is(model, currentModel) && Object.getOwnPropertyNames(model).length > 0;
 }
 
-function execCmd<TMessage>(dispatch: Dispatch<TMessage>, ...commands: (Cmd<TMessage> | undefined)[]): void {
+function execCmd<TMessage>(dispatch: Dispatch<TMessage>, ...commands: Commands<TMessage>): void {
 	for (const call of commands.flat()) {
 		if (call) {
 			call(dispatch);
@@ -244,7 +242,7 @@ function runInit<TModel, TProps, TMessage extends Message>(
 	props: TProps,
 	getDevTools: () => Nullable<ReduxDevTools>,
 	fakeModel: TModel | undefined,
-): [TModel, InitCommands<TMessage>] {
+): [TModel, Commands<TMessage>] {
 	const [initModel, ...initCommands] = fakeModel ? [fakeModel] : initFn(props);
 
 	getDevTools()?.init(initModel);
@@ -261,7 +259,7 @@ function runInit<TModel, TProps, TMessage extends Message>(
  */
 function useInitCommands<TMessage>(
 	dispatch: Dispatch<TMessage>,
-	pendingInitCommandsRef: RefObject<Nullable<InitCommands<TMessage>>>,
+	pendingInitCommandsRef: RefObject<Nullable<Commands<TMessage>>>,
 	initCount: number,
 ): void {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to execute the commands after a (re-)initialization
@@ -329,8 +327,6 @@ function useRemount(onRemount: () => void): void {
 		onRemountRef.current();
 	}, []);
 }
-
-export type { InitCommands };
 
 export {
 	execCmd,

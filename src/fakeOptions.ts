@@ -3,7 +3,6 @@ import type { Dispatch, Message, Nullable } from "./Types";
 /**
  * Options for the `renderWithModel` function.
  * @interface RenderWithModelOptions
- * @template TModel The type of the model.
  * @template TMessage The type of the messages discriminated union.
  */
 interface RenderWithModelOptions<TMessage extends Message> {
@@ -15,8 +14,8 @@ interface RenderWithModelOptions<TMessage extends Message> {
 }
 
 /**
- * Options for the `renderWithModel` function.
- * @interface RenderWithModelOptions
+ * The options set by `renderWithModel`, including the model.
+ * @interface RenderWithModelConfig
  * @template TModel The type of the model.
  * @template TMessage The type of the messages discriminated union.
  */
