@@ -1,19 +1,8 @@
 import React from "react";
-import { bindToInit, execCmd, getDispatch, logMessage } from "./Common";
+import { bindToInit, execCmd, getDispatch, logMessage, type ModelHandling } from "./Common";
 import { getFakeOptions } from "./fakeOptions";
 import { Services } from "./Init";
 import type { Commands, Dispatch, DisposeFunction, InitFunction, Message, Nullable } from "./Types";
-
-/**
- * Runs the update for a message.
- * @returns The updated model (the same reference, if nothing has changed) and the commands.
- */
-type UpdateModelFunction<TProps, TStoredModel, TMessage extends Message, TUpdate> = (
-	update: TUpdate,
-	msg: TMessage,
-	model: TStoredModel,
-	props: TProps,
-) => [TStoredModel, ...Commands<TMessage>];
 
 /**
  * The implementation of `ElmComponent`, shared by the mutable and the immutable variant.
@@ -47,8 +36,7 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 		props: TProps,
 		init: InitFunction<TProps, TModel, TMessage>,
 		name: string,
-		toStoredModel: (model: TModel) => TStoredModel,
-		updateModel: UpdateModelFunction<TProps, TStoredModel, TMessage, TUpdate>,
+		{ toStoredModel, updateModel }: ModelHandling<TProps, TModel, TStoredModel, TMessage, TUpdate>,
 		disposeHandler?: DisposeFunction<TStoredModel>,
 	) {
 		super(props);

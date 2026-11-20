@@ -218,7 +218,7 @@ describe("getUpdateFn", () => {
 				return [];
 			},
 			checkSelection(_msg, model) {
-				model.hasSelection = model.selection !== undefined;
+				model.hasSelection = "selection" in model;
 
 				return [];
 			},

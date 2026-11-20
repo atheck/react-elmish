@@ -1,6 +1,7 @@
 import type { Draft } from "immer";
+import { createVariantCallBase } from "../createCallBase";
 import type { Message } from "../Types";
-import type { BaseHandler, CallBaseFunction, DeferFunction, UpdateFunctionOptions, UpdateReturnType } from "./Types";
+import type { CallBaseFunction, UpdateFunctionOptions } from "./Types";
 
 /**
  * Creates the `callBase` function for an update handler.
@@ -17,16 +18,7 @@ function createCallBase<TProps, TModel, TMessage extends Message>(
 	props: TProps,
 	options: Omit<UpdateFunctionOptions<TProps, TModel, TMessage>, "callBase">,
 ): CallBaseFunction<TModel, TProps, TMessage> {
-	const callBase = <TBaseMessage extends Message>(
-		fn: BaseHandler<TModel, TProps, TMessage, TBaseMessage>,
-	): UpdateReturnType<TBaseMessage> => {
-		// biome-ignore lint/nursery/noUnsafeTypeAssertion: The base handler defers its own messages, which must be part of the messages of the calling component.
-		const defer = options.defer as unknown as DeferFunction<TBaseMessage>;
-
-		return fn(msg, draft, props, { ...options, defer, callBase });
-	};
-
-	return callBase;
+	return createVariantCallBase<"immutable", TProps, TModel, TMessage>(msg, draft, props, options);
 }
 
 export { createCallBase };

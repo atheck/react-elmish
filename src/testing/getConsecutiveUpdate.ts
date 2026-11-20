@@ -1,42 +1,40 @@
-import type { Update } from "../runUpdate";
+import { runUpdate, type Update } from "../runUpdate";
 import type { Message, Nullable, UpdateFunctionOptions } from "../Types";
-import { getUpdateAndExecCmdFn } from "./getUpdateFn";
+import { execCmd } from "./execCmd";
 
-type ConsecutiveUpdateFn<TProps, TModel, TStoredModel, TMessage extends Message, TOptions> = (
+/**
+ * Runs a single update and executes its commands.
+ * @returns The updated model, which is passed to the next update, the model changes, and the dispatched messages.
+ */
+type UpdateStep<TModel, TStoredModel, TMessage extends Message, TArgs extends unknown[]> = (
 	msg: TMessage,
 	model: TStoredModel,
-	props: TProps,
-	optionsTemplate?: TOptions,
-) => Promise<Partial<TModel>>;
+	...args: TArgs
+) => Promise<[TStoredModel, Partial<TModel>, Nullable<TMessage>[]]>;
 
 /**
  * Creates a function which runs an update and the updates of all consecutive messages.
  * Shared by the mutable and the immutable variant.
- * @param updateAndExecCmdFn Runs a single update and executes its commands.
- * @returns The created update function.
+ * @param updateStep Runs a single update and executes its commands.
+ * @returns The created update function, which returns all model changes.
  */
-function createConsecutiveUpdateFn<TProps, TModel, TStoredModel, TMessage extends Message, TOptions>(
-	updateAndExecCmdFn: (
-		msg: TMessage,
-		model: TStoredModel,
-		props: TProps,
-		optionsTemplate?: TOptions,
-	) => Promise<[Partial<TModel>, Nullable<TMessage>[]]>,
-): ConsecutiveUpdateFn<TProps, TModel, TStoredModel, TMessage, TOptions> {
-	return async function consecutiveUpdateFn(msg, model, props, optionsTemplate): Promise<Partial<TModel>> {
+function createConsecutiveUpdateFn<TModel, TStoredModel, TMessage extends Message, TArgs extends unknown[]>(
+	updateStep: UpdateStep<TModel, TStoredModel, TMessage, TArgs>,
+): (msg: TMessage, model: TStoredModel, ...args: TArgs) => Promise<Partial<TModel>> {
+	return async function consecutiveUpdateFn(msg, model, ...args): Promise<Partial<TModel>> {
 		let messages: TMessage[] = [msg];
 		let currentModel = model;
-		let totalUpdatedModel: Partial<TModel> = {};
+		let totalChanges: Partial<TModel> = {};
 
 		while (messages.length > 0) {
 			const currentMessages: Nullable<TMessage>[] = [];
 
 			for (const nextMsg of messages) {
 				// biome-ignore lint/performance/noAwaitInLoops: We need to await each update sequentially
-				const [updatedModel, newMessages] = await updateAndExecCmdFn(nextMsg, currentModel, props, optionsTemplate);
+				const [updatedModel, changes, newMessages] = await updateStep(nextMsg, currentModel, ...args);
 
-				currentModel = { ...currentModel, ...updatedModel };
-				totalUpdatedModel = { ...totalUpdatedModel, ...updatedModel };
+				currentModel = updatedModel;
+				totalChanges = { ...totalChanges, ...changes };
 
 				currentMessages.push(...newMessages);
 			}
@@ -44,7 +42,7 @@ function createConsecutiveUpdateFn<TProps, TModel, TStoredModel, TMessage extend
 			messages = currentMessages.filter((message) => message != null);
 		}
 
-		return totalUpdatedModel;
+		return totalChanges;
 	};
 }
 
@@ -60,8 +58,17 @@ function createConsecutiveUpdateFn<TProps, TModel, TStoredModel, TMessage extend
  */
 function getConsecutiveUpdateFn<TProps, TModel, TMessage extends Message>(
 	update: Update<TProps, TModel, TMessage>,
-): ConsecutiveUpdateFn<TProps, TModel, TModel, TMessage, Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>> {
-	return createConsecutiveUpdateFn(getUpdateAndExecCmdFn(update));
+): (
+	msg: TMessage,
+	model: TModel,
+	props: TProps,
+	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
+) => Promise<Partial<TModel>> {
+	return createConsecutiveUpdateFn(async (msg: TMessage, model: TModel, props: TProps, optionsTemplate?) => {
+		const [changes, ...commands] = runUpdate(update, msg, model, props, optionsTemplate);
+
+		return [{ ...model, ...changes }, changes, await execCmd(...commands)];
+	});
 }
 
 export { createConsecutiveUpdateFn, getConsecutiveUpdateFn };

@@ -1,5 +1,5 @@
 import { ElmComponentBase } from "./ElmComponentBase";
-import { updateModel } from "./runUpdate";
+import { modelHandling } from "./runUpdate";
 import type { DisposeFunction, InitFunction, Message, UpdateFunction } from "./Types";
 
 /**
@@ -33,7 +33,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends El
 		name: string,
 		disposeHandler?: DisposeFunction<TModel>,
 	) {
-		super(props, init, name, (model) => model, updateModel, disposeHandler);
+		super(props, init, name, modelHandling, disposeHandler);
 	}
 
 	/**

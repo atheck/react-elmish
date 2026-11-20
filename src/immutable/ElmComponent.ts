@@ -1,7 +1,7 @@
-import { castImmutable, freeze, type Immutable } from "immer";
+import type { Immutable } from "immer";
 import { ElmComponentBase } from "../ElmComponentBase";
 import type { DisposeFunction, InitFunction, Message } from "../Types";
-import { runUpdate } from "./runUpdate";
+import { modelHandling } from "./runUpdate";
 import type { UpdateFunction } from "./Types";
 
 /**
@@ -35,7 +35,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends El
 		name: string,
 		disposeHandler?: DisposeFunction<Immutable<TModel>>,
 	) {
-		super(props, init, name, (model) => castImmutable(freeze(model, true)), runUpdate, disposeHandler);
+		super(props, init, name, modelHandling, disposeHandler);
 	}
 
 	/**

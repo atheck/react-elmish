@@ -1,4 +1,4 @@
-import { updateModel } from "./runUpdate";
+import { modelHandling } from "./runUpdate";
 import type { Dispatch, DisposeFunction, Message, Subscription, UpdateFunction, UpdateMap } from "./Types";
 import { type UseElmishBaseOptions, useElmishBase } from "./useElmishBase";
 
@@ -38,11 +38,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	update,
 	...options
 }: UseElmishOptions<TProps, TModel, TMessage>): [TModel, Dispatch<TMessage>] {
-	return useElmishBase({
-		...options,
-		toStoredModel: (model: TModel) => model,
-		updateModel: (model, msg, props) => updateModel(update, msg, model, props),
-	});
+	return useElmishBase<TProps, TModel, TModel, TMessage, typeof update>({ ...options, update, modelHandling });
 }
 
 export type { UseElmishOptions };

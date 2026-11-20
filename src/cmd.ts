@@ -99,7 +99,7 @@ const cmd = {
 	/**
 	 * Creates a command out of a function and ignores the success case. This can also be an async function.
 	 * @param task The function to call.
-	 * @param ofError Creates the message to dispatch when the function runs successfully or, for an async function, the promise is rejected.
+	 * @param ofError Creates the message to dispatch when the function throws an error or, for an async function, the promise is rejected.
 	 * @param args The parameters of the task.
 	 */
 	ofError<TErrorMessage extends Message, TArgs extends unknown[]>(
@@ -129,10 +129,7 @@ const cmd = {
 	 * @param task The function to call.
 	 * @param args The parameters of the task.
 	 */
-	ofNone<TErrorMessage extends Message, TArgs extends unknown[]>(
-		task: (...args: TArgs) => unknown,
-		...args: TArgs
-	): Cmd<TErrorMessage> {
+	ofNone<TMessage extends Message, TArgs extends unknown[]>(task: (...args: TArgs) => unknown, ...args: TArgs): Cmd<TMessage> {
 		const bind = (): Promise<unknown> | undefined => {
 			try {
 				const taskResult = task(...args);

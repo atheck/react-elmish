@@ -31,13 +31,28 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
 	update: Update<TProps, TModel, TMessage>,
 ): UpdateFn<TProps, TModel, TMessage> {
 	return function updateFn(msg, model, props, optionsTemplate) {
-		const recordedPatches: Patch[] = [];
-		const [updatedModel, ...commands] = runUpdate(update, msg, model, props, optionsTemplate, (patches) => {
-			recordedPatches.push(...patches);
-		});
+		const [, diff, ...commands] = runUpdateWithDiff(update, msg, model, props, optionsTemplate);
 
-		return [getDiffFromPatches(recordedPatches, updatedModel), ...commands];
+		return [diff, ...commands];
 	};
+}
+
+/**
+ * Runs the update for a message and computes the changed top level properties.
+ * @returns The updated model, the changed top level properties, and the commands.
+ */
+function runUpdateWithDiff<TProps, TModel, TMessage extends Message>(
+	...[update, msg, model, props, optionsTemplate]: [
+		Update<TProps, TModel, TMessage>,
+		...Parameters<UpdateFn<TProps, TModel, TMessage>>,
+	]
+): [Immutable<TModel>, Partial<TModel>, ...Commands<TMessage>] {
+	const recordedPatches: Patch[] = [];
+	const [updatedModel, ...commands] = runUpdate(update, msg, model, props, optionsTemplate, (patches) => {
+		recordedPatches.push(...patches);
+	});
+
+	return [updatedModel, getDiffFromPatches(recordedPatches, updatedModel), ...commands];
 }
 
 /**
@@ -88,4 +103,4 @@ function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>):
 
 export type { Update } from "../runUpdate";
 
-export { getUpdateAndExecCmdFn, getUpdateFn };
+export { getUpdateAndExecCmdFn, getUpdateFn, runUpdateWithDiff };

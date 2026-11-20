@@ -58,4 +58,36 @@ describe("getUpdateFn", () => {
 		expect(model).toStrictEqual({ foo: "base" });
 		expect(commands).toStrictEqual([]);
 	});
+
+	it("uses the created defer and callBase functions, if the options template sets them to undefined", () => {
+		// arrange
+		const updateFn = getUpdateFn(derivedUpdateMap);
+
+		// act
+		const [model, ...commands] = updateFn({ name: "foo" }, initialModel, {}, { defer: undefined, callBase: undefined });
+
+		// assert
+		expect(model).toStrictEqual({ foo: "base", bar: "deferred by base" });
+		expect(commands).toHaveLength(1);
+	});
+
+	it("does not modify the passed model, like at runtime", () => {
+		// arrange
+		const model: Model = { foo: "", bar: "" };
+		const updateFn = getUpdateFn<Props, Model, Message>({
+			...baseUpdateMap,
+			bar(_msg, currentModel) {
+				currentModel.bar = "modified";
+
+				return [{}];
+			},
+		});
+
+		// act
+		const [updatedModel] = updateFn({ name: "bar" }, model, {});
+
+		// assert
+		expect(updatedModel).toStrictEqual({});
+		expect(model).toStrictEqual({ foo: "", bar: "" });
+	});
 });

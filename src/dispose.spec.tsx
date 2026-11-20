@@ -1,13 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { type JSX, StrictMode } from "react";
 import { cmd } from "./cmd";
 import { ElmComponent } from "./ElmComponent";
 import { useElmish as useImmutableElmish } from "./immutable";
-import type { InitResult } from "./Types";
+import type { Dispatch, InitResult } from "./Types";
 import { useElmish } from "./useElmish";
 
 interface Message {
-	name: "opened";
+	name: "changeValue";
 }
 
 const disposePattern = /^dispose model/u;
@@ -19,30 +19,39 @@ interface Model {
 interface Props {
 	init: () => InitResult<Model, Message>;
 	dispose: (model: Model) => void;
+	onDispatch?: (dispatch: Dispatch<Message>) => void;
 }
 
 function MutableComponent(props: Props): JSX.Element {
-	const { init, dispose } = props;
-	const [{ value }] = useElmish<Props, Model, Message>({
+	const { init, dispose, onDispatch } = props;
+	const [{ value }, dispatch] = useElmish<Props, Model, Message>({
 		name: "MutableComponent",
 		props,
 		init,
-		update: () => [{}],
+		update: () => [{ value: "changed" }],
 		dispose,
 	});
+
+	onDispatch?.(dispatch);
 
 	return <p>{value}</p>;
 }
 
 function ImmutableComponent(props: Props): JSX.Element {
-	const { init, dispose } = props;
-	const [{ value }] = useImmutableElmish<Props, Model, Message>({
+	const { init, dispose, onDispatch } = props;
+	const [{ value }, dispatch] = useImmutableElmish<Props, Model, Message>({
 		name: "ImmutableComponent",
 		props,
 		init,
-		update: () => [],
+		update(model) {
+			model.value = "changed";
+
+			return [];
+		},
 		dispose,
 	});
+
+	onDispatch?.(dispatch);
 
 	return <p>{value}</p>;
 }
@@ -53,10 +62,12 @@ class ClassComponent extends ElmComponent<Model, Message, Props> {
 	}
 
 	// biome-ignore lint/style/useThisInClassMethods: Test only.
-	public update = (): [Partial<Model>] => [{}];
+	public update = (): [Partial<Model>] => [{ value: "changed" }];
 
 	public override render(): JSX.Element {
 		const { value } = this.model;
+
+		this.props.onDispatch?.(this.dispatch);
 
 		return <p>{value}</p>;
 	}
@@ -104,6 +115,29 @@ describe.each([
 
 		// assert
 		expect(events).toStrictEqual(["init", "open", "dispose model 1"]);
+	});
+
+	it("disposes the current model, if the component unmounts before the last update has been rendered", () => {
+		// arrange
+		const [props, events] = createProps();
+		const dispatchRef: { current?: Dispatch<Message> } = {};
+		const api = render(
+			<Component
+				{...props}
+				onDispatch={(dispatch) => {
+					dispatchRef.current = dispatch;
+				}}
+			/>,
+		);
+
+		// act
+		act(() => {
+			dispatchRef.current?.({ name: "changeValue" });
+			api.unmount();
+		});
+
+		// assert
+		expect(events).toStrictEqual(["init", "open", "dispose changed"]);
 	});
 
 	it("initializes the model again when it is mounted again in StrictMode after it has been disposed", () => {

@@ -1,6 +1,6 @@
-import { type Draft, type Immutable, type PatchListener, produce } from "immer";
+import { castImmutable, type Draft, freeze, type Immutable, type PatchListener, produce } from "immer";
+import { callUpdate, createUpdateOptions } from "../callUpdate";
 import type { Commands, Message } from "../Types";
-import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
 import type { UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
 
@@ -10,22 +10,6 @@ import type { UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType
 type Update<TProps, TModel, TMessage extends Message> =
 	| UpdateFunction<TProps, TModel, TMessage>
 	| UpdateMap<TProps, TModel, TMessage>;
-
-function callUpdate<TProps, TModel, TMessage extends Message>(
-	update: Update<TProps, TModel, TMessage>,
-	msg: TMessage,
-	draft: Draft<TModel>,
-	props: TProps,
-	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-): UpdateReturnType<TMessage> {
-	if (typeof update === "function") {
-		return update(draft, msg, props, options);
-	}
-
-	const msgName: TMessage["name"] = msg.name;
-
-	return update[msgName](msg, draft, props, options);
-}
 
 /**
  * Runs the update for a message on a draft of the model, including the deferred commands.
@@ -46,16 +30,14 @@ function runUpdate<TProps, TModel, TMessage extends Message>(
 	patchListener?: PatchListener,
 ): [Immutable<TModel>, ...Commands<TMessage>] {
 	const [defer, getDeferred] = createDefer<TMessage>();
-	// The options template may replace `defer` (in tests), so the base handlers must get it, too.
-	const options = { defer, ...optionsTemplate };
 	const commands: UpdateReturnType<TMessage> = [];
 
 	const updatedModel = produce(
 		model,
 		(draft: Draft<TModel>) => {
-			const callBase = createCallBase(msg, draft, props, options);
+			const options = createUpdateOptions<"immutable", TProps, TModel, TMessage>(msg, draft, props, defer, optionsTemplate);
 
-			commands.push(...callUpdate(update, msg, draft, props, { callBase, ...options }));
+			commands.push(...callUpdate<"immutable", TProps, TModel, TMessage>(update, msg, draft, props, options));
 		},
 		patchListener,
 	);
@@ -63,6 +45,18 @@ function runUpdate<TProps, TModel, TMessage extends Message>(
 	return [updatedModel, ...commands, ...getDeferred()];
 }
 
+/**
+ * The immutable variant stores the model deeply frozen.
+ */
+function toStoredModel<TModel>(model: TModel): Immutable<TModel> {
+	return castImmutable(freeze(model, true));
+}
+
+/**
+ * The model handling of the immutable variant, used by `useElmish` and `ElmComponent`.
+ */
+const modelHandling = { toStoredModel, updateModel: runUpdate };
+
 export type { Update };
 
-export { runUpdate };
+export { modelHandling, runUpdate };

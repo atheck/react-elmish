@@ -12,6 +12,25 @@ import {
 	type Subscription,
 } from "./Types";
 
+/**
+ * The parts of the model handling which differ between the mutable and the immutable variant.
+ * Shared by `useElmish` and `ElmComponent`.
+ * @template TModel The type of the model returned by `init`.
+ * @template TStoredModel The type of the model which is stored and passed to the component.
+ * @template TUpdate The type of the update function or UpdateMap.
+ */
+interface ModelHandling<TProps, TModel, TStoredModel, TMessage extends Message, TUpdate> {
+	/**
+	 * Converts a model returned by `init` or sent by the DevTools to the stored model.
+	 */
+	toStoredModel: (model: TModel) => TStoredModel;
+	/**
+	 * Runs the update for a message.
+	 * @returns The updated model (the same reference, if nothing has changed) and the commands.
+	 */
+	updateModel: (update: TUpdate, msg: TMessage, model: TStoredModel, props: TProps) => [TStoredModel, ...Commands<TMessage>];
+}
+
 function logMessage(name: string, msg: Message): void {
 	Services.logger?.info("Message from", name, msg.name);
 	Services.logger?.debug("Message from", name, msg);
@@ -311,32 +330,34 @@ function useInitCommands<TMessage>(
 /**
  * Calls the dispose function with the current model when the component unmounts or the `reInitOn` values change.
  * @param dispose The dispose function.
- * @param model The current model.
+ * @param currentModelRef The ref to the current model. It is read when disposing, so the model changes of messages
+ * which have not been rendered yet are included. It is `null` if the model has already been disposed and reset.
  * @param reInitOn The values which trigger a re-initialization.
  * @param onDisposed Is called after the dispose function has been called.
  */
 function useDispose<TModel>(
 	dispose: DisposeFunction<TModel> | undefined,
-	model: TModel,
+	currentModelRef: RefObject<Nullable<TModel>>,
 	reInitOn: unknown[] | undefined,
 	onDisposed: () => void,
 ): void {
 	// The cleanup runs later, so it reads the latest values through this ref.
-	const latestRef = useRef({ dispose, model, onDisposed });
+	const latestRef = useRef({ dispose, onDisposed });
 
 	useLayoutEffect(() => {
-		latestRef.current = { dispose, model, onDisposed };
+		latestRef.current = { dispose, onDisposed };
 	});
 
 	useEffect(
 		() => () => {
 			const latest = latestRef.current;
+			const model = currentModelRef.current;
 
-			if (!latest.dispose) {
+			if (model === null || !latest.dispose) {
 				return;
 			}
 
-			latest.dispose(latest.model);
+			latest.dispose(model);
 			latest.onDisposed();
 		},
 		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to run dispose when the reInitOn dependencies change or on unmount
@@ -366,6 +387,8 @@ function useRemount(onRemount: () => void): void {
 		onRemountRef.current();
 	}, []);
 }
+
+export type { ModelHandling };
 
 export {
 	bindToInit,

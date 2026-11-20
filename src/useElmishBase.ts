@@ -4,6 +4,7 @@ import {
 	execCmd,
 	getDispatch,
 	logMessage,
+	type ModelHandling,
 	runInit,
 	useDispose,
 	useInitCommands,
@@ -43,26 +44,10 @@ interface UseElmishBaseOptions<TProps, TModel, TMessage extends Message> {
 	init: InitFunction<TProps, TModel, TMessage>;
 }
 
-/**
- * The parts of `useElmish` which differ between the mutable and the immutable variant.
- * @template TModel The type of the model returned by `init`.
- * @template TStoredModel The type of the model which is stored and passed to the component.
- */
-interface ModelHandling<TProps, TModel, TStoredModel, TMessage extends Message> {
-	/**
-	 * Converts a model returned by `init` or sent by the DevTools to the stored model.
-	 */
-	toStoredModel: (model: TModel) => TStoredModel;
-	/**
-	 * Runs the update for a message.
-	 * @returns The updated model (the same reference, if nothing has changed) and the commands.
-	 */
-	updateModel: (model: TStoredModel, msg: TMessage, props: TProps) => [TStoredModel, ...Commands<TMessage>];
-}
-
-interface UseElmishBaseParams<TProps, TModel, TStoredModel, TMessage extends Message>
-	extends UseElmishBaseOptions<TProps, TModel, TMessage>,
-		ModelHandling<TProps, TModel, TStoredModel, TMessage> {
+interface UseElmishBaseParams<TProps, TModel, TStoredModel, TMessage extends Message, TUpdate>
+	extends UseElmishBaseOptions<TProps, TModel, TMessage> {
+	update: TUpdate;
+	modelHandling: ModelHandling<TProps, TModel, TStoredModel, TMessage, TUpdate>;
 	subscription?: Subscription<TProps, TStoredModel, TMessage>;
 	dispose?: DisposeFunction<TStoredModel>;
 }
@@ -71,19 +56,19 @@ interface UseElmishBaseParams<TProps, TModel, TStoredModel, TMessage extends Mes
  * The implementation of the `useElmish` hook, shared by the mutable and the immutable variant.
  * @returns A tuple containing the current model and the dispatcher.
  */
-function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
+function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, TUpdate>({
 	name,
 	props,
 	reInitOn,
 	init,
+	update,
 	subscription,
 	dispose,
-	toStoredModel,
-	updateModel,
-}: UseElmishBaseParams<TProps, TModel, TStoredModel, TMessage>): [TStoredModel, Dispatch<TMessage>] {
+	modelHandling: { toStoredModel, updateModel },
+}: UseElmishBaseParams<TProps, TModel, TStoredModel, TMessage, TUpdate>): [TStoredModel, Dispatch<TMessage>] {
 	const [model, setModel] = useState<Nullable<TStoredModel>>(null);
 	// The dispatch function is created once, so it reads the current values of the options through these refs.
-	const optionsRef = useRef({ name, props, updateModel });
+	const optionsRef = useRef({ name, props, update });
 	const currentModelRef = useRef<Nullable<TStoredModel>>(null);
 	const devToolsRef = useRedux(
 		name,
@@ -102,7 +87,7 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 	const isDisposedRef = useRef(false);
 
 	useLayoutEffect(() => {
-		optionsRef.current = { name, props, updateModel };
+		optionsRef.current = { name, props, update };
 	});
 
 	// Only a component that is initializing may use the fake options of renderWithModel.
@@ -164,7 +149,7 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
 	useSubscription(subscription, initializedModel, props, initDispatch, initCountRef.current);
 	// biome-ignore-end lint/nursery/useReactCompiler: See above.
-	useDispose(dispose, initializedModel, reInitOn, () => {
+	useDispose(dispose, currentModelRef, reInitOn, () => {
 		isDisposedRef.current = true;
 	});
 
@@ -184,7 +169,7 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 
 		logMessage(options.name, msg);
 
-		const [updatedModel, ...commands] = options.updateModel(currentModel, msg, options.props);
+		const [updatedModel, ...commands] = updateModel(options.update, msg, currentModel, options.props);
 		const isModified = updatedModel !== currentModel;
 
 		currentModelRef.current = updatedModel;
@@ -198,6 +183,6 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 	}
 }
 
-export type { ModelHandling, UseElmishBaseOptions };
+export type { UseElmishBaseOptions };
 
 export { useElmishBase };

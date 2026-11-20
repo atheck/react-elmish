@@ -1,7 +1,7 @@
-import { castImmutable, freeze, type Immutable } from "immer";
+import type { Immutable } from "immer";
 import type { Dispatch, DisposeFunction, Message } from "../Types";
 import { type UseElmishBaseOptions, useElmishBase } from "../useElmishBase";
-import { runUpdate } from "./runUpdate";
+import { modelHandling } from "./runUpdate";
 import type { Subscription, UpdateFunction, UpdateMap } from "./Types";
 
 /**
@@ -40,11 +40,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	update,
 	...options
 }: UseElmishOptions<TProps, TModel, TMessage>): [Immutable<TModel>, Dispatch<TMessage>] {
-	return useElmishBase({
-		...options,
-		toStoredModel: (model: TModel) => castImmutable(freeze(model, true)),
-		updateModel: (model, msg, props) => runUpdate(update, msg, model, props),
-	});
+	return useElmishBase<TProps, TModel, Immutable<TModel>, TMessage, typeof update>({ ...options, update, modelHandling });
 }
 
 export type { UseElmishOptions };

@@ -1,62 +1,45 @@
-import type { Draft, Immutable } from "immer";
+import type { Immutable } from "immer";
 import type { Commands, Message, SubscriptionResult } from "../Types";
+import type * as Variant from "../UpdateTypes";
 
 /**
  * Type for the return value of the `update` function.
  */
 type UpdateReturnType<TMessage> = Commands<TMessage>;
 
-type DeferFunction<TMessage> = (...commands: Commands<TMessage>) => void;
-/**
- * Calls the handler of a base module with the current message, draft, props, and options.
- * The returned commands keep the message type of the base handler, so they can only be used
- * (e.g. passed to `defer`) if the base messages are part of the messages of the calling component.
- */
-type CallBaseFunction<TModel, TProps, TMessage extends Message> = <TBaseMessage extends Message>(
-	fn: BaseHandler<TModel, TProps, TMessage, TBaseMessage>,
-) => UpdateReturnType<TBaseMessage>;
+type DeferFunction<TMessage> = Variant.DeferFunction<"immutable", unknown, TMessage>;
 
-/**
- * A handler of a base module which can be called with `callBase`.
- */
-type BaseHandler<TModel, TProps, TMessage extends Message, TBaseMessage extends Message> = (
-	msg: TMessage,
-	model: Draft<TModel>,
-	props: TProps,
-	options: UpdateFunctionOptions<TProps, TModel, TBaseMessage, TMessage>,
-) => UpdateReturnType<TBaseMessage>;
+type CallBaseFunction<TModel, TProps, TMessage extends Message> = Variant.CallBaseFunction<"immutable", TModel, TProps, TMessage>;
 
-type UpdateMapFunction<TProps, TModel, TMessage extends Message> = (
-	msg: TMessage,
-	model: Draft<TModel>,
-	props: TProps,
-	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-) => UpdateReturnType<TMessage>;
+type BaseHandler<TModel, TProps, TMessage extends Message, TBaseMessage extends Message> = Variant.BaseHandler<
+	"immutable",
+	TModel,
+	TProps,
+	TMessage,
+	TBaseMessage
+>;
 
-interface UpdateFunctionOptions<TProps, TModel, TMessage extends Message, TSpecificMessage extends Message = TMessage> {
-	defer: DeferFunction<TMessage>;
-	callBase: CallBaseFunction<TModel, TProps, TSpecificMessage>;
-}
+type UpdateMapFunction<TProps, TModel, TMessage extends Message> = Variant.UpdateMapFunction<
+	"immutable",
+	TProps,
+	TModel,
+	TMessage
+>;
 
-type UpdateFunction<TProps, TModel, TMessage extends Message> = (
-	model: Draft<TModel>,
-	msg: TMessage,
-	props: TProps,
-	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-) => UpdateReturnType<TMessage>;
+type UpdateFunctionOptions<
+	TProps,
+	TModel,
+	TMessage extends Message,
+	TCurrentMessage extends Message = TMessage,
+> = Variant.UpdateFunctionOptions<"immutable", TProps, TModel, TMessage, TCurrentMessage>;
+
+type UpdateFunction<TProps, TModel, TMessage extends Message> = Variant.UpdateFunction<"immutable", TProps, TModel, TMessage>;
 
 /**
  * Type for mapping messages to functions.
  * Use this type to create your update logic for the useElmish hook.
  */
-type UpdateMap<TProps, TModel, TMessage extends Message> = {
-	[TMessageName in TMessage["name"]]: (
-		msg: TMessage & { name: TMessageName },
-		model: Draft<TModel>,
-		props: TProps,
-		options: UpdateFunctionOptions<TProps, TModel, TMessage, TMessage & { name: TMessageName }>,
-	) => UpdateReturnType<TMessage>;
-};
+type UpdateMap<TProps, TModel, TMessage extends Message> = Variant.UpdateMap<"immutable", TProps, TModel, TMessage>;
 
 type Subscription<TProps, TModel, TMessage extends Message> = (
 	model: Immutable<TModel>,
