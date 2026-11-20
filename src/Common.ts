@@ -154,18 +154,16 @@ function runSubscription<TProps, TModel, TMessage extends Message>(
  * @param subscription The subscription function.
  * @param model The current model.
  * @param props The current props.
- * @param dispatch The dispatch function.
- * @param initCount The number of times the model has been initialized. A change triggers a re-subscription.
+ * @param initDispatch The dispatch function of the current initialization. A change triggers a re-subscription.
  */
 function useSubscription<TProps, TModel, TMessage extends Message>(
 	subscription: Subscription<TProps, TModel, TMessage> | undefined,
 	model: TModel,
 	props: TProps,
-	dispatch: Dispatch<TMessage>,
-	initCount: number,
+	initDispatch: Dispatch<TMessage>,
 ): void {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to re-subscribe when the model has been re-initialized
-	useEffect(() => runSubscription(subscription, model, props, dispatch), [initCount]);
+	useEffect(() => runSubscription(subscription, model, props, initDispatch), [initDispatch]);
 }
 
 /**
@@ -204,23 +202,22 @@ function areValuesEqual(first: unknown[] | undefined, second: unknown[] | undefi
 }
 
 /**
- * Creates a dispatch function for the commands and subscriptions of one initialization of the model.
- * Their messages are dropped once the model has been initialized again (e.g. after `reInitOn` changed),
+ * Creates the dispatch function for the commands and subscriptions of one initialization of the model.
+ * Its messages are dropped once the model has been initialized again (e.g. after `reInitOn` changed),
  * so the results of a previous initialization do not end up in the new model.
+ * Create it once per initialization and reuse it, so its identity marks the initialization.
  * @param dispatch The dispatch function of the component.
- * @param getInitCount Returns the number of times the model has been initialized.
+ * @param isCurrent Returns whether the passed dispatch function belongs to the current initialization.
  * @param name The name of the component, used for logging.
- * @returns The dispatch function bound to the current initialization.
+ * @returns The dispatch function of this initialization.
  */
-function bindToInit<TMessage extends Message>(
+function createInitDispatch<TMessage extends Message>(
 	dispatch: Dispatch<TMessage>,
-	getInitCount: () => number,
+	isCurrent: (initDispatch: Dispatch<TMessage>) => boolean,
 	name: string,
 ): Dispatch<TMessage> {
-	const initCount = getInitCount();
-
-	return (msg) => {
-		if (getInitCount() !== initCount) {
+	const initDispatch: Dispatch<TMessage> = (msg) => {
+		if (!isCurrent(initDispatch)) {
 			Services.logger?.debug("Dropped message of a previous initialization of", name, msg);
 
 			return;
@@ -228,6 +225,8 @@ function bindToInit<TMessage extends Message>(
 
 		dispatch(msg);
 	};
+
+	return initDispatch;
 }
 
 function getDispatch<TMessage extends Message>(
@@ -305,14 +304,12 @@ function runInit<TModel, TProps, TMessage extends Message>(
 
 /**
  * Executes the commands of the last (re-)initialization once, after the component has been rendered.
- * @param dispatch The dispatch function.
+ * @param initDispatch The dispatch function of the current initialization. A change triggers the execution.
  * @param pendingInitCommandsRef The commands which have not been executed yet. They are reset after the execution.
- * @param initCount The number of times the model has been initialized. A change triggers the execution.
  */
 function useInitCommands<TMessage>(
-	dispatch: Dispatch<TMessage>,
+	initDispatch: Dispatch<TMessage>,
 	pendingInitCommandsRef: RefObject<Nullable<Commands<TMessage>>>,
-	initCount: number,
 ): void {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to execute the commands after a (re-)initialization
 	useEffect(() => {
@@ -322,9 +319,9 @@ function useInitCommands<TMessage>(
 		pendingInitCommandsRef.current = null;
 
 		if (commands) {
-			execCmd(dispatch, ...commands);
+			execCmd(initDispatch, ...commands);
 		}
-	}, [initCount]);
+	}, [initDispatch]);
 }
 
 /**
@@ -391,7 +388,7 @@ function useRemount(onRemount: () => void): void {
 export type { ModelHandling };
 
 export {
-	bindToInit,
+	createInitDispatch,
 	execCmd,
 	getDispatch,
 	hasModelChanged,

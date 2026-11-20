@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
-	bindToInit,
+	createInitDispatch,
 	execCmd,
 	getDispatch,
 	logMessage,
@@ -69,6 +69,14 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 	const [model, setModel] = useState<Nullable<TStoredModel>>(null);
 	// The dispatch function is created once, so it reads the current values of the options through these refs.
 	const optionsRef = useRef({ name, props, update });
+
+	// Updated during render (not in an effect), so messages dispatched in the layout effects of children,
+	// which run before the effects of this component, are handled with the current props and update.
+	// biome-ignore-start lint/nursery/useReactCompiler: See above.
+	// eslint-disable-next-line react/refs -- See above.
+	optionsRef.current = { name, props, update };
+	// biome-ignore-end lint/nursery/useReactCompiler: See above.
+
 	const currentModelRef = useRef<Nullable<TStoredModel>>(null);
 	const devToolsRef = useRedux(
 		name,
@@ -82,13 +90,8 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 		},
 	);
 	const isMountedRef = useIsMounted();
-	const initCountRef = useRef(0);
 	const pendingInitCommandsRef = useRef<Nullable<Commands<TMessage>>>(null);
 	const isDisposedRef = useRef(false);
-
-	useLayoutEffect(() => {
-		optionsRef.current = { name, props, update };
-	});
 
 	// Only a component that is initializing may use the fake options of renderWithModel.
 	const fakeOptions = model === null ? getFakeOptions<TModel, TMessage>(name) : null;
@@ -112,6 +115,8 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 		),
 	);
 
+	// The dispatch function of the current initialization, which is passed to the commands and subscriptions.
+	const initDispatchRef = useRef(dispatch);
 	let initializedModel = model;
 
 	/* eslint-disable react/refs -- The model is (re-)initialized during render, so the refs must be up to date immediately. */
@@ -122,7 +127,7 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 		pendingInitCommandsRef.current = initCommands;
 		isDisposedRef.current = false;
 		currentModelRef.current = initModel;
-		initCountRef.current++;
+		initDispatchRef.current = createInitDispatch(dispatch, (initDispatch) => initDispatchRef.current === initDispatch, name);
 		setModel(initModel);
 		initializedModel = initModel;
 	}
@@ -133,7 +138,8 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 		setModel(null);
 	};
 
-	const initDispatch = bindToInit(dispatch, () => initCountRef.current, name);
+	// eslint-disable-next-line react/refs -- The init dispatch only changes when the model is initialized above, during this render.
+	const initDispatch = initDispatchRef.current;
 
 	useReInit(resetModel, reInitOn);
 	// When React mounts the component again (e.g. in StrictMode) after the model has been disposed, we initialize it again.
@@ -144,10 +150,8 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 
 		resetModel();
 	});
-	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
-	useInitCommands(initDispatch, pendingInitCommandsRef, initCountRef.current);
-	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
-	useSubscription(subscription, initializedModel, props, initDispatch, initCountRef.current);
+	useInitCommands(initDispatch, pendingInitCommandsRef);
+	useSubscription(subscription, initializedModel, props, initDispatch);
 	// biome-ignore-end lint/nursery/useReactCompiler: See above.
 	useDispose(dispose, currentModelRef, reInitOn, () => {
 		isDisposedRef.current = true;
@@ -174,10 +178,7 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 
 		currentModelRef.current = updatedModel;
 
-		execCmd(
-			bindToInit(dispatch, () => initCountRef.current, options.name),
-			...commands,
-		);
+		execCmd(initDispatchRef.current, ...commands);
 
 		return isModified;
 	}

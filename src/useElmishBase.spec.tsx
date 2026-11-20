@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { JSX } from "react";
+import { type JSX, useLayoutEffect } from "react";
 import { useElmish as useImmutableElmish } from "./immutable";
 import type { Dispatch } from "./Types";
 import { useElmish } from "./useElmish";
@@ -15,10 +15,29 @@ interface Model {
 interface Props {
 	newValue: string;
 	onDispatch: (dispatch: Dispatch<Message>) => void;
+	dispatchFromChild?: boolean;
+}
+
+interface ChildProps {
+	dispatch: Dispatch<Message>;
+	value: string;
+}
+
+/**
+ * Dispatches a message in a layout effect whenever the value changes.
+ * React runs the layout effects of children before the ones of their parent.
+ */
+function Child({ dispatch, value }: ChildProps): null {
+	// biome-ignore lint/correctness/useExhaustiveDependencies: The message is dispatched whenever the value changes.
+	useLayoutEffect(() => {
+		dispatch({ name: "change" });
+	}, [dispatch, value]);
+
+	return null;
 }
 
 function MutableComponent(props: Props): JSX.Element {
-	const { newValue, onDispatch } = props;
+	const { newValue, onDispatch, dispatchFromChild } = props;
 	const [{ value }, dispatch] = useElmish<Props, Model, Message>({
 		name: "MutableComponent",
 		props,
@@ -32,14 +51,17 @@ function MutableComponent(props: Props): JSX.Element {
 	onDispatch(dispatch);
 
 	return (
-		<button onClick={() => dispatch({ name: "change" })} type={"button"}>
-			{value}
-		</button>
+		<>
+			<button onClick={() => dispatch({ name: "change" })} type={"button"}>
+				{value}
+			</button>
+			{dispatchFromChild === true && <Child dispatch={dispatch} value={newValue} />}
+		</>
 	);
 }
 
 function ImmutableComponent(props: Props): JSX.Element {
-	const { newValue, onDispatch } = props;
+	const { newValue, onDispatch, dispatchFromChild } = props;
 	const [{ value }, dispatch] = useImmutableElmish<Props, Model, Message>({
 		name: "ImmutableComponent",
 		props,
@@ -57,9 +79,12 @@ function ImmutableComponent(props: Props): JSX.Element {
 	onDispatch(dispatch);
 
 	return (
-		<button onClick={() => dispatch({ name: "change" })} type={"button"}>
-			{value}
-		</button>
+		<>
+			<button onClick={() => dispatch({ name: "change" })} type={"button"}>
+				{value}
+			</button>
+			{dispatchFromChild === true && <Child dispatch={dispatch} value={newValue} />}
+		</>
 	);
 }
 
@@ -77,6 +102,18 @@ describe.each([
 		// act
 		// eslint-disable-next-line testing-library/prefer-user-event -- @testing-library/user-event is not installed.
 		fireEvent.click(screen.getByRole("button"));
+
+		// assert
+		expect(screen.getByRole("button")).toHaveTextContent("second");
+	});
+
+	it("uses the props and update of the latest render for messages dispatched in the layout effect of a child", () => {
+		// arrange
+		const onDispatch = jest.fn();
+		const api = render(<Component dispatchFromChild newValue={"first"} onDispatch={onDispatch} />);
+
+		// act
+		api.rerender(<Component dispatchFromChild newValue={"second"} onDispatch={onDispatch} />);
 
 		// assert
 		expect(screen.getByRole("button")).toHaveTextContent("second");
