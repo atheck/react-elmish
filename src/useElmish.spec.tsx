@@ -1,4 +1,4 @@
-import { type RenderResult, render } from "@testing-library/react";
+import { act, type RenderResult, render } from "@testing-library/react";
 import type { JSX } from "react";
 import { type Cmd, cmd, type InitResult, type SubscriptionResult, type UpdateReturnType, useElmish } from ".";
 import type { UpdateFunctionOptions } from "./Types";
@@ -61,6 +61,7 @@ function defaultUpdate(
 }
 
 let componentModel: Model | undefined;
+let componentDispatch: ((msg: Message) => void) | undefined;
 
 describe("useElmish", () => {
 	it("calls the init function", () => {
@@ -327,11 +328,92 @@ describe("useElmish", () => {
 
 		expect(mockSub).toHaveBeenCalledTimes(2);
 	});
+
+	it("uses the re-initialized model for messages dispatched after reInitOn changes", () => {
+		// arrange
+		let initCount = 0;
+		const init = (): InitResult<Model, Message> => {
+			initCount++;
+
+			return [{ value1: `init${initCount}`, value2: "" }];
+		};
+		let props: Props = {
+			init,
+			update: defaultUpdate,
+			reInitOn: [1],
+		};
+
+		const api = renderComponent(props);
+
+		act(() => componentDispatch?.({ name: "First" }));
+
+		expect(componentModel).toStrictEqual({ value1: "First", value2: "Second" });
+
+		props = { ...props, reInitOn: [2] };
+		api.rerender(<TestComponent {...props} />);
+
+		expect(componentModel).toStrictEqual({ value1: "init2", value2: "" });
+
+		// act
+		act(() => componentDispatch?.({ name: "Third" }));
+
+		// assert
+		expect(componentModel).toStrictEqual({ value1: "init2", value2: "Third" });
+	});
+
+	it("keeps processing messages after an update handler has thrown", () => {
+		// arrange
+		const update = jest.fn(defaultUpdate).mockImplementationOnce(() => {
+			throw new Error("update failed");
+		});
+		const props: Props = {
+			init: () => defaultInit(),
+			update,
+		};
+
+		renderComponent(props);
+
+		expect(() => act(() => componentDispatch?.({ name: "Test" }))).toThrow("update failed");
+
+		// act
+		act(() => componentDispatch?.({ name: "Third" }));
+
+		// assert
+		expect(componentModel).toStrictEqual({ value1: "", value2: "Third" });
+	});
+
+	it("calls the subscription with the re-initialized model when reInitOn changes", () => {
+		// arrange
+		let initCount = 0;
+		const init = (): InitResult<Model, Message> => {
+			initCount++;
+
+			return [{ value1: `init${initCount}`, value2: "" }];
+		};
+		const mockSubscription = jest.fn((_model: Model): SubscriptionResult<Message> => []);
+		let props: Props = {
+			init,
+			update: defaultUpdate,
+			subscription: mockSubscription,
+			reInitOn: [1],
+		};
+
+		const api = renderComponent(props);
+
+		expect(mockSubscription.mock.lastCall?.[0]).toStrictEqual({ value1: "init1", value2: "" });
+
+		// act
+		props = { ...props, reInitOn: [2] };
+		api.rerender(<TestComponent {...props} />);
+
+		// assert
+		expect(mockSubscription.mock.lastCall?.[0]).toStrictEqual({ value1: "init2", value2: "" });
+	});
 });
 
 function TestComponent(props: Props): JSX.Element {
 	const { init, update, subscription, dispose, reInitOn } = props;
-	const [model] = useElmish({
+	const [model, dispatch] = useElmish({
 		props,
 		init,
 		update,
@@ -344,6 +426,8 @@ function TestComponent(props: Props): JSX.Element {
 	/* eslint-disable react/globals, unicorn/no-top-level-assignment-in-function -- Test only. */
 	// biome-ignore lint/nursery/useReactCompiler: Test only.
 	componentModel = model;
+	// biome-ignore lint/nursery/useReactCompiler: Test only.
+	componentDispatch = dispatch;
 	/* eslint-enable react/globals, unicorn/no-top-level-assignment-in-function */
 
 	return <div />;

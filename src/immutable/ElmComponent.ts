@@ -109,37 +109,45 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 		this.running = true;
 
 		let nextMsg: TMessage | undefined = msg;
+		let hasFailed = true;
 
-		do {
-			const currentMessage = nextMsg;
+		try {
+			do {
+				const currentMessage = nextMsg;
 
-			logMessage(this.componentName, currentMessage);
+				logMessage(this.componentName, currentMessage);
 
-			const [defer, getDeferred] = createDefer<TMessage>();
-			const commands: UpdateReturnType<TMessage> = [];
+				const [defer, getDeferred] = createDefer<TMessage>();
+				const commands: UpdateReturnType<TMessage> = [];
 
-			this.currentModel = produce(this.currentModel, (draft: Draft<TModel>) => {
-				const callBase = createCallBase(currentMessage, draft, this.props, { defer });
+				this.currentModel = produce(this.currentModel, (draft: Draft<TModel>) => {
+					const callBase = createCallBase(currentMessage, draft, this.props, { defer });
 
-				commands.push(...this.update(draft, currentMessage, this.props, { defer, callBase }));
-			});
+					commands.push(...this.update(draft, currentMessage, this.props, { defer, callBase }));
+				});
 
-			const deferredCommands = getDeferred();
+				const deferredCommands = getDeferred();
 
-			execCmd(this.dispatch, ...commands, ...deferredCommands);
+				execCmd(this.dispatch, ...commands, ...deferredCommands);
 
-			// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
-			nextMsg = this.buffer.shift();
-		} while (nextMsg);
+				// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
+				nextMsg = this.buffer.shift();
+			} while (nextMsg);
 
-		this.running = false;
+			hasFailed = false;
+		} finally {
+			if (hasFailed) {
+				// Drop the messages queued by the failed run, so they are not processed out of order later.
+				this.buffer.length = 0;
+			}
 
-		if (!this.mounted) {
-			return;
+			this.running = false;
+
+			if (this.mounted) {
+				Services.logger?.debug("Update model for", this.componentName, this.currentModel);
+				this.forceUpdate();
+			}
 		}
-
-		Services.logger?.debug("Update model for", this.componentName, this.currentModel);
-		this.forceUpdate();
 	};
 
 	/**

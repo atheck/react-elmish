@@ -72,13 +72,22 @@ function useIsMounted(): RefObject<boolean> {
 	return isMountedRef;
 }
 
+/**
+ * Runs the subscription and re-subscribes whenever the model has been (re-)initialized.
+ * @param subscription The subscription function.
+ * @param model The current model.
+ * @param props The current props.
+ * @param dispatch The dispatch function.
+ * @param initCount The number of times the model has been initialized. A change triggers a re-subscription.
+ */
 function useSubscription<TProps, TModel, TMessage extends Message>(
 	subscription: Subscription<TProps, TModel, TMessage> | undefined,
 	model: TModel,
 	props: TProps,
 	dispatch: Dispatch<TMessage>,
-	reInitOn: unknown[] | undefined,
+	initCount: number,
 ): void {
+	// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to re-subscribe when the model has been re-initialized
 	useEffect(() => {
 		if (!subscription) {
 			return;
@@ -101,11 +110,10 @@ function useSubscription<TProps, TModel, TMessage extends Message>(
 		execCmd(dispatch, subCmd);
 
 		return destructor;
-		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
-	}, reInitOn ?? []);
+	}, [initCount]);
 }
 
-function useReInit(setModel: (model: null) => void, reInitOn: unknown[] | undefined): void {
+function useReInit(resetModel: () => void, reInitOn: unknown[] | undefined): void {
 	const firstCallRef = useRef(true);
 
 	useEffect(() => {
@@ -115,7 +123,7 @@ function useReInit(setModel: (model: null) => void, reInitOn: unknown[] | undefi
 			return;
 		}
 
-		setModel(null);
+		resetModel();
 		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to reinitialize when the reInitOn dependencies change
 	}, reInitOn ?? []);
 }
@@ -142,22 +150,32 @@ function getDispatch<TMessage extends Message>(
 
 			let nextMsg: TMessage | undefined = msg;
 			let isModified = false;
+			let hasFailed = true;
 
-			do {
-				if (handleMessage(nextMsg)) {
-					isModified = true;
+			try {
+				do {
+					if (handleMessage(nextMsg)) {
+						isModified = true;
+					}
+
+					callDevTools?.(nextMsg);
+
+					// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
+					nextMsg = buffer.shift();
+				} while (nextMsg);
+
+				hasFailed = false;
+			} finally {
+				if (hasFailed) {
+					// Drop the messages queued by the failed run, so they are not processed out of order later.
+					buffer.length = 0;
 				}
 
-				callDevTools?.(nextMsg);
+				isRunning = false;
 
-				// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
-				nextMsg = buffer.shift();
-			} while (nextMsg);
-
-			isRunning = false;
-
-			if (isModified) {
-				callSetModel();
+				if (isModified) {
+					callSetModel();
+				}
 			}
 		})
 	);

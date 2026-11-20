@@ -104,4 +104,16 @@ describe("mergeSubscriptions", () => {
 		expect(sub1Dispose).toHaveBeenCalledTimes(1);
 		expect(sub2Dispose).toHaveBeenCalledTimes(1);
 	});
+
+	it("accepts a subscription returning an empty array of subscription functions", () => {
+		// arrange
+		const emptySubscription = (): SubscriptionResult<Message> => [];
+		const subscription = mergeSubscriptions(emptySubscription);
+
+		// act
+		const act = (): unknown => subscription(model, props);
+
+		// assert
+		expect(act).not.toThrow();
+	});
 });

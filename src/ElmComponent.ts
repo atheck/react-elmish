@@ -108,38 +108,46 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
 		let nextMsg: TMessage | undefined = msg;
 		let isModified = false;
+		let hasFailed = true;
 
-		do {
-			const currentMessage = nextMsg;
+		try {
+			do {
+				const currentMessage = nextMsg;
 
-			logMessage(this.componentName, currentMessage);
+				logMessage(this.componentName, currentMessage);
 
-			const [defer, getDeferred] = createDefer<TModel, TMessage>();
-			const callBase = createCallBase(currentMessage, this.currentModel, this.props, { defer });
+				const [defer, getDeferred] = createDefer<TModel, TMessage>();
+				const callBase = createCallBase(currentMessage, this.currentModel, this.props, { defer });
 
-			const [model, ...commands] = this.update(this.currentModel, currentMessage, this.props, { defer, callBase });
+				const [model, ...commands] = this.update(this.currentModel, currentMessage, this.props, { defer, callBase });
 
-			const [deferredModel, deferredCommands] = getDeferred();
+				const [deferredModel, deferredCommands] = getDeferred();
 
-			if (hasModelChanged(this.currentModel, { ...deferredModel, ...model })) {
-				this.currentModel = { ...this.currentModel, ...deferredModel, ...model };
-				isModified = true;
+				if (hasModelChanged(this.currentModel, { ...deferredModel, ...model })) {
+					this.currentModel = { ...this.currentModel, ...deferredModel, ...model };
+					isModified = true;
+				}
+
+				execCmd(this.dispatch, ...commands, ...deferredCommands);
+
+				// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
+				nextMsg = this.buffer.shift();
+			} while (nextMsg);
+
+			hasFailed = false;
+		} finally {
+			if (hasFailed) {
+				// Drop the messages queued by the failed run, so they are not processed out of order later.
+				this.buffer.length = 0;
 			}
 
-			execCmd(this.dispatch, ...commands, ...deferredCommands);
+			this.running = false;
 
-			// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
-			nextMsg = this.buffer.shift();
-		} while (nextMsg);
-
-		this.running = false;
-
-		if (!(isModified && this.mounted)) {
-			return;
+			if (isModified && this.mounted) {
+				Services.logger?.debug("Update model for", this.componentName, this.currentModel);
+				this.forceUpdate();
+			}
 		}
-
-		Services.logger?.debug("Update model for", this.componentName, this.currentModel);
-		this.forceUpdate();
 	};
 
 	/**

@@ -1,4 +1,4 @@
-import { type RenderResult, render } from "@testing-library/react";
+import { act, type RenderResult, render } from "@testing-library/react";
 import type { Draft } from "immer";
 import { createRef, type JSX } from "react";
 import { cmd } from "../cmd";
@@ -60,6 +60,21 @@ describe("ElmComponent", () => {
 
 		// assert
 		expect(update).toHaveBeenCalledTimes(1);
+	});
+
+	it("keeps processing messages after the update function has thrown", () => {
+		// arrange
+		const ref = createRef<LockTestComponent>();
+
+		render(<LockTestComponent ref={ref} />);
+
+		expect(() => act(() => ref.current?.dispatch({ name: "Fail" }))).toThrow("update failed");
+
+		// act
+		act(() => ref.current?.dispatch({ name: "Increment" }));
+
+		// assert
+		expect(ref.current?.model).toStrictEqual({ count: 1 });
 	});
 
 	it("applies the model changes of the base handler called with callBase", () => {
@@ -133,4 +148,32 @@ class DisposeTestComponent extends ElmComponent<Model, Message, DisposeProps> {
 
 function renderComponent(props: Props): RenderResult {
 	return render(<TestComponent {...props} />);
+}
+
+type LockMessage = { name: "Fail" } | { name: "Increment" };
+
+interface LockModel {
+	count: number;
+}
+
+class LockTestComponent extends ElmComponent<LockModel, LockMessage, object> {
+	public constructor(props: object) {
+		super(props, () => [{ count: 0 }], "LockTest");
+	}
+
+	// biome-ignore lint/style/useThisInClassMethods: Test only.
+	public update = (model: Draft<LockModel>, msg: LockMessage): UpdateReturnType<LockMessage> => {
+		if (msg.name === "Fail") {
+			throw new Error("update failed");
+		}
+
+		model.count++;
+
+		return [];
+	};
+
+	// biome-ignore lint/style/useThisInClassMethods: Test only.
+	public override render(): JSX.Element {
+		return <div />;
+	}
 }

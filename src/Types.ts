@@ -90,7 +90,8 @@ type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => 
 type DisposeFunction<TModel> = (model: TModel) => void;
 
 function isSubscriptionFunctionArray(subscription: SubscriptionResult<unknown>): subscription is SubscriptionFunction<unknown>[] {
-	return typeof subscription[0] === "function";
+	// An empty array has no command, so it can only be an (empty) array of subscription functions.
+	return subscription.length === 0 || typeof subscription[0] === "function";
 }
 
 export type {

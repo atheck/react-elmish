@@ -84,8 +84,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	const propsRef = useRef(props);
 	const devToolsRef = useRedux(name, setModel);
 	const isMountedRef = useIsMounted();
-
-	let currentModel = model;
+	const currentModelRef = useRef<Nullable<Immutable<TModel>>>(null);
+	const initCountRef = useRef(0);
 
 	useLayoutEffect(() => {
 		propsRef.current = props;
@@ -103,20 +103,20 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 				}
 
 				setModel(() => {
-					Services.logger?.debug("Update model for", name, currentModel);
+					Services.logger?.debug("Update model for", name, currentModelRef.current);
 
-					return currentModel;
+					return currentModelRef.current;
 				});
 			},
 			(msg) => {
-				devToolsRef.current?.send(msg.name, currentModel);
+				devToolsRef.current?.send(msg.name, currentModelRef.current);
 			},
 			fakeOptions?.dispatch,
 		),
 		[],
 	);
 
-	let initializedModel = currentModel;
+	let initializedModel = model;
 
 	if (!initializedModel) {
 		enablePatches();
@@ -127,8 +127,11 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 				init,
 				props,
 				(initModel) => {
-					currentModel = castImmutable(freeze(initModel, true));
-					setModel(currentModel);
+					const frozenModel = castImmutable(freeze(initModel, true));
+
+					currentModelRef.current = frozenModel;
+					initCountRef.current++;
+					setModel(frozenModel);
 				},
 				dispatch,
 				() => devToolsRef.current,
@@ -136,15 +139,21 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 			),
 		);
 	}
-	// biome-ignore-end lint/nursery/useReactCompiler: See above.
 
-	useReInit(setModel, reInitOn);
-	useSubscription(subscription, initializedModel, props, dispatch, reInitOn);
+	useReInit(() => {
+		currentModelRef.current = null;
+		setModel(null);
+	}, reInitOn);
+	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
+	useSubscription(subscription, initializedModel, props, dispatch, initCountRef.current);
+	// biome-ignore-end lint/nursery/useReactCompiler: See above.
 	useDispose(dispose, initializedModel, reInitOn);
 
 	return [initializedModel, dispatch];
 
 	function handleMessage(nextMsg: TMessage): boolean {
+		const currentModel = currentModelRef.current;
+
 		if (!currentModel) {
 			return false;
 		}
@@ -157,7 +166,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 
 		const deferredCommands = getDeferred();
 
-		currentModel = updatedModel;
+		currentModelRef.current = updatedModel;
 
 		execCmd(dispatch, ...commands, ...deferredCommands);
 

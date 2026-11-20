@@ -94,8 +94,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 	const propsRef = useRef(props);
 	const devToolsRef = useRedux(name, setModel);
 	const isMountedRef = useIsMounted();
-
-	let currentModel = model;
+	const currentModelRef = useRef<Nullable<TModel>>(null);
+	const initCountRef = useRef(0);
 
 	useLayoutEffect(() => {
 		propsRef.current = props;
@@ -113,7 +113,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 				}
 
 				setModel((prevModel) => {
-					const updatedModel = { ...prevModel, ...currentModel };
+					const updatedModel = { ...prevModel, ...currentModelRef.current };
 
 					Services.logger?.debug("Update model for", name, updatedModel);
 
@@ -122,36 +122,43 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 				});
 			},
 			(msg) => {
-				devToolsRef.current?.send(msg.name, { ...currentModel });
+				devToolsRef.current?.send(msg.name, { ...currentModelRef.current });
 			},
 			fakeOptions?.dispatch,
 		),
 		[],
 	);
 
-	let initializedModel = currentModel;
+	let initializedModel = model;
 
 	initializedModel ??= runInit(
 		name,
 		init,
 		props,
 		(initModel) => {
-			currentModel = initModel;
-			setModel(currentModel);
+			currentModelRef.current = initModel;
+			initCountRef.current++;
+			setModel(initModel);
 		},
 		dispatch,
 		() => devToolsRef.current,
 		fakeOptions?.model,
 	);
-	// biome-ignore-end lint/nursery/useReactCompiler: See above.
 
-	useReInit(setModel, reInitOn);
-	useSubscription(subscription, initializedModel, props, dispatch, reInitOn);
+	useReInit(() => {
+		currentModelRef.current = null;
+		setModel(null);
+	}, reInitOn);
+	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
+	useSubscription(subscription, initializedModel, props, dispatch, initCountRef.current);
+	// biome-ignore-end lint/nursery/useReactCompiler: See above.
 	useDispose(dispose, initializedModel, reInitOn);
 
 	return [initializedModel, dispatch];
 
 	function handleMessage(nextMsg: TMessage): boolean {
+		const currentModel = currentModelRef.current;
+
 		if (!currentModel) {
 			return false;
 		}
@@ -170,7 +177,7 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		const [deferredModel, deferredCommands] = getDeferred();
 
 		if (hasModelChanged(currentModel, { ...deferredModel, ...newModel })) {
-			currentModel = { ...currentModel, ...deferredModel, ...newModel };
+			currentModelRef.current = { ...currentModel, ...deferredModel, ...newModel };
 
 			isModified = true;
 		}
