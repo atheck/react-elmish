@@ -1,7 +1,7 @@
 import { castImmutable, type Draft, freeze, type Immutable, produce } from "immer";
 import React from "react";
 import { execCmd, logMessage } from "../Common";
-import { getFakeOptionsOnce } from "../fakeOptions";
+import { getFakeOptions } from "../fakeOptions";
 import { Services } from "../Init";
 import type { Cmd, DisposeFunction, InitFunction, Message, Nullable } from "../Types";
 import { createCallBase } from "./createCallBase";
@@ -42,7 +42,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	) {
 		super(props);
 
-		const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
+		const fakeOptions = getFakeOptions<TModel, TMessage>(name);
 
 		if (fakeOptions?.dispatch) {
 			this.dispatch = fakeOptions.dispatch;

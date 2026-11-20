@@ -1,33 +1,42 @@
 import type { Dispatch } from "react";
-import type { Cmd, Nullable } from "../Types";
+import type { Cmd, Nullable, Sub } from "../Types";
+import { isPromiseLike } from "./isPromiseLike";
 
 /**
  * Executes all commands and resolves the messages.
+ * A command is finished when it returns, or, if it returns a promise, when the promise is settled.
  * @param cmd The command to process.
- * @returns The array of processed messages.
+ * @returns The array of dispatched messages in order, with `null` for every command which did not dispatch a message.
  */
 async function execCmd<TMessage>(...commands: (Cmd<TMessage> | undefined)[]): Promise<Nullable<TMessage>[]> {
-	const definedCommands = commands.filter((cmd) => cmd !== undefined);
-	const callers = definedCommands.flatMap((cmd) =>
-		cmd.map(
-			async (currentCmd) =>
-				new Promise<Nullable<TMessage>>((resolve, reject) => {
-					const dispatch = (msg: TMessage): void => resolve(msg);
+	const subs = commands.filter((cmd) => cmd !== undefined).flat();
+	const results = await Promise.all(subs.map(execSub));
 
-					currentCmd(dispatch, (error) => {
-						if (error) {
-							reject(error);
-						} else {
-							resolve(null);
-						}
-					});
-				}),
-		),
+	return results.flat();
+}
+
+async function execSub<TMessage>(sub: Sub<TMessage>): Promise<Nullable<TMessage>[]> {
+	const messages: TMessage[] = [];
+	let fallbackError: Error | undefined;
+
+	const result: unknown = sub(
+		(msg) => {
+			messages.push(msg);
+		},
+		(error) => {
+			fallbackError ??= error;
+		},
 	);
 
-	const results = await Promise.all(callers);
+	if (isPromiseLike(result)) {
+		await result;
+	}
 
-	return results;
+	if (fallbackError) {
+		throw fallbackError;
+	}
+
+	return messages.length > 0 ? [...messages] : [null];
 }
 
 function execCmdWithDispatch<TMessage>(dispatch: Dispatch<TMessage>, ...commands: (Cmd<TMessage> | undefined)[]): void {

@@ -1,8 +1,10 @@
 import { type RenderWithModelOptions, setFakeOptions } from "../fakeOptions";
 import type { Message } from "../Types";
+import { isPromiseLike } from "./isPromiseLike";
 
 /**
  * Renders a component with a provided model.
+ * The model is used by the first component initialized while `render` runs (by its name), not by its child components.
  * @template TModel The type of the model.
  * @template TMessage The type of the message discriminated union.
  * @template TResult The return type of the render function.
@@ -20,10 +22,24 @@ function renderWithModel<TMessage extends Message, TResult>(
 		...options,
 	});
 
-	const result = render();
+	let result: TResult;
 
-	// biome-ignore lint/nursery/noFloatingPromises: No async function
-	Promise.resolve(result).then(() => setFakeOptions(null));
+	try {
+		result = render();
+	} catch (ex) {
+		setFakeOptions(null);
+
+		throw ex;
+	}
+
+	if (isPromiseLike(result)) {
+		const reset = (): void => setFakeOptions(null);
+
+		// The caller awaits the original result, we only reset the options.
+		Promise.resolve(result).then(reset).catch(reset);
+	} else {
+		setFakeOptions(null);
+	}
 
 	return result;
 }

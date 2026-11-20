@@ -1,6 +1,6 @@
 /* eslint-disable testing-library/prefer-user-event */
-import { fireEvent, render, screen } from "@testing-library/react";
-import type { JSX, ReactNode } from "react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { type JSX, type ReactNode, StrictMode } from "react";
 import { ElmComponent, useElmish } from "..";
 import type { InitResult, UpdateReturnType } from "../Types";
 import { renderWithModel } from ".";
@@ -116,4 +116,121 @@ describe("renderWithModel", () => {
 		// assert
 		expect(mockDispatch).toHaveBeenCalledWith({ name: "click" });
 	});
+
+	it("does not pass the fake model to the next render when the render function throws", () => {
+		// arrange
+		const model: Model = { value: "It works" };
+
+		expect(() =>
+			renderWithModel(() => {
+				throw new Error("render failed");
+			}, model),
+		).toThrow("render failed");
+
+		// act
+		render(<TestComponent />);
+
+		// assert
+		expect(screen.queryByText("It works")).not.toBeInTheDocument();
+	});
+
+	it("does not pass the fake model to an already mounted component re-rendering", () => {
+		// arrange
+		const model: Model = { value: "It works" };
+		const api = render(<TwoComponents showSecond={false} />);
+
+		// act
+		renderWithModel(() => api.rerender(<TwoComponents showSecond />), model);
+
+		// assert
+		expect(within(screen.getByRole("region", { name: "second" })).getByRole("paragraph")).toHaveTextContent("It works");
+		expect(within(screen.getByRole("region", { name: "first" })).getByRole("paragraph")).toBeEmptyDOMElement();
+	});
+
+	it("passes the fake model only to the first initialized component, not to its children", () => {
+		// arrange
+		const model: ParentModel = { title: "Fake title" };
+
+		// act
+		renderWithModel(() => render(<ParentComponent />), model);
+
+		// assert
+		expect(screen.getByText("Fake title")).toBeInTheDocument();
+		expect(within(screen.getByRole("region", { name: "child" })).getByRole("paragraph")).toBeEmptyDOMElement();
+	});
+
+	it("renders function component with provided model in StrictMode", () => {
+		// arrange
+		const model: Model = { value: "It works" };
+
+		// act
+		renderWithModel(
+			() =>
+				render(
+					<StrictMode>
+						<TestComponent />
+					</StrictMode>,
+				),
+			model,
+		);
+
+		// assert
+		expect(screen.getByText("It works")).toBeInTheDocument();
+	});
+
+	it("renders class component with provided model in StrictMode", () => {
+		// arrange
+		const model: Model = { value: "It works" };
+
+		// act
+		renderWithModel(
+			() =>
+				render(
+					<StrictMode>
+						<TestClassComponent />
+					</StrictMode>,
+				),
+			model,
+		);
+
+		// assert
+		expect(screen.getByText("It works")).toBeInTheDocument();
+	});
 });
+
+function TwoComponents({ showSecond }: { showSecond: boolean }): JSX.Element {
+	return (
+		<>
+			<section aria-label={"first"}>
+				<TestComponent />
+			</section>
+			{showSecond ? (
+				<section aria-label={"second"}>
+					<TestComponent />
+				</section>
+			) : null}
+		</>
+	);
+}
+
+interface ParentModel {
+	title: string;
+}
+
+function ParentComponent(): JSX.Element {
+	const [{ title }] = useElmish<Props, ParentModel, Message>({
+		name: "ParentComponent",
+		props: {},
+		init: () => [{ title: "Real title" }],
+		update: () => [{}],
+	});
+
+	return (
+		<div>
+			<h1>{title}</h1>
+			<section aria-label={"child"}>
+				<TestComponent />
+			</section>
+		</div>
+	);
+}

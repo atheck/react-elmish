@@ -13,7 +13,7 @@ import {
 } from "./Common";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
-import { getFakeOptionsOnce } from "./fakeOptions";
+import { getFakeOptions } from "./fakeOptions";
 import { Services } from "./Init";
 import type {
 	Dispatch,
@@ -101,7 +101,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		propsRef.current = props;
 	});
 
-	const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
+	// Only a component that is initializing may use the fake options of renderWithModel.
+	const fakeOptions = model === null ? getFakeOptions<TModel, TMessage>(name) : null;
 
 	// biome-ignore-start lint/nursery/useReactCompiler: The dispatch function must be stable and intentionally captures the mutable model and refs.
 	const dispatch = useCallback(

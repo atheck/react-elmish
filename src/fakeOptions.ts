@@ -30,28 +30,48 @@ interface RenderWithModelConfig<TModel, TMessage extends Message> extends Render
 
 interface FakeState {
 	currentFakeOptions: Nullable<RenderWithModelConfig<unknown, Message>>;
+	claimedBy: Nullable<string>;
 }
 
 const State: FakeState = {
 	currentFakeOptions: null,
+	claimedBy: null,
 };
 
+/**
+ * Sets the fake options for the components rendered next, or resets them with `null`.
+ * @param options The fake options.
+ */
 function setFakeOptions<TModel extends object, TMessage extends Message>(
 	options: Nullable<RenderWithModelConfig<TModel, TMessage>>,
 ): void {
 	// biome-ignore lint/nursery/noUnsafeTypeAssertion: We must cast the type here.
 	State.currentFakeOptions = options as RenderWithModelConfig<unknown, Message>;
+	State.claimedBy = null;
 }
 
-function getFakeOptionsOnce<TModel, TMessage extends Message>(): Nullable<RenderWithModelConfig<TModel, TMessage>> {
-	const temp = State.currentFakeOptions;
+/**
+ * Returns the fake options for a component that is initializing.
+ * The first component asking for them claims them by its name. Later calls with the same name
+ * (e.g. the second render of React's StrictMode) get them too, components with other names (e.g. children) get `null`.
+ * @param name The name of the initializing component.
+ * @returns The fake options or `null`.
+ */
+function getFakeOptions<TModel, TMessage extends Message>(name: string): Nullable<RenderWithModelConfig<TModel, TMessage>> {
+	if (!State.currentFakeOptions) {
+		return null;
+	}
 
-	State.currentFakeOptions = null;
+	State.claimedBy ??= name;
+
+	if (State.claimedBy !== name) {
+		return null;
+	}
 
 	// biome-ignore lint/nursery/noUnsafeTypeAssertion: We must cast the type here.
-	return temp as RenderWithModelConfig<TModel, TMessage>;
+	return State.currentFakeOptions as RenderWithModelConfig<TModel, TMessage>;
 }
 
 export type { RenderWithModelOptions };
 
-export { getFakeOptionsOnce, setFakeOptions };
+export { getFakeOptions, setFakeOptions };

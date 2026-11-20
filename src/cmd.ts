@@ -24,6 +24,8 @@ const cmd = {
 
 	/**
 	 * Command to call the subscriber.
+	 * If the subscriber dispatches asynchronously, let it return a promise (e.g. use an async function),
+	 * so `execCmd` of `react-elmish/testing` can wait for it.
 	 * @param {Sub<TMessage>} sub The subscriber function.
 	 */
 	ofSub<TMessage extends Message>(sub: Sub<TMessage>): Cmd<TMessage> {
@@ -43,11 +45,11 @@ const cmd = {
 		ofError: (error: Error) => TErrorMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TSuccessMessage | TErrorMessage> {
-		const bind = (dispatch: Dispatch<TSuccessMessage | TErrorMessage>): void => {
+		const bind = (dispatch: Dispatch<TSuccessMessage | TErrorMessage>): Promise<void> | undefined => {
 			try {
 				const taskResult = task(...args);
 
-				Promise.resolve(taskResult)
+				return Promise.resolve(taskResult)
 					.then((result) => {
 						const msg = ofSuccess(result);
 
@@ -87,11 +89,14 @@ const cmd = {
 		ofSuccess: (result: Awaited<TReturn>) => TSuccessMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TSuccessMessage> {
-		const bind = (dispatch: Dispatch<TSuccessMessage>, fallback: FallbackHandler = defaultFallbackHandler): void => {
+		const bind = (
+			dispatch: Dispatch<TSuccessMessage>,
+			fallback: FallbackHandler = defaultFallbackHandler,
+		): Promise<void> | undefined => {
 			try {
 				const taskResult = task(...args);
 
-				Promise.resolve(taskResult)
+				return Promise.resolve(taskResult)
 					.then((result) => {
 						const msg = ofSuccess(result);
 
@@ -119,11 +124,11 @@ const cmd = {
 		ofError: (error: Error) => TErrorMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TErrorMessage> {
-		const bind = (dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): void => {
+		const bind = (dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): Promise<void> | undefined => {
 			try {
 				const taskResult = task(...args);
 
-				Promise.resolve(taskResult)
+				return Promise.resolve(taskResult)
 					.then(() => fallback?.())
 					.catch((ex: unknown) => {
 						// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
@@ -155,11 +160,11 @@ const cmd = {
 		task: (...args: TArgs) => unknown,
 		...args: TArgs
 	): Cmd<TErrorMessage> {
-		const bind = (_dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): void => {
+		const bind = (_dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): Promise<void> | undefined => {
 			try {
 				const taskResult = task(...args);
 
-				Promise.resolve(taskResult)
+				return Promise.resolve(taskResult)
 					.then(() => fallback?.())
 					.catch(() => fallback?.());
 			} catch {

@@ -2,7 +2,7 @@ import React from "react";
 import { execCmd, hasModelChanged, logMessage } from "./Common";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
-import { getFakeOptionsOnce } from "./fakeOptions";
+import { getFakeOptions } from "./fakeOptions";
 import { Services } from "./Init";
 import type { Cmd, DisposeFunction, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
 
@@ -40,7 +40,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	) {
 		super(props);
 
-		const fakeOptions = getFakeOptionsOnce<TModel, TMessage>();
+		const fakeOptions = getFakeOptions<TModel, TMessage>(name);
 
 		if (fakeOptions?.dispatch) {
 			this.dispatch = fakeOptions.dispatch;

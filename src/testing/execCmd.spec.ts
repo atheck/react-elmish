@@ -231,4 +231,60 @@ describe("execCmd", () => {
 		// assert
 		expect(messages).toStrictEqual([null]);
 	});
+
+	it("resolves for a sub that neither dispatches nor calls the fallback", async () => {
+		// arrange
+		const commands = cmd.ofSub<Message>(() => {
+			// does not dispatch
+		});
+
+		// act
+		const messages = await withTimeout(execCmd(commands));
+
+		// assert
+		expect(messages).toStrictEqual([null]);
+	});
+
+	it("returns all messages of a sub dispatching several messages", async () => {
+		// arrange
+		const commands = cmd.batch<Message>(
+			cmd.ofSub((dispatch) => {
+				dispatch({ name: "Msg1" });
+				dispatch({ name: "Msg2" });
+			}),
+			cmd.ofMsg({ name: "Error" }),
+		);
+
+		// act
+		const messages = await withTimeout(execCmd(commands));
+
+		// assert
+		expect(messages).toStrictEqual([{ name: "Msg1" }, { name: "Msg2" }, { name: "Error" }]);
+	});
+
+	it("waits for an async sub", async () => {
+		// arrange
+		// biome-ignore lint/nursery/noMisusedPromises: execCmd waits for the promise returned by an async sub.
+		const commands = cmd.ofSub<Message>(async (dispatch) => {
+			await Promise.resolve();
+			dispatch({ name: "Msg1" });
+		});
+
+		// act
+		const messages = await withTimeout(execCmd(commands));
+
+		// assert
+		expect(messages).toStrictEqual([{ name: "Msg1" }]);
+	});
 });
+
+async function withTimeout<TResult>(promise: Promise<TResult>): Promise<TResult | "timed out"> {
+	const result = await Promise.race([
+		promise,
+		new Promise<"timed out">((resolve) => {
+			setTimeout(() => resolve("timed out"), 100);
+		}),
+	]);
+
+	return result;
+}
