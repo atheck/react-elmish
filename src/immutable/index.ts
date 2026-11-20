@@ -12,6 +12,7 @@ export type {
 	DisposeFunction,
 	InitResult,
 	Message,
+	MsgSource,
 	SubscriptionResult,
 } from "../Types";
 export { ElmComponent } from "./ElmComponent";
