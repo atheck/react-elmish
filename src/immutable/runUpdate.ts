@@ -46,14 +46,16 @@ function runUpdate<TProps, TModel, TMessage extends Message>(
 	patchListener?: PatchListener,
 ): [Immutable<TModel>, ...Commands<TMessage>] {
 	const [defer, getDeferred] = createDefer<TMessage>();
+	// The options template may replace `defer` (in tests), so the base handlers must get it, too.
+	const options = { defer, ...optionsTemplate };
 	const commands: UpdateReturnType<TMessage> = [];
 
 	const updatedModel = produce(
 		model,
 		(draft: Draft<TModel>) => {
-			const callBase = createCallBase(msg, draft, props, { defer });
+			const callBase = createCallBase(msg, draft, props, options);
 
-			commands.push(...callUpdate(update, msg, draft, props, { defer, callBase, ...optionsTemplate }));
+			commands.push(...callUpdate(update, msg, draft, props, { callBase, ...options }));
 		},
 		patchListener,
 	);

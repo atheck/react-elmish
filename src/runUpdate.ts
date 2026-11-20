@@ -43,9 +43,11 @@ function runUpdate<TProps, TModel, TMessage extends Message>(
 	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
 ): UpdateReturnType<TModel, TMessage> {
 	const [defer, getDeferred] = createDefer<TModel, TMessage>();
-	const callBase = createCallBase(msg, model, props, { defer });
+	// The options template may replace `defer` (in tests), so the base handlers must get it, too.
+	const options = { defer, ...optionsTemplate };
+	const callBase = createCallBase(msg, model, props, options);
 
-	const [updatedModel, ...commands] = callUpdate(update, msg, model, props, { defer, callBase, ...optionsTemplate });
+	const [updatedModel, ...commands] = callUpdate(update, msg, model, props, { callBase, ...options });
 
 	const [deferredModel, deferredCommands] = getDeferred();
 

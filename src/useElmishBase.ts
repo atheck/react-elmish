@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import {
+	bindToInit,
 	execCmd,
 	getDispatch,
 	logMessage,
@@ -147,6 +148,8 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 		setModel(null);
 	};
 
+	const initDispatch = bindToInit(dispatch, () => initCountRef.current, name);
+
 	useReInit(resetModel, reInitOn);
 	// When React mounts the component again (e.g. in StrictMode) after the model has been disposed, we initialize it again.
 	useRemount(() => {
@@ -157,9 +160,9 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 		resetModel();
 	});
 	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
-	useInitCommands(dispatch, pendingInitCommandsRef, initCountRef.current);
+	useInitCommands(initDispatch, pendingInitCommandsRef, initCountRef.current);
 	// eslint-disable-next-line react/refs -- The init count only changes in runInit above, during this render.
-	useSubscription(subscription, initializedModel, props, dispatch, initCountRef.current);
+	useSubscription(subscription, initializedModel, props, initDispatch, initCountRef.current);
 	// biome-ignore-end lint/nursery/useReactCompiler: See above.
 	useDispose(dispose, initializedModel, reInitOn, () => {
 		isDisposedRef.current = true;
@@ -170,11 +173,14 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 	function handleMessage(msg: TMessage): boolean {
 		const currentModel = currentModelRef.current;
 
+		const options = optionsRef.current;
+
 		if (currentModel === null) {
+			// The model has been reset and is initialized again with the next render.
+			Services.logger?.debug("Dropped message while initializing", options.name, msg);
+
 			return false;
 		}
-
-		const options = optionsRef.current;
 
 		logMessage(options.name, msg);
 
@@ -183,7 +189,10 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message>({
 
 		currentModelRef.current = updatedModel;
 
-		execCmd(dispatch, ...commands);
+		execCmd(
+			bindToInit(dispatch, () => initCountRef.current, options.name),
+			...commands,
+		);
 
 		return isModified;
 	}

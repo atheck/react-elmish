@@ -126,3 +126,25 @@ describe.each([
 		expect(screen.getByText(`model ${lastInitCount}`)).toBeInTheDocument();
 	});
 });
+
+describe.each([
+	["useElmish", MutableComponent],
+	["immutable useElmish", ImmutableComponent],
+])("dispose function changes with %s", (_name, Component) => {
+	it("calls the latest dispose function on unmount", () => {
+		// arrange
+		const [props] = createProps();
+		const mockFirstDispose = jest.fn();
+		const mockLatestDispose = jest.fn();
+		const api = render(<Component {...props} dispose={mockFirstDispose} />);
+
+		api.rerender(<Component {...props} dispose={mockLatestDispose} />);
+
+		// act
+		api.unmount();
+
+		// assert
+		expect(mockFirstDispose).not.toHaveBeenCalled();
+		expect(mockLatestDispose).toHaveBeenCalledWith({ value: "model 1" });
+	});
+});

@@ -1,5 +1,5 @@
 import React from "react";
-import { execCmd, getDispatch, logMessage } from "./Common";
+import { bindToInit, execCmd, getDispatch, logMessage } from "./Common";
 import { getFakeOptions } from "./fakeOptions";
 import { Services } from "./Init";
 import type { Commands, Dispatch, DisposeFunction, InitFunction, Message, Nullable } from "./Types";
@@ -32,11 +32,14 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 	 */
 	public readonly dispatch: Dispatch<TMessage>;
 
+	readonly #name: string;
 	readonly #disposeHandler: DisposeFunction<TStoredModel> | undefined;
 	readonly #initialize: () => void;
 	#initCommands: Nullable<Commands<TMessage>> = null;
 	#isMounted = false;
 	#isDisposed = false;
+	// The number of times the model has been initialized. The messages of commands of a previous initialization are dropped.
+	#initCount = 0;
 	// Assigned by #initialize, which is called in the constructor.
 	#currentModel!: TStoredModel;
 
@@ -52,6 +55,7 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 
 		const fakeOptions = getFakeOptions<TModel, TMessage>(name);
 
+		this.#name = name;
 		this.#disposeHandler = disposeHandler;
 		this.#initialize = (): void => {
 			const [model, ...commands] = fakeOptions?.model ? [fakeOptions.model] : init(this.props);
@@ -60,6 +64,7 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 
 			this.#currentModel = toStoredModel(model);
 			this.#initCommands = commands;
+			this.#initCount++;
 		};
 
 		this.#initialize();
@@ -73,7 +78,7 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 
 				this.#currentModel = updatedModel;
 
-				execCmd(this.dispatch, ...updateCommands);
+				execCmd(this.#bindToInit(), ...updateCommands);
 
 				return isModified;
 			},
@@ -110,7 +115,7 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 		this.#initCommands = null;
 
 		if (initCommands) {
-			execCmd(this.dispatch, ...initCommands);
+			execCmd(this.#bindToInit(), ...initCommands);
 		}
 	}
 
@@ -128,6 +133,10 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 
 		this.#disposeHandler(this.#currentModel);
 		this.#isDisposed = true;
+	}
+
+	#bindToInit(): Dispatch<TMessage> {
+		return bindToInit(this.dispatch, () => this.#initCount, this.#name);
 	}
 
 	/**

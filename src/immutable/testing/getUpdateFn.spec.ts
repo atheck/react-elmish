@@ -167,6 +167,32 @@ describe("getUpdateFn", () => {
 			expect(updatedModel).toStrictEqual({ foobar: ["bar"] });
 			expect(messages).toStrictEqual([{ name: "foo" }]);
 		});
+
+		it("passes the defer function of the options template to the base handler", () => {
+			// arrange
+			const mockDefer = jest.fn();
+			const baseUpdateMap: UpdateMap<Props, Model, Message> = {
+				...updateMap,
+				foobar(_msg, _model, _props, { defer }) {
+					defer(cmd.ofMsg({ name: "foo" }));
+
+					return [];
+				},
+			};
+			const updateFn = getUpdateFn<Props, Model, Message>({
+				...baseUpdateMap,
+				foobar(_msg, _model, _props, { callBase }) {
+					return callBase(baseUpdateMap.foobar);
+				},
+			});
+
+			// act
+			const [, ...commands] = updateFn({ name: "foobar" }, { ...initialModel }, {}, { defer: mockDefer });
+
+			// assert
+			expect(mockDefer).toHaveBeenCalledTimes(1);
+			expect(commands).toStrictEqual([]);
+		});
 	});
 
 	describe("removed properties", () => {

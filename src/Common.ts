@@ -184,6 +184,33 @@ function areValuesEqual(first: unknown[] | undefined, second: unknown[] | undefi
 	return first.every((value, index) => Object.is(value, second[index]));
 }
 
+/**
+ * Creates a dispatch function for the commands and subscriptions of one initialization of the model.
+ * Their messages are dropped once the model has been initialized again (e.g. after `reInitOn` changed),
+ * so the results of a previous initialization do not end up in the new model.
+ * @param dispatch The dispatch function of the component.
+ * @param getInitCount Returns the number of times the model has been initialized.
+ * @param name The name of the component, used for logging.
+ * @returns The dispatch function bound to the current initialization.
+ */
+function bindToInit<TMessage extends Message>(
+	dispatch: Dispatch<TMessage>,
+	getInitCount: () => number,
+	name: string,
+): Dispatch<TMessage> {
+	const initCount = getInitCount();
+
+	return (msg) => {
+		if (getInitCount() !== initCount) {
+			Services.logger?.debug("Dropped message of a previous initialization of", name, msg);
+
+			return;
+		}
+
+		dispatch(msg);
+	};
+}
+
 function getDispatch<TMessage extends Message>(
 	handleMessage: (msg: TMessage) => boolean,
 	callSetModel: () => void,
@@ -294,21 +321,27 @@ function useDispose<TModel>(
 	reInitOn: unknown[] | undefined,
 	onDisposed: () => void,
 ): void {
-	const modelRef = useRef(model);
+	// The cleanup runs later, so it reads the latest values through this ref.
+	const latestRef = useRef({ dispose, model, onDisposed });
 
 	useLayoutEffect(() => {
-		modelRef.current = model;
+		latestRef.current = { dispose, model, onDisposed };
 	});
 
-	useEffect(() => {
-		if (dispose) {
-			return () => {
-				dispose(modelRef.current);
-				onDisposed();
-			};
-		}
+	useEffect(
+		() => () => {
+			const latest = latestRef.current;
+
+			if (!latest.dispose) {
+				return;
+			}
+
+			latest.dispose(latest.model);
+			latest.onDisposed();
+		},
 		// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to run dispose when the reInitOn dependencies change or on unmount
-	}, reInitOn ?? []);
+		reInitOn ?? [],
+	);
 }
 
 /**
@@ -335,6 +368,7 @@ function useRemount(onRemount: () => void): void {
 }
 
 export {
+	bindToInit,
 	execCmd,
 	getDispatch,
 	hasModelChanged,
