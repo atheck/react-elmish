@@ -35,19 +35,18 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
 ) => [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]] {
 	return function updateFn(msg, model, props, optionsTemplate): [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]] {
 		const [defer, getDeferred] = createDefer<TMessage>();
-		const callBase = createCallBase(msg, model, props, { defer });
-
-		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
-			defer,
-			callBase,
-			...optionsTemplate,
-		};
 
 		const commands: (Cmd<TMessage> | undefined)[] = [];
 		const recordedPatches: Patch[] = [];
 		const updatedModel = produce(
 			model,
 			(draft: Draft<TModel>) => {
+				const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
+					defer,
+					callBase: createCallBase(msg, draft, props, { defer }),
+					...optionsTemplate,
+				};
+
 				commands.push(...callUpdate(update, msg, draft, props, options));
 			},
 			(patches) => {
@@ -82,19 +81,18 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 ) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
 	return async function updateAndExecCmdFn(msg, model, props, optionsTemplate): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
 		const [defer, getDeferred] = createDefer<TMessage>();
-		const callBase = createCallBase(msg, model, props, { defer });
-
-		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
-			defer,
-			callBase,
-			...optionsTemplate,
-		};
 
 		const commands: (Cmd<TMessage> | undefined)[] = [];
 		const recordedPatches: Patch[] = [];
 		const updatedModel = produce(
 			model,
 			(draft: Draft<TModel>) => {
+				const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
+					defer,
+					callBase: createCallBase(msg, draft, props, { defer }),
+					...optionsTemplate,
+				};
+
 				commands.push(...callUpdate(update, msg, draft, props, options));
 			},
 			(patches) => {

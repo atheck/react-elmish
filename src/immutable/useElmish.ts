@@ -16,7 +16,7 @@ import { Services } from "../Init";
 import type { Cmd, Dispatch, DisposeFunction, InitFunction, Message, Nullable } from "../Types";
 import { createCallBase } from "./createCallBase";
 import { createDefer } from "./createDefer";
-import type { Subscription, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
+import type { DeferFunction, Subscription, UpdateFunction, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "./Types";
 
 /**
  * Options for the `useElmish` hook.
@@ -152,12 +152,8 @@ function useElmish<TProps, TModel, TMessage extends Message>({
 		logMessage(name, nextMsg);
 
 		const [defer, getDeferred] = createDefer<TMessage>();
-		const callBase = createCallBase<TProps, TModel, TMessage>(nextMsg, currentModel, propsRef.current, { defer });
 
-		const [isModified, updatedModel, ...commands] = callUpdate(update, nextMsg, currentModel, propsRef.current, {
-			defer,
-			callBase,
-		});
+		const [isModified, updatedModel, ...commands] = callUpdate(update, nextMsg, currentModel, propsRef.current, defer);
 
 		const deferredCommands = getDeferred();
 
@@ -174,13 +170,16 @@ function callUpdate<TProps, TModel, TMessage extends Message>(
 	msg: TMessage,
 	model: Immutable<TModel>,
 	props: TProps,
-	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
+	defer: DeferFunction<TMessage>,
 ): [boolean, Immutable<TModel>, ...(Cmd<TMessage> | undefined)[]] {
 	const commands: (Cmd<TMessage> | undefined)[] = [];
 	let isModified = false;
 	const updatedModel = produce(
 		model,
 		(draft: Draft<TModel>) => {
+			const callBase = createCallBase<TProps, TModel, TMessage>(msg, draft, props, { defer });
+			const options: UpdateFunctionOptions<TProps, TModel, TMessage> = { defer, callBase };
+
 			if (typeof update === "function") {
 				commands.push(...update(draft, msg, props, options));
 

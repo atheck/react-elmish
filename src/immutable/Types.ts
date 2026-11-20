@@ -12,9 +12,10 @@ type CallBaseFunction<TModel, TProps, TMessage> = (
 		msg: TMessage,
 		model: Draft<TModel>,
 		props: TProps,
-		options: UpdateFunctionOptions<TProps, TModel, TMessage>,
+		// biome-ignore lint/suspicious/noExplicitAny: any is needed here to allow options of any type
+		...args: any[]
 	) => UpdateReturnType<Message>,
-) => [Immutable<TModel>, UpdateReturnType<TMessage>];
+) => UpdateReturnType<TMessage>;
 
 type UpdateMapFunction<TProps, TModel, TMessage> = (
 	msg: TMessage,
@@ -23,9 +24,9 @@ type UpdateMapFunction<TProps, TModel, TMessage> = (
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ) => UpdateReturnType<TMessage>;
 
-interface UpdateFunctionOptions<TProps, TModel, TMessage> {
+interface UpdateFunctionOptions<TProps, TModel, TMessage, TSpecificMessage = TMessage> {
 	defer: DeferFunction<TMessage>;
-	callBase: CallBaseFunction<TModel, TProps, TMessage>;
+	callBase: CallBaseFunction<TModel, TProps, TSpecificMessage>;
 }
 
 type UpdateFunction<TProps, TModel, TMessage extends Message> = (
@@ -44,7 +45,7 @@ type UpdateMap<TProps, TModel, TMessage extends Message> = {
 		msg: TMessage & { name: TMessageName },
 		model: Draft<TModel>,
 		props: TProps,
-		options: UpdateFunctionOptions<TProps, TModel, TMessage>,
+		options: UpdateFunctionOptions<TProps, TModel, TMessage, TMessage & { name: TMessageName }>,
 	) => UpdateReturnType<TMessage>;
 };
 

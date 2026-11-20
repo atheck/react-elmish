@@ -116,11 +116,11 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 			logMessage(this.componentName, currentMessage);
 
 			const [defer, getDeferred] = createDefer<TMessage>();
-			const callBase = createCallBase(currentMessage, this.currentModel, this.props, { defer });
-
 			const commands: UpdateReturnType<TMessage> = [];
 
 			this.currentModel = produce(this.currentModel, (draft: Draft<TModel>) => {
+				const callBase = createCallBase(currentMessage, draft, this.props, { defer });
+
 				commands.push(...this.update(draft, currentMessage, this.props, { defer, callBase }));
 			});
 

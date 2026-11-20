@@ -1,4 +1,5 @@
 import { type RenderResult, render } from "@testing-library/react";
+import type { Draft } from "immer";
 import type { JSX } from "react";
 import { cmd } from "../cmd";
 import type { Cmd, InitResult, SubscriptionResult } from "../Types";
@@ -338,6 +339,92 @@ describe("useElmish", () => {
 		api.rerender(<TestComponent {...props} />);
 
 		expect(mockSub).toHaveBeenCalledTimes(2);
+	});
+
+	it("applies the model changes of the base handler called with callBase", () => {
+		// arrange
+		const base = (_msg: Message, model: Draft<Model>): UpdateReturnType<Message> => {
+			model.value1 = "Base";
+
+			return [];
+		};
+		const update = (
+			model: Model,
+			_msg: Message,
+			_props: Props,
+			{ callBase }: UpdateFunctionOptions<Props, Model, Message>,
+		): UpdateReturnType<Message> => {
+			model.value2 = "Derived";
+			callBase(base);
+
+			return [];
+		};
+		const props: Props = {
+			init: () => defaultInit(cmd.ofMsg({ name: "Test" })),
+			update,
+		};
+
+		// act
+		renderComponent(props);
+
+		// assert
+		expect(componentModel).toStrictEqual({ value1: "Base", value2: "Derived" });
+	});
+
+	it("executes the commands of the base handler passed to defer", () => {
+		// arrange
+		const base = (_msg: Message, model: Draft<Model>): UpdateReturnType<Message> => {
+			model.value1 = "Base";
+
+			return [cmd.ofMsg({ name: "Third" })];
+		};
+		const update = jest
+			.fn(defaultUpdate)
+			.mockImplementationOnce((_model, _msg, _props, { defer, callBase }): UpdateReturnType<Message> => {
+				defer(...callBase(base));
+
+				return [];
+			});
+		const props: Props = {
+			init: () => defaultInit(cmd.ofMsg({ name: "Test" })),
+			update,
+		};
+
+		// act
+		renderComponent(props);
+
+		// assert
+		expect(componentModel).toStrictEqual({ value1: "Base", value2: "Third" });
+	});
+
+	it("passes the current draft with previous changes to the base handler called with callBase", () => {
+		// arrange
+		const base = (_msg: Message, model: Draft<Model>): UpdateReturnType<Message> => {
+			model.value1 = `Base sees ${model.value2}`;
+
+			return [];
+		};
+		const update = (
+			model: Model,
+			_msg: Message,
+			_props: Props,
+			{ callBase }: UpdateFunctionOptions<Props, Model, Message>,
+		): UpdateReturnType<Message> => {
+			model.value2 = "Derived";
+			callBase(base);
+
+			return [];
+		};
+		const props: Props = {
+			init: () => defaultInit(cmd.ofMsg({ name: "Test" })),
+			update,
+		};
+
+		// act
+		renderComponent(props);
+
+		// assert
+		expect(componentModel?.value1).toBe("Base sees Derived");
 	});
 });
 

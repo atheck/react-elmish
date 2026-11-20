@@ -1,9 +1,10 @@
 import { type RenderResult, render } from "@testing-library/react";
-import type { JSX } from "react";
+import type { Draft } from "immer";
+import { createRef, type JSX } from "react";
 import { cmd } from "../cmd";
 import type { Cmd } from "../Types";
 import { ElmComponent } from "./ElmComponent";
-import type { UpdateReturnType } from "./Types";
+import type { UpdateFunction, UpdateReturnType } from "./Types";
 
 describe("ElmComponent", () => {
 	it("calls the init function", () => {
@@ -60,6 +61,31 @@ describe("ElmComponent", () => {
 		// assert
 		expect(update).toHaveBeenCalledTimes(1);
 	});
+
+	it("applies the model changes of the base handler called with callBase", () => {
+		// arrange
+		const ref = createRef<TestComponent>();
+		const base = (_msg: Message, model: Draft<Model>): UpdateReturnType<Message> => {
+			model.value += 10;
+
+			return [];
+		};
+		const props: Props = {
+			init: () => [{ value: 1 }, cmd.ofMsg({ name: "Test" })],
+			update(model, _msg, _props, { callBase }) {
+				model.value *= 2;
+				callBase(base);
+
+				return [];
+			},
+		};
+
+		// act
+		render(<TestComponent ref={ref} {...props} />);
+
+		// assert
+		expect(ref.current?.model).toStrictEqual({ value: 12 });
+	});
 });
 
 interface Message {
@@ -72,7 +98,7 @@ interface Model {
 
 interface Props {
 	init: () => [Model, Cmd<Message>];
-	update: (model: Model, msg: Message, props: Props) => UpdateReturnType<Message>;
+	update: UpdateFunction<Props, Model, Message>;
 }
 
 class TestComponent extends ElmComponent<Model, Message, Props> {

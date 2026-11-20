@@ -123,4 +123,48 @@ describe("getUpdateFn", () => {
 			expect(messages).toStrictEqual([{ name: "foo" }]);
 		});
 	});
+
+	describe("callBase", () => {
+		const derivedUpdateMap: UpdateMap<Props, Model, Message> = {
+			...updateMap,
+			foobar(_msg, model, _props, { defer, callBase }) {
+				model.foo = "derived";
+				defer(...callBase(updateMap.foobar));
+
+				return [];
+			},
+		};
+
+		it("includes the model changes of the base handler in the diff", () => {
+			const updateFn = getUpdateFn(derivedUpdateMap);
+
+			const [updatedModel] = updateFn({ name: "foobar" }, { ...initialModel }, {});
+
+			expect(updatedModel).toStrictEqual({ foo: "derived", foobar: ["bar"] });
+		});
+
+		it("executes the deferred commands of the base handler with getUpdateAndExecCmdFn", async () => {
+			const baseUpdateMap: UpdateMap<Props, Model, Message> = {
+				...updateMap,
+				foobar(_msg, model) {
+					model.foobar.push("bar");
+
+					return [cmd.ofMsg({ name: "foo" })];
+				},
+			};
+			const updateAndExecCmd = getUpdateAndExecCmdFn<Props, Model, Message>({
+				...baseUpdateMap,
+				foobar(_msg, _model, _props, { defer, callBase }) {
+					defer(...callBase(baseUpdateMap.foobar));
+
+					return [];
+				},
+			});
+
+			const [updatedModel, messages] = await updateAndExecCmd({ name: "foobar" }, { ...initialModel }, {});
+
+			expect(updatedModel).toStrictEqual({ foobar: ["bar"] });
+			expect(messages).toStrictEqual([{ name: "foo" }]);
+		});
+	});
 });
