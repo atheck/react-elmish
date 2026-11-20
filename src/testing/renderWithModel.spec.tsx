@@ -196,6 +196,43 @@ describe("renderWithModel", () => {
 		// assert
 		expect(screen.getByText("It works")).toBeInTheDocument();
 	});
+
+	it("keeps the fake model until the promise returned by the render function resolves", async () => {
+		// arrange
+		const model: Model = { value: "It works" };
+		const { promise, resolve } = Promise.withResolvers<void>();
+		const result = renderWithModel(async () => {
+			await promise;
+		}, model);
+
+		// act
+		render(<TestComponent />);
+		resolve();
+		await result;
+		await Promise.resolve();
+		render(<TestComponent />);
+
+		// assert
+		expect(screen.getAllByRole("paragraph").map((element) => element.textContent)).toStrictEqual(["It works", ""]);
+	});
+
+	it("resets the fake model when the promise returned by the render function rejects", async () => {
+		// arrange
+		const model: Model = { value: "It works" };
+		const { promise, reject } = Promise.withResolvers<void>();
+		const result = renderWithModel(async () => {
+			await promise;
+		}, model);
+
+		// act
+		reject(new Error("render failed"));
+		await expect(result).rejects.toThrow("render failed");
+		await Promise.resolve();
+		render(<TestComponent />);
+
+		// assert
+		expect(screen.queryByText("It works")).not.toBeInTheDocument();
+	});
 });
 
 function TwoComponents({ showSecond }: { showSecond: boolean }): JSX.Element {

@@ -14,6 +14,7 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch --coverage",
     "lint": "biome lint src demo/src --max-diagnostics 200 && npx eslint src demo/src",
+    "format": "biome format --write .",
     "update": "npx -y npm-check-updates -w -i --install never && npx -y npm-check-updates -w -i --target minor --install never && npx -y npm-check-updates -w -i --target patch --install never && npm update && npm audit signatures",
     "semantic-release": "semantic-release",
     "demo:dev": "npm run build && npm run dev -w demo",

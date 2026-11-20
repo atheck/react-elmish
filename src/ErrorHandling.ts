@@ -54,14 +54,20 @@ function errorHandler<TModel, TMessage>(): {
  * @param {Error} error The error.
  */
 function handleError<TModel, TMessage>(error: Error): UpdateReturnType<TModel, TMessage> {
-	if (Services.errorMiddleware) {
-		Services.errorMiddleware(error);
-	}
-	Services.logger?.error(error);
+	reportError(error);
 
 	return [{}];
 }
 
+/**
+ * Passes the error to the error handling middleware and the logger, if specified.
+ * @param {Error} error The error.
+ */
+function reportError(error: Error): void {
+	Services.errorMiddleware?.(error);
+	Services.logger?.error(error);
+}
+
 export type { ErrorMessage };
 
-export { errorHandler, errorMsg, handleError };
+export { errorHandler, errorMsg, handleError, reportError };

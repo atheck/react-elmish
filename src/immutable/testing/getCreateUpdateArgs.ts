@@ -1,6 +1,5 @@
 import type { Immutable } from "immer";
 import type { InitFunction, Message } from "../../Types";
-import type { UpdateFunctionOptions } from "../Types";
 import { createModelAndProps } from "./createModelAndProps";
 import type { UpdateArgsFactory } from "./createUpdateArgsFactory";
 
@@ -19,16 +18,11 @@ function getCreateUpdateArgs<TProps, TModel, TMessage extends Message>(
 	init: InitFunction<TProps, TModel, TMessage>,
 	initProps: () => TProps,
 ): UpdateArgsFactory<TProps, TModel, TMessage> {
-	return function createUpdateArgs(
-		msg: TMessage,
-		modelTemplate?: Partial<TModel>,
-		propsTemplate?: Partial<TProps>,
-		optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-	): [TMessage, Immutable<TModel>, TProps, Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>?] {
-		const args = createModelAndProps(init, initProps, modelTemplate, propsTemplate);
-
-		return [msg, ...args, optionsTemplate];
-	};
+	return (msg, modelTemplate, propsTemplate, optionsTemplate) => [
+		msg,
+		...createModelAndProps(init, initProps, modelTemplate, propsTemplate),
+		optionsTemplate,
+	];
 }
 
 type ModelAndPropsFactory<TProps, TModel> = (
@@ -51,9 +45,7 @@ function getCreateModelAndProps<TProps, TModel, TMessage extends Message>(
 	init: InitFunction<TProps, TModel, TMessage>,
 	initProps: () => TProps,
 ): ModelAndPropsFactory<TProps, TModel> {
-	return function create(modelTemplate?: Partial<TModel>, propsTemplate?: Partial<TProps>): [Immutable<TModel>, TProps] {
-		return createModelAndProps(init, initProps, modelTemplate, propsTemplate);
-	};
+	return (modelTemplate, propsTemplate) => createModelAndProps(init, initProps, modelTemplate, propsTemplate);
 }
 
 export type { ModelAndPropsFactory };

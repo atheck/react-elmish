@@ -145,7 +145,7 @@ export const update: UpdateMap<Props, Model, Message> = {
 Alternatively we can use an `update` function:
 
 ```ts
-export const update = (model: Model, msg: Msg, props: Props): UpdateReturnType<Model, Message> => {
+export const update = (model: Model, msg: Message, props: Props): UpdateReturnType<Model, Message> => {
     switch (msg.name) {
         case "increment":
             return [{ value: model.value + 1 }];
@@ -225,6 +225,8 @@ class App extends ElmComponent<Model, Message, Props> {
 ```
 
 > **Note**: When using a class component, you can only use an `update` function. Class components do not support `UpdateMap`s.
+>
+> Class components also do not support [subscriptions](#subscriptions), [re-initialization with `reInitOn`](#re-initialize-the-component), or the [Redux Dev Tools](#redux-dev-tools). Use the `useElmish` hook if you need one of these features.
 
 You can use these components like any other React component.
 
@@ -420,7 +422,7 @@ When `noop()` is returned from a callback, the dispatch is silently skipped — 
 
 ### Working with external sources of events
 
-If you want to use external sources of events (e.g. a timer), you can use a `subscription`. With this those events can be processed by our `update` handler.
+If you want to use external sources of events (e.g. a timer), you can pass a `subscription` to the `useElmish` hook (class components do not support subscriptions). With this those events can be processed by our `update` handler.
 
 Let's define a `Model` and a `Message`:
 
@@ -499,7 +501,7 @@ The destructor is called when the component is removed from the DOM.
 
 ## Re-Initialize the component
 
-If you want to re-initialize the component when a prop (or another value) changes, you can pass a `reInitOn` array to the `useElmish` hook. This array contains the dependencies that trigger a re-initialization of the component.
+If you want to re-initialize the component when a prop (or another value) changes, you can pass a `reInitOn` array to the `useElmish` hook (class components do not support this). This array contains the dependencies that trigger a re-initialization of the component.
 
 ```tsx
 interface Props {
@@ -658,7 +660,7 @@ import { update } from "./MyComponent";
 const updateFn = getUpdateFn(update);
 
 // Call the update function in the test
-const [model, cmd] = updateFn(msg, model, props);
+const [newModel, cmd] = updateFn(msg, model, props);
 ```
 
 ## Setup
@@ -1177,8 +1179,11 @@ To test your **update** handler you can use some helper functions in `react-elmi
 | `getCreateUpdateArgs` | Creates a factory function to create a message, a model, and props in a test. |
 | `createUpdateArgsFactory` | This is an alternative for `getCreateUpdateArgs`. Creates a factory function to create a message, a model, and props in a test. |
 | `getCreateModelAndProps` | Creates a factory function to create a model and props, which can be passed to an `update` or `subscription` function in a test. |
+| `createModelAndProps` | Creates a model with the `init` function and props in a test. It takes the `init` function, a function to create the initial props, and optional templates to override the model and the props. |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
+| `execCmdWithDispatch` | Executes the provided commands with the given `dispatch` function, e.g. a `jest.fn()`. Unlike `execCmd`, it does not wait for asynchronous commands. |
 | `execSubscription` | Executes a `subscription` function with a fake dispatch function and returns its combined dispose function. |
+| `renderWithModel` | Renders a component with a fake model and an optional fake `dispatch` function, see [UI Tests](#ui-tests). |
 
 ### Testing the init function
 
@@ -1210,15 +1215,16 @@ import { updateMap } from "./MyComponent";
 const updateFn = getUpdateFn(updateMap);
 
 // Call the update function in the test
-const [model, cmd] = updateFn(msg, model, props);
+const [newModel, cmd] = updateFn(msg, model, props);
 ```
 
 A simple test:
 
 ```ts
-import { getCreateUpdateArgs, createUpdateArgsFactory, execCmd } from "react-elmish/testing";
-import { init, Msg } from "./MyComponent";
+import { getCreateUpdateArgs, createUpdateArgsFactory, execCmd, getUpdateFn } from "react-elmish/testing";
+import { init, Msg, updateMap } from "./MyComponent";
 
+const updateFn = getUpdateFn(updateMap);
 const createUpdateArgs = getCreateUpdateArgs(init, () => ({ /* initial props */ }));
 // Or: const createUpdateArgs = createUpdateArgsFactory(() => ({ /* initial model */ }), () => ({ /* initial props */ }));
 
@@ -1259,8 +1265,10 @@ A command that does not dispatch any message resolves its slot with `null`. This
 There is an alternative function `getUpdateAndExecCmdFn` to get the `update` function for an update map, which immediately invokes the command and returns the messages.
 
 ```ts
-import { createUpdateArgs, getUpdateAndExecCmdFn } from "react-elmish/testing";
+import { getCreateUpdateArgs, getUpdateAndExecCmdFn } from "react-elmish/testing";
+import { init, Msg, updateMap } from "./MyComponent";
 
+const createUpdateArgs = getCreateUpdateArgs(init, () => ({ /* initial props */ }));
 const updateAndExecCmdFn = getUpdateAndExecCmdFn(updateMap);
 
 ...
@@ -1292,10 +1300,10 @@ You may have something like this in your `update` map:
 Then the `consecutiveUpdateFn` will execute all these commands in a row and return the final model after all commands have been executed.
 
 ```ts
-import { getConsecutiveUpdateFn, createUpdateArgsFactory } from "react-elmish/testing";
-import { init, Msg } from "./MyComponent";
+import { getConsecutiveUpdateFn, getCreateUpdateArgs } from "react-elmish/testing";
+import { init, Msg, updateMap } from "./MyComponent";
 
-const createUpdateArgs = createUpdateArgsFactory(init, () => ({ /* initial props */ }));
+const createUpdateArgs = getCreateUpdateArgs(init, () => ({ /* initial props */ }));
 const consecutiveUpdateFn = getConsecutiveUpdateFn(updateMap);
 
 it("updates the model and executes all commands", async () => {
@@ -1389,6 +1397,8 @@ init({
 
 Hint: You should only enable this in development mode.
 
+The Redux Dev Tools are only supported for components using the `useElmish` hook, not for class components.
+
 ## Migrations
 
 ### From v1.x to v2.x
@@ -1406,14 +1416,7 @@ Hint: You should only enable this in development mode.
 
 The signature of `useElmish` has changed. It takes an options object now. Thus there is no need for the `useElmishMap` function. Use the new `useElmish` hook with an `UpdateMap` instead.
 
-To use the old `useElmish` and `useElmishMap` functions, import them from the legacy namespace:
-
-```ts
-import { useElmish } from "react-elmish/dist/legacy/useElmish";
-import { useElmishMap } from "react-elmish/dist/legacy/useElmishMap";
-```
-
-**Notice**: These functions are marked as deprecated and will be removed in a later release.
+v3 still shipped the old `useElmish` and `useElmishMap` functions in a legacy namespace. They have been removed in v4 (see below).
 
 ### From v3.x to v4.x
 

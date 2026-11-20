@@ -1,5 +1,4 @@
-import type { Dispatch } from "react";
-import type { Cmd, Nullable, Sub } from "../Types";
+import type { Commands, Nullable, Sub } from "../Types";
 import { isPromiseLike } from "./isPromiseLike";
 
 /**
@@ -8,7 +7,7 @@ import { isPromiseLike } from "./isPromiseLike";
  * @param cmd The command to process.
  * @returns The array of dispatched messages in order, with `null` for every command which did not dispatch a message.
  */
-async function execCmd<TMessage>(...commands: (Cmd<TMessage> | undefined)[]): Promise<Nullable<TMessage>[]> {
+async function execCmd<TMessage>(...commands: Commands<TMessage>): Promise<Nullable<TMessage>[]> {
 	const subs = commands.filter((cmd) => cmd !== undefined).flat();
 	const results = await Promise.all(subs.map(execSub));
 
@@ -17,36 +16,18 @@ async function execCmd<TMessage>(...commands: (Cmd<TMessage> | undefined)[]): Pr
 
 async function execSub<TMessage>(sub: Sub<TMessage>): Promise<Nullable<TMessage>[]> {
 	const messages: TMessage[] = [];
-	let fallbackError: Error | undefined;
 
-	const result: unknown = sub(
-		(msg) => {
-			messages.push(msg);
-		},
-		(error) => {
-			fallbackError ??= error;
-		},
-	);
+	const result: unknown = sub((msg) => {
+		messages.push(msg);
+	});
 
 	if (isPromiseLike(result)) {
 		await result;
 	}
 
-	if (fallbackError) {
-		throw fallbackError;
-	}
-
-	return messages.length > 0 ? [...messages] : [null];
+	return messages.length > 0 ? messages : [null];
 }
 
-function execCmdWithDispatch<TMessage>(dispatch: Dispatch<TMessage>, ...commands: (Cmd<TMessage> | undefined)[]): void {
-	const definedCommands = commands.filter((cmd) => cmd !== undefined);
+export { execCmd as execCmdWithDispatch } from "../Common";
 
-	for (const cmd of definedCommands) {
-		for (const sub of cmd) {
-			sub(dispatch);
-		}
-	}
-}
-
-export { execCmd, execCmdWithDispatch };
+export { execCmd };

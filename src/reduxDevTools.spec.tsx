@@ -1,5 +1,5 @@
 import { act, render } from "@testing-library/react";
-import type { JSX } from "react";
+import { type JSX, useEffect } from "react";
 import { init as initElmish } from "./Init";
 import { useElmish as useImmutableElmish } from "./immutable";
 import type { ReduxDevTools, ReduxDevToolsExtension } from "./reduxDevTools";
@@ -14,6 +14,10 @@ interface Model {
 	value: number;
 }
 
+interface Props {
+	reInitValue?: number;
+}
+
 interface ReduxMessageCallbackHolder {
 	callback?: Parameters<ReduxDevTools["subscribe"]>[0];
 }
@@ -25,13 +29,27 @@ function init(): InitResult<Model, Message> {
 	return [{ value: 0 }];
 }
 
-function MutableComponent(): JSX.Element {
+/**
+ * Dispatches a message in an effect which runs after the model has been reset by a change of `reInitValue`.
+ */
+function useDispatchOnReInit(reInitValue: number | undefined, dispatch: Dispatch<Message>): void {
+	useEffect(() => {
+		if (reInitValue !== undefined) {
+			dispatch({ name: "increment" });
+		}
+	}, [reInitValue, dispatch]);
+}
+
+function MutableComponent({ reInitValue }: Props): JSX.Element {
 	const [model, dispatch] = useElmish<object, Model, Message>({
 		name: "MutableComponent",
 		props: {},
 		init,
+		reInitOn: [reInitValue],
 		update: (model) => [{ value: model.value + 1 }],
 	});
+
+	useDispatchOnReInit(reInitValue, dispatch);
 
 	/* eslint-disable react/globals, unicorn/no-top-level-assignment-in-function -- Test only. */
 	// biome-ignore lint/nursery/useReactCompiler: Test only.
@@ -43,17 +61,20 @@ function MutableComponent(): JSX.Element {
 	return <div />;
 }
 
-function ImmutableComponent(): JSX.Element {
+function ImmutableComponent({ reInitValue }: Props): JSX.Element {
 	const [model, dispatch] = useImmutableElmish<object, Model, Message>({
 		name: "ImmutableComponent",
 		props: {},
 		init,
+		reInitOn: [reInitValue],
 		update(model) {
 			model.value++;
 
 			return [];
 		},
 	});
+
+	useDispatchOnReInit(reInitValue, dispatch);
 
 	/* eslint-disable react/globals, unicorn/no-top-level-assignment-in-function -- Test only. */
 	// biome-ignore lint/nursery/useReactCompiler: Test only.
@@ -105,6 +126,30 @@ describe.each([
 
 		// assert
 		expect(devTools.init).toHaveBeenCalledWith({ value: 0 });
+	});
+
+	it("sends the processed messages with the updated model", () => {
+		// arrange
+		render(<Component />);
+
+		// act
+		act(() => componentDispatch?.({ name: "increment" }));
+
+		// assert
+		expect(devTools.send).toHaveBeenCalledTimes(1);
+		expect(devTools.send).toHaveBeenCalledWith("increment", { value: 1 });
+	});
+
+	it("does not send messages which are dropped while the model is initialized again", () => {
+		// arrange
+		const { rerender } = render(<Component />);
+
+		// act
+		rerender(<Component reInitValue={1} />);
+
+		// assert
+		expect(componentModel).toStrictEqual({ value: 0 });
+		expect(devTools.send).not.toHaveBeenCalled();
 	});
 
 	it("continues with the model the DevTools jumped to", () => {

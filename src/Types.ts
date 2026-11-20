@@ -1,3 +1,5 @@
+import type * as Variant from "./UpdateTypes";
+
 type Nullable<TType> = TType | null;
 
 interface Message {
@@ -9,13 +11,17 @@ interface Message {
  */
 type Dispatch<TMessage> = (msg: TMessage) => void;
 
-type FallbackHandler = (error?: Error) => void;
-type Sub<TMsg> = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => void;
+type Sub<TMsg> = (dispatch: Dispatch<TMsg>) => void;
 
 /**
  * Type of a command.
  */
 type Cmd<TMessage> = Sub<TMessage>[];
+
+/**
+ * A list of commands. `undefined` entries are allowed and ignored, so commands can be added conditionally.
+ */
+type Commands<TMessage> = (Cmd<TMessage> | undefined)[];
 
 /**
  * Creates a MsgSource type.
@@ -27,57 +33,52 @@ interface MsgSource<TSource extends string> {
 /**
  * The return type of the `init` function.
  */
-type InitResult<TModel, TMessage> = [TModel, ...(Cmd<TMessage> | undefined)[]];
+type InitResult<TModel, TMessage> = [TModel, ...Commands<TMessage>];
 
 type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TModel, TMessage>;
 
 /**
  * Type for the return value of the `update` function.
  */
-type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]];
+type UpdateReturnType<TModel, TMessage> = Variant.UpdateReturnType<"mutable", TModel, TMessage>;
 
-type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: (Cmd<TMessage> | undefined)[]) => void;
-type CallBaseFunction<TModel, TProps, TMessage extends Message> = (
-	fn: (
-		msg: TMessage,
-		model: TModel,
-		props: TProps,
-		// biome-ignore lint/suspicious/noExplicitAny: any is needed here to allow options of any type
-		...args: any[]
-	) => UpdateReturnType<TModel, Message>,
-) => UpdateReturnType<TModel, TMessage>;
+type DeferFunction<TModel, TMessage> = Variant.DeferFunction<"mutable", TModel, TMessage>;
 
-type UpdateMapFunction<TProps, TModel, TMessage extends Message> = (
-	msg: TMessage,
-	model: TModel,
-	props: TProps,
-	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-) => UpdateReturnType<TModel, TMessage>;
+type CallBaseFunction<TModel, TProps, TMessage extends Message> = Variant.CallBaseFunction<"mutable", TModel, TProps, TMessage>;
 
-interface UpdateFunctionOptions<TProps, TModel, TMessage extends Message, TSpecificMessage extends Message = TMessage> {
-	defer: DeferFunction<TModel, TMessage>;
-	callBase: CallBaseFunction<TModel, TProps, TSpecificMessage>;
-}
+type BaseHandler<TModel, TProps, TMessage extends Message, TBaseMessage extends Message> = Variant.BaseHandler<
+	"mutable",
+	TModel,
+	TProps,
+	TMessage,
+	TBaseMessage
+>;
 
-type UpdateFunction<TProps, TModel, TMessage extends Message> = (
-	model: TModel,
-	msg: TMessage,
-	props: TProps,
-	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-) => UpdateReturnType<TModel, TMessage>;
+type UpdateMapFunction<TProps, TModel, TMessage extends Message> = Variant.UpdateMapFunction<"mutable", TProps, TModel, TMessage>;
+
+type UpdateFunctionOptions<
+	TProps,
+	TModel,
+	TMessage extends Message,
+	TCurrentMessage extends Message = TMessage,
+> = Variant.UpdateFunctionOptions<"mutable", TProps, TModel, TMessage, TCurrentMessage>;
+
+type UpdateFunction<TProps, TModel, TMessage extends Message> = Variant.UpdateFunction<"mutable", TProps, TModel, TMessage>;
 
 /**
  * Type for mapping messages to functions.
  * Use this type to create your update logic for the useElmish hook.
  */
-type UpdateMap<TProps, TModel, TMessage extends Message> = {
-	[TMessageName in TMessage["name"]]: (
-		msg: TMessage & { name: TMessageName },
-		model: TModel,
-		props: TProps,
-		options: UpdateFunctionOptions<TProps, TModel, TMessage, TMessage & { name: TMessageName }>,
-	) => UpdateReturnType<TModel, TMessage>;
-};
+type UpdateMap<TProps, TModel, TMessage extends Message> = Variant.UpdateMap<"mutable", TProps, TModel, TMessage>;
+
+/**
+ * An UpdateMap or an update function.
+ * It is a union of the aliases above (and not of the generic variant types), so TypeScript can infer
+ * the type arguments from an `UpdateMap` or `UpdateFunction` passed to a generic function.
+ */
+type Update<TProps, TModel, TMessage extends Message> =
+	| UpdateFunction<TProps, TModel, TMessage>
+	| UpdateMap<TProps, TModel, TMessage>;
 
 /**
  * The return type of the `subscription` function.
@@ -95,12 +96,13 @@ function isSubscriptionFunctionArray(subscription: SubscriptionResult<unknown>):
 }
 
 export type {
+	BaseHandler,
 	CallBaseFunction,
 	Cmd,
+	Commands,
 	DeferFunction,
 	Dispatch,
 	DisposeFunction,
-	FallbackHandler,
 	InitFunction,
 	InitResult,
 	Message,
@@ -110,6 +112,7 @@ export type {
 	Subscription,
 	SubscriptionFunction,
 	SubscriptionResult,
+	Update,
 	UpdateFunction,
 	UpdateFunctionOptions,
 	UpdateMap,

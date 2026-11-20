@@ -1,19 +1,21 @@
-import { type Draft, enablePatches, type Immutable, type Patch, produce } from "immer";
-import type { Cmd, Message, Nullable } from "../../Types";
-import { execCmd } from "../../testing";
-import { createCallBase } from "../createCallBase";
-import { createDefer } from "../createDefer";
-import type { UpdateFunction, UpdateFunctionOptions, UpdateMap } from "../Types";
-import { callUpdateMap } from "../useElmish";
+import { enablePatches, type Immutable, type Patch } from "immer";
+import type { Commands, Message, Nullable } from "../../Types";
+import { execCmd } from "../../testing/execCmd";
+import { runUpdate } from "../runUpdate";
+import type { Update, UpdateFunctionOptions } from "../Types";
 
 enablePatches();
 
-/**
- * An UpdateMap or an update function, as accepted by the test helpers.
- */
-type Update<TProps, TModel, TMessage extends Message> =
-	| UpdateMap<TProps, TModel, TMessage>
-	| UpdateFunction<TProps, TModel, TMessage>;
+type UpdateFn<TProps, TModel, TMessage extends Message> = (
+	msg: TMessage,
+	model: Immutable<TModel>,
+	props: TProps,
+	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
+) => [Partial<TModel>, ...Commands<TMessage>];
+
+type UpdateAndExecCmdFn<TProps, TModel, TMessage extends Message> = (
+	...args: Parameters<UpdateFn<TProps, TModel, TMessage>>
+) => Promise<[Partial<TModel>, Nullable<TMessage>[]]>;
 
 /**
  * Creates an update function out of an UpdateMap or an update function.
@@ -27,38 +29,30 @@ type Update<TProps, TModel, TMessage extends Message> =
  */
 function getUpdateFn<TProps, TModel, TMessage extends Message>(
 	update: Update<TProps, TModel, TMessage>,
-): (
-	msg: TMessage,
-	model: Immutable<TModel>,
-	props: TProps,
-	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-) => [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]] {
-	return function updateFn(msg, model, props, optionsTemplate): [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]] {
-		const [defer, getDeferred] = createDefer<TMessage>();
+): UpdateFn<TProps, TModel, TMessage> {
+	return function updateFn(msg, model, props, optionsTemplate) {
+		const [, diff, ...commands] = runUpdateWithDiff(update, msg, model, props, optionsTemplate);
 
-		const commands: (Cmd<TMessage> | undefined)[] = [];
-		const recordedPatches: Patch[] = [];
-		const updatedModel = produce(
-			model,
-			(draft: Draft<TModel>) => {
-				const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
-					defer,
-					callBase: createCallBase(msg, draft, props, { defer }),
-					...optionsTemplate,
-				};
-
-				commands.push(...callUpdate(update, msg, draft, props, options));
-			},
-			(patches) => {
-				recordedPatches.push(...patches);
-			},
-		);
-		const deferredCommands = getDeferred();
-
-		const diff = getDiffFromPatches(recordedPatches, updatedModel);
-
-		return [diff, ...commands, ...deferredCommands];
+		return [diff, ...commands];
 	};
+}
+
+/**
+ * Runs the update for a message and computes the changed top level properties.
+ * @returns The updated model, the changed top level properties, and the commands.
+ */
+function runUpdateWithDiff<TProps, TModel, TMessage extends Message>(
+	...[update, msg, model, props, optionsTemplate]: [
+		Update<TProps, TModel, TMessage>,
+		...Parameters<UpdateFn<TProps, TModel, TMessage>>,
+	]
+): [Immutable<TModel>, Partial<TModel>, ...Commands<TMessage>] {
+	const recordedPatches: Patch[] = [];
+	const [updatedModel, ...commands] = runUpdate(update, msg, model, props, optionsTemplate, (patches) => {
+		recordedPatches.push(...patches);
+	});
+
+	return [updatedModel, getDiffFromPatches(recordedPatches, updatedModel), ...commands];
 }
 
 /**
@@ -73,93 +67,40 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
  */
 function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 	update: Update<TProps, TModel, TMessage>,
-): (
-	msg: TMessage,
-	model: Immutable<TModel>,
-	props: TProps,
-	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
-	return async function updateAndExecCmdFn(msg, model, props, optionsTemplate): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
-		const [defer, getDeferred] = createDefer<TMessage>();
+): UpdateAndExecCmdFn<TProps, TModel, TMessage> {
+	const updateFn = getUpdateFn(update);
 
-		const commands: (Cmd<TMessage> | undefined)[] = [];
-		const recordedPatches: Patch[] = [];
-		const updatedModel = produce(
-			model,
-			(draft: Draft<TModel>) => {
-				const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
-					defer,
-					callBase: createCallBase(msg, draft, props, { defer }),
-					...optionsTemplate,
-				};
+	return async function updateAndExecCmdFn(...args) {
+		const [updatedModel, ...commands] = updateFn(...args);
 
-				commands.push(...callUpdate(update, msg, draft, props, options));
-			},
-			(patches) => {
-				recordedPatches.push(...patches);
-			},
-		);
-		const deferredCommands = getDeferred();
-
-		const diff = getDiffFromPatches(recordedPatches, updatedModel);
-
-		const messages = await execCmd(...commands, ...deferredCommands);
-
-		return [diff, messages];
+		return [updatedModel, await execCmd(...commands)];
 	};
 }
 
-function callUpdate<TProps, TModel, TMessage extends Message>(
-	update: Update<TProps, TModel, TMessage>,
-	msg: TMessage,
-	draft: Draft<TModel>,
-	props: TProps,
-	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
-): (Cmd<TMessage> | undefined)[] {
-	if (typeof update === "function") {
-		return update(draft, msg, props, options);
-	}
-
-	return callUpdateMap(update, msg, draft, props, options);
-}
-
+/**
+ * Computes the changed top level properties of the model from the patches of an update.
+ * A removed top level property is included with the value `undefined`.
+ * @param patches The patches of the update.
+ * @param model The updated model.
+ * @returns The changed top level properties.
+ */
 function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>): Partial<TModel> {
-	const diff: Partial<TModel> = {};
+	const diff: Record<PropertyKey, unknown> = {};
+	// biome-ignore lint/nursery/noUnsafeTypeAssertion: The model is always an object.
+	const updatedModel = model as Record<PropertyKey, unknown>;
 
-	for (const patch of patches) {
-		// biome-ignore lint/style/noNonNullAssertion: The path is always defined
-		handleOp(patch.op, patch.path[0]!);
+	for (const { op, path } of patches) {
+		// biome-ignore lint/style/noNonNullAssertion: The patches of an object always have a path.
+		const key = path[0]!;
+
+		// A patch of a nested value changes the top level property, even if the nested value has been removed.
+		diff[key] = op === "remove" && path.length === 1 ? undefined : updatedModel[key];
 	}
 
-	return diff;
-
-	function handleOp(op: Patch["op"], path: string | number): void {
-		/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-		switch (op) {
-			case "replace": {
-				// @ts-expect-error
-				diff[path] = model[path];
-
-				break;
-			}
-			case "add": {
-				// @ts-expect-error
-				diff[path] = model[path];
-
-				break;
-			}
-			case "remove": {
-				// @ts-expect-error
-				// biome-ignore lint/nursery/noDynamicDelete: This for testing purposes.
-				delete diff[path];
-
-				break;
-			}
-		}
-		/* eslint-enable @typescript-eslint/no-unsafe-assignment */
-	}
+	// biome-ignore lint/nursery/noUnsafeTypeAssertion: The diff only contains properties of the model.
+	return diff as Partial<TModel>;
 }
 
-export type { Update };
+export type { Update } from "../Types";
 
-export { getUpdateAndExecCmdFn, getUpdateFn };
+export { getUpdateAndExecCmdFn, getUpdateFn, runUpdateWithDiff };
