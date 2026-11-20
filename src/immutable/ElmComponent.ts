@@ -109,6 +109,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 		this.running = true;
 
 		let nextMsg: TMessage | undefined = msg;
+		let isModified = false;
 		let hasFailed = true;
 
 		try {
@@ -120,11 +121,17 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 				const [defer, getDeferred] = createDefer<TMessage>();
 				const commands: UpdateReturnType<TMessage> = [];
 
-				this.currentModel = produce(this.currentModel, (draft: Draft<TModel>) => {
+				const updatedModel = produce(this.currentModel, (draft: Draft<TModel>) => {
 					const callBase = createCallBase(currentMessage, draft, this.props, { defer });
 
 					commands.push(...this.update(draft, currentMessage, this.props, { defer, callBase }));
 				});
+
+				// Immer returns the same reference, if the model has not been changed.
+				if (updatedModel !== this.currentModel) {
+					this.currentModel = updatedModel;
+					isModified = true;
+				}
 
 				const deferredCommands = getDeferred();
 
@@ -143,7 +150,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 
 			this.running = false;
 
-			if (this.mounted) {
+			if (isModified && this.mounted) {
 				Services.logger?.debug("Update model for", this.componentName, this.currentModel);
 				this.forceUpdate();
 			}
