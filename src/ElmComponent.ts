@@ -1,10 +1,6 @@
-import React from "react";
-import { execCmd, hasModelChanged, logMessage } from "./Common";
-import { createCallBase } from "./createCallBase";
-import { createDefer } from "./createDefer";
-import { getFakeOptions } from "./fakeOptions";
-import { Services } from "./Init";
-import type { Cmd, DisposeFunction, InitFunction, Message, Nullable, UpdateFunction } from "./Types";
+import { ElmComponentBase } from "./ElmComponentBase";
+import { updateModel } from "./runUpdate";
+import type { DisposeFunction, InitFunction, Message, UpdateFunction } from "./Types";
 
 /**
  * Abstract class for a react class component using the Elmish pattern.
@@ -16,139 +12,29 @@ import type { Cmd, DisposeFunction, InitFunction, Message, Nullable, UpdateFunct
  * @template TMessage The type of the messages.
  * @template TProps The type of the props.
  */
-// biome-ignore lint/style/useReactFunctionComponents: This is only for downward compatibility.
-abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends React.Component<TProps> {
-	private initCommands: Nullable<(Cmd<TMessage> | undefined)[]> | undefined;
-	private readonly componentName: string;
-	private readonly buffer: TMessage[] = [];
-	private running = false;
-	private mounted = false;
-	private currentModel: TModel;
-
+abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends ElmComponentBase<
+	TModel,
+	Readonly<TModel>,
+	TMessage,
+	TProps,
+	UpdateFunction<TProps, TModel, TMessage>
+> {
 	/**
 	 * Creates an instance of ElmComponent.
 	 * @param {TProps} props The props for the component.
 	 * @param {() => TModel} init The initializer function.
 	 * @param name The name of the component.
+	 * @param disposeHandler The optional function which is called with the current model when the component unmounts.
 	 * @memberof ElmComponent
 	 */
 	public constructor(
 		props: TProps,
 		init: InitFunction<TProps, TModel, TMessage>,
 		name: string,
-		private readonly disposeHandler?: DisposeFunction<TModel>,
+		disposeHandler?: DisposeFunction<TModel>,
 	) {
-		super(props);
-
-		const fakeOptions = getFakeOptions<TModel, TMessage>(name);
-
-		if (fakeOptions?.dispatch) {
-			this.dispatch = fakeOptions.dispatch;
-		}
-
-		const [model, ...commands] = fakeOptions?.model ? [fakeOptions.model] : init(this.props);
-
-		Services.logger?.debug("Initial model for", name, model);
-
-		this.componentName = name;
-		this.currentModel = model;
-		this.initCommands = commands;
+		super(props, init, name, (model) => model, updateModel, disposeHandler);
 	}
-
-	/**
-	 * Is called when the component is loaded.
-	 * When implementing this method, the base implementation has to be called.
-	 * @memberof ElmComponent
-	 */
-	public componentDidMount(): void {
-		this.mounted = true;
-
-		if (!this.initCommands) {
-			return;
-		}
-
-		execCmd(this.dispatch, ...this.initCommands);
-		this.initCommands = null;
-	}
-
-	/**
-	 * Is called before unloading the component.
-	 * When implementing this method, the base implementation has to be called.
-	 * @memberof ElmComponent
-	 */
-	public componentWillUnmount(): void {
-		this.disposeHandler?.(this.currentModel);
-		this.mounted = false;
-	}
-
-	/**
-	 * Returns the current model.
-	 * @readonly
-	 * @type {Readonly<TModel>}
-	 * @memberof ElmComponent
-	 */
-	// eslint-disable-next-line react/no-unused-class-component-members -- We need it internally.
-	public get model(): Readonly<TModel> {
-		return this.currentModel;
-	}
-
-	/**
-	 * Dispatches a message.
-	 * @param {TMessage} msg The message to dispatch.
-	 * @memberof ElmComponent
-	 */
-	public readonly dispatch = (msg: TMessage): void => {
-		if (this.running) {
-			this.buffer.push(msg);
-
-			return;
-		}
-
-		this.running = true;
-
-		let nextMsg: TMessage | undefined = msg;
-		let isModified = false;
-		let hasFailed = true;
-
-		try {
-			do {
-				const currentMessage = nextMsg;
-
-				logMessage(this.componentName, currentMessage);
-
-				const [defer, getDeferred] = createDefer<TModel, TMessage>();
-				const callBase = createCallBase(currentMessage, this.currentModel, this.props, { defer });
-
-				const [model, ...commands] = this.update(this.currentModel, currentMessage, this.props, { defer, callBase });
-
-				const [deferredModel, deferredCommands] = getDeferred();
-
-				if (hasModelChanged(this.currentModel, { ...deferredModel, ...model })) {
-					this.currentModel = { ...this.currentModel, ...deferredModel, ...model };
-					isModified = true;
-				}
-
-				execCmd(this.dispatch, ...commands, ...deferredCommands);
-
-				// eslint-disable-next-line unicorn/no-array-front-mutation -- We need to remove messages from the start.
-				nextMsg = this.buffer.shift();
-			} while (nextMsg);
-
-			hasFailed = false;
-		} finally {
-			if (hasFailed) {
-				// Drop the messages queued by the failed run, so they are not processed out of order later.
-				this.buffer.length = 0;
-			}
-
-			this.running = false;
-
-			if (isModified && this.mounted) {
-				Services.logger?.debug("Update model for", this.componentName, this.currentModel);
-				this.forceUpdate();
-			}
-		}
-	};
 
 	/**
 	 * Function to modify the model based on a message.
@@ -160,7 +46,7 @@ abstract class ElmComponent<TModel, TMessage extends Message, TProps> extends Re
 	 * @abstract
 	 * @memberof ElmComponent
 	 */
-	public abstract update: UpdateFunction<TProps, TModel, TMessage>;
+	public abstract override update: UpdateFunction<TProps, TModel, TMessage>;
 }
 
 export { ElmComponent };

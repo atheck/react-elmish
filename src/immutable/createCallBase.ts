@@ -1,6 +1,6 @@
 import type { Draft } from "immer";
 import type { Message } from "../Types";
-import type { CallBaseFunction, UpdateFunctionOptions, UpdateReturnType } from "./Types";
+import type { CallBaseFunction, UpdateFunctionOptions } from "./Types";
 
 /**
  * Creates the `callBase` function for an update handler.
@@ -18,8 +18,8 @@ function createCallBase<TProps, TModel, TMessage extends Message>(
 	options: Omit<UpdateFunctionOptions<TProps, TModel, TMessage>, "callBase">,
 ): CallBaseFunction<TModel, TProps, TMessage> {
 	const callBase: CallBaseFunction<TModel, TProps, TMessage> = (fn) =>
-		// biome-ignore lint/nursery/noUnsafeTypeAssertion: The current TMessage must be extended from Message.
-		fn(msg, draft, props, { ...options, callBase }) as UpdateReturnType<TMessage>;
+		// biome-ignore lint/nursery/noUnsafeTypeAssertion: The options are typed as never in CallBaseFunction, so the base handler may declare its own options type.
+		fn(msg, draft, props, { ...options, callBase } as never);
 
 	return callBase;
 }

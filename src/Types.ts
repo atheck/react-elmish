@@ -37,15 +37,14 @@ type InitFunction<TProps, TModel, TMessage> = (props: TProps) => InitResult<TMod
 type UpdateReturnType<TModel, TMessage> = [Partial<TModel>, ...(Cmd<TMessage> | undefined)[]];
 
 type DeferFunction<TModel, TMessage> = (model: Partial<TModel>, ...commands: (Cmd<TMessage> | undefined)[]) => void;
-type CallBaseFunction<TModel, TProps, TMessage extends Message> = (
-	fn: (
-		msg: TMessage,
-		model: TModel,
-		props: TProps,
-		// biome-ignore lint/suspicious/noExplicitAny: any is needed here to allow options of any type
-		...args: any[]
-	) => UpdateReturnType<TModel, Message>,
-) => UpdateReturnType<TModel, TMessage>;
+/**
+ * Calls the handler of a base module with the current message, model, props, and options.
+ * The returned commands keep the message type of the base handler, so they can only be used
+ * (e.g. passed to `defer`) if the base messages are part of the messages of the calling component.
+ */
+type CallBaseFunction<TModel, TProps, TMessage extends Message> = <TBaseMessage extends Message>(
+	fn: (msg: TMessage, model: TModel, props: TProps, options: never) => UpdateReturnType<TModel, TBaseMessage>,
+) => UpdateReturnType<TModel, TBaseMessage>;
 
 type UpdateMapFunction<TProps, TModel, TMessage extends Message> = (
 	msg: TMessage,

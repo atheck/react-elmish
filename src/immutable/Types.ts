@@ -7,24 +7,23 @@ import type { Cmd, Message, SubscriptionResult } from "../Types";
 type UpdateReturnType<TMessage> = (Cmd<TMessage> | undefined)[];
 
 type DeferFunction<TMessage> = (...commands: (Cmd<TMessage> | undefined)[]) => void;
-type CallBaseFunction<TModel, TProps, TMessage> = (
-	fn: (
-		msg: TMessage,
-		model: Draft<TModel>,
-		props: TProps,
-		// biome-ignore lint/suspicious/noExplicitAny: any is needed here to allow options of any type
-		...args: any[]
-	) => UpdateReturnType<Message>,
-) => UpdateReturnType<TMessage>;
+/**
+ * Calls the handler of a base module with the current message, draft, props, and options.
+ * The returned commands keep the message type of the base handler, so they can only be used
+ * (e.g. passed to `defer`) if the base messages are part of the messages of the calling component.
+ */
+type CallBaseFunction<TModel, TProps, TMessage extends Message> = <TBaseMessage extends Message>(
+	fn: (msg: TMessage, model: Draft<TModel>, props: TProps, options: never) => UpdateReturnType<TBaseMessage>,
+) => UpdateReturnType<TBaseMessage>;
 
-type UpdateMapFunction<TProps, TModel, TMessage> = (
+type UpdateMapFunction<TProps, TModel, TMessage extends Message> = (
 	msg: TMessage,
 	model: Draft<TModel>,
 	props: TProps,
 	options: UpdateFunctionOptions<TProps, TModel, TMessage>,
 ) => UpdateReturnType<TMessage>;
 
-interface UpdateFunctionOptions<TProps, TModel, TMessage, TSpecificMessage = TMessage> {
+interface UpdateFunctionOptions<TProps, TModel, TMessage extends Message, TSpecificMessage extends Message = TMessage> {
 	defer: DeferFunction<TMessage>;
 	callBase: CallBaseFunction<TModel, TProps, TSpecificMessage>;
 }
@@ -49,7 +48,10 @@ type UpdateMap<TProps, TModel, TMessage extends Message> = {
 	) => UpdateReturnType<TMessage>;
 };
 
-type Subscription<TProps, TModel, TMessage> = (model: Immutable<TModel>, props: TProps) => SubscriptionResult<TMessage>;
+type Subscription<TProps, TModel, TMessage extends Message> = (
+	model: Immutable<TModel>,
+	props: TProps,
+) => SubscriptionResult<TMessage>;
 
 export type {
 	CallBaseFunction,

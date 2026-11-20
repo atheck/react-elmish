@@ -1,39 +1,23 @@
 import type { Immutable } from "immer";
-import { type Dispatch, isSubscriptionFunctionArray, type Message } from "../../Types";
-import { execCmdWithDispatch } from "../../testing";
+import type { Dispatch, Message } from "../../Types";
+import { execSubscription as execMutableSubscription } from "../../testing/execSubscription";
 import type { Subscription } from "../Types";
 
+/**
+ * Executes the subscription.
+ * @param subscription The subscription function.
+ * @param dispatch The dispatch function which receives the messages.
+ * @param model The model.
+ * @param props The props.
+ * @returns A function to dispose the subscription.
+ */
 function execSubscription<TProps, TModel, TMessage extends Message>(
 	subscription: Subscription<TProps, TModel, TMessage> | undefined,
 	dispatch: Dispatch<TMessage>,
 	model: Immutable<TModel>,
 	props: TProps,
 ): () => void {
-	const noop = (): void => {
-		// do nothing
-	};
-
-	if (!subscription) {
-		return noop;
-	}
-
-	const subscriptionResult = subscription(model, props);
-
-	if (isSubscriptionFunctionArray(subscriptionResult)) {
-		const disposers = subscriptionResult.map((sub) => sub(dispatch)).filter((disposer) => disposer !== undefined);
-
-		return () => {
-			for (const dispose of disposers) {
-				dispose();
-			}
-		};
-	}
-
-	const [cmd, dispose] = subscriptionResult;
-
-	execCmdWithDispatch<TMessage>(dispatch, cmd);
-
-	return dispose ?? noop;
+	return execMutableSubscription(subscription, dispatch, model, props);
 }
 
 export { execSubscription };

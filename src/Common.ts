@@ -40,11 +40,7 @@ function execCmd<TMessage>(dispatch: Dispatch<TMessage>, ...commands: (Cmd<TMess
  * @param setModel Sets the current model, when the DevTools jump to another state.
  * @returns A ref to the DevTools connection.
  */
-function useRedux<TModel>(
-	name: string,
-	getModel: () => Nullable<TModel>,
-	setModel: (model: TModel) => void,
-): RefObject<Nullable<ReduxDevTools>> {
+function useRedux(name: string, getModel: () => unknown, setModel: (model: unknown) => void): RefObject<Nullable<ReduxDevTools>> {
 	const devToolsRef = useRef<Nullable<ReduxDevTools>>(null);
 	const callbacksRef = useRef({ getModel, setModel });
 
@@ -66,8 +62,7 @@ function useRedux<TModel>(
 
 		const reduxUnsubscribe = devTools.subscribe((message) => {
 			if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
-				// biome-ignore lint/nursery/noUnsafeTypeAssertion: We parse JSON here.
-				callbacksRef.current.setModel(JSON.parse(message.state) as TModel);
+				callbacksRef.current.setModel(JSON.parse(message.state));
 			}
 		});
 
@@ -95,6 +90,43 @@ function useIsMounted(): RefObject<boolean> {
 }
 
 /**
+ * Runs the subscription.
+ * @param subscription The subscription function.
+ * @param model The current model.
+ * @param props The current props.
+ * @param dispatch The dispatch function.
+ * @returns A function to dispose the subscription, if there is one.
+ */
+function runSubscription<TProps, TModel, TMessage extends Message>(
+	subscription: Subscription<TProps, TModel, TMessage> | undefined,
+	model: TModel,
+	props: TProps,
+	dispatch: Dispatch<TMessage>,
+): (() => void) | undefined {
+	if (!subscription) {
+		return;
+	}
+
+	const subscriptionResult = subscription(model, props);
+
+	if (isSubscriptionFunctionArray(subscriptionResult)) {
+		const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((current) => current !== undefined);
+
+		return function combinedDestructor() {
+			for (const destructor of destructors) {
+				destructor();
+			}
+		};
+	}
+
+	const [subCmd, destructor] = subscriptionResult;
+
+	execCmd(dispatch, subCmd);
+
+	return destructor;
+}
+
+/**
  * Runs the subscription and re-subscribes whenever the model has been (re-)initialized.
  * @param subscription The subscription function.
  * @param model The current model.
@@ -110,29 +142,7 @@ function useSubscription<TProps, TModel, TMessage extends Message>(
 	initCount: number,
 ): void {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to re-subscribe when the model has been re-initialized
-	useEffect(() => {
-		if (!subscription) {
-			return;
-		}
-
-		const subscriptionResult = subscription(model, props);
-
-		if (isSubscriptionFunctionArray(subscriptionResult)) {
-			const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((current) => current !== undefined);
-
-			return function combinedDestructor() {
-				for (const destructor of destructors) {
-					destructor();
-				}
-			};
-		}
-
-		const [subCmd, destructor] = subscriptionResult;
-
-		execCmd(dispatch, subCmd);
-
-		return destructor;
-	}, [initCount]);
+	useEffect(() => runSubscription(subscription, model, props, dispatch), [initCount]);
 }
 
 /**
@@ -224,25 +234,23 @@ function getDispatch<TMessage extends Message>(
 }
 
 /**
- * Calls the init function (or uses the fake model) and passes the initial model and commands to `onInit`.
+ * Calls the init function (or uses the fake model).
  * The commands are not executed here, because this runs during render. Use `useInitCommands` to execute them.
- * @returns The initial model.
+ * @returns The initial model and the init commands.
  */
 function runInit<TModel, TProps, TMessage extends Message>(
 	name: string,
 	initFn: InitFunction<TProps, TModel, TMessage>,
 	props: TProps,
-	onInit: (model: TModel, commands: InitCommands<TMessage>) => void,
 	getDevTools: () => Nullable<ReduxDevTools>,
 	fakeModel: TModel | undefined,
-): TModel {
+): [TModel, InitCommands<TMessage>] {
 	const [initModel, ...initCommands] = fakeModel ? [fakeModel] : initFn(props);
 
-	onInit(initModel, initCommands);
 	getDevTools()?.init(initModel);
 	Services.logger?.debug("Initial model for", name, initModel);
 
-	return initModel;
+	return [initModel, initCommands];
 }
 
 /**
@@ -294,6 +302,7 @@ export {
 	hasModelChanged,
 	logMessage,
 	runInit,
+	runSubscription,
 	useDispose,
 	useInitCommands,
 	useIsMounted,

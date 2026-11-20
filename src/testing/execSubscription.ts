@@ -1,38 +1,23 @@
-import type { Dispatch } from "react";
-import { isSubscriptionFunctionArray, type Message, type Subscription } from "../Types";
-import { execCmdWithDispatch } from "./execCmd";
+import { runSubscription } from "../Common";
+import type { Dispatch, Message, Subscription } from "../Types";
 
+/**
+ * Executes the subscription.
+ * @param subscription The subscription function.
+ * @param dispatch The dispatch function which receives the messages.
+ * @param model The model.
+ * @param props The props.
+ * @returns A function to dispose the subscription.
+ */
 function execSubscription<TProps, TModel, TMessage extends Message>(
 	subscription: Subscription<TProps, TModel, TMessage> | undefined,
 	dispatch: Dispatch<TMessage>,
 	model: TModel,
 	props: TProps,
 ): () => void {
-	const noop = (): void => {
-		// do nothing
-	};
+	const dispose = runSubscription(subscription, model, props, dispatch);
 
-	if (!subscription) {
-		return noop;
-	}
-
-	const subscriptionResult = subscription(model, props);
-
-	if (isSubscriptionFunctionArray(subscriptionResult)) {
-		const disposers = subscriptionResult.map((sub) => sub(dispatch)).filter((disposer) => disposer !== undefined);
-
-		return () => {
-			for (const dispose of disposers) {
-				dispose();
-			}
-		};
-	}
-
-	const [cmd, dispose] = subscriptionResult;
-
-	execCmdWithDispatch<TMessage>(dispatch, cmd);
-
-	return dispose ?? noop;
+	return () => dispose?.();
 }
 
 export { execSubscription };

@@ -1,4 +1,3 @@
-import type { Dispatch } from "react";
 import type { Cmd, Nullable, Sub } from "../Types";
 import { isPromiseLike } from "./isPromiseLike";
 
@@ -39,14 +38,6 @@ async function execSub<TMessage>(sub: Sub<TMessage>): Promise<Nullable<TMessage>
 	return messages.length > 0 ? [...messages] : [null];
 }
 
-function execCmdWithDispatch<TMessage>(dispatch: Dispatch<TMessage>, ...commands: (Cmd<TMessage> | undefined)[]): void {
-	const definedCommands = commands.filter((cmd) => cmd !== undefined);
+export { execCmd as execCmdWithDispatch } from "../Common";
 
-	for (const cmd of definedCommands) {
-		for (const sub of cmd) {
-			sub(dispatch);
-		}
-	}
-}
-
-export { execCmd, execCmdWithDispatch };
+export { execCmd };
