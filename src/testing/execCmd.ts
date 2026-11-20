@@ -16,26 +16,16 @@ async function execCmd<TMessage>(...commands: Commands<TMessage>): Promise<Nulla
 
 async function execSub<TMessage>(sub: Sub<TMessage>): Promise<Nullable<TMessage>[]> {
 	const messages: TMessage[] = [];
-	let fallbackError: Error | undefined;
 
-	const result: unknown = sub(
-		(msg) => {
-			messages.push(msg);
-		},
-		(error) => {
-			fallbackError ??= error;
-		},
-	);
+	const result: unknown = sub((msg) => {
+		messages.push(msg);
+	});
 
 	if (isPromiseLike(result)) {
 		await result;
 	}
 
-	if (fallbackError) {
-		throw fallbackError;
-	}
-
-	return messages.length > 0 ? [...messages] : [null];
+	return messages.length > 0 ? messages : [null];
 }
 
 export { execCmd as execCmdWithDispatch } from "../Common";

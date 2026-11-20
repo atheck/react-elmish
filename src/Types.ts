@@ -9,8 +9,7 @@ interface Message {
  */
 type Dispatch<TMessage> = (msg: TMessage) => void;
 
-type FallbackHandler = (error?: Error) => void;
-type Sub<TMsg> = (dispatch: Dispatch<TMsg>, fallback?: FallbackHandler) => void;
+type Sub<TMsg> = (dispatch: Dispatch<TMsg>) => void;
 
 /**
  * Type of a command.
@@ -116,7 +115,6 @@ export type {
 	DeferFunction,
 	Dispatch,
 	DisposeFunction,
-	FallbackHandler,
 	InitFunction,
 	InitResult,
 	Message,

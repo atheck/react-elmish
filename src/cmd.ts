@@ -1,5 +1,5 @@
 import { isNoop, type NoopMessage } from "./noop";
-import type { Cmd, Dispatch, FallbackHandler, Message, Sub } from "./Types";
+import type { Cmd, Dispatch, Message, Sub } from "./Types";
 
 const cmd = {
 	/**
@@ -77,10 +77,7 @@ const cmd = {
 		ofSuccess: (result: Awaited<TReturn>) => TSuccessMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TSuccessMessage> {
-		const bind = (
-			dispatch: Dispatch<TSuccessMessage>,
-			fallback: FallbackHandler = defaultFallbackHandler,
-		): Promise<void> | undefined => {
+		const bind = (dispatch: Dispatch<TSuccessMessage>): Promise<void> | undefined => {
 			try {
 				const taskResult = task(...args);
 
@@ -88,9 +85,11 @@ const cmd = {
 					.then((result) => {
 						dispatchUnlessNoop(dispatch, ofSuccess(result));
 					})
-					.catch(() => fallback());
+					.catch(() => {
+						// The error case is ignored.
+					});
 			} catch {
-				fallback();
+				// The error case is ignored.
 			}
 		};
 
@@ -108,16 +107,14 @@ const cmd = {
 		ofError: (error: Error) => TErrorMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TErrorMessage> {
-		const bind = (dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): Promise<void> | undefined => {
+		const bind = (dispatch: Dispatch<TErrorMessage>): Promise<unknown> | undefined => {
 			try {
 				const taskResult = task(...args);
 
-				return Promise.resolve(taskResult)
-					.then(() => fallback?.())
-					.catch((ex: unknown) => {
-						// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
-						dispatchUnlessNoop(dispatch, ofError(ex as Error));
-					});
+				return Promise.resolve(taskResult).catch((ex: unknown) => {
+					// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
+					dispatchUnlessNoop(dispatch, ofError(ex as Error));
+				});
 			} catch (ex: unknown) {
 				// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
 				dispatchUnlessNoop(dispatch, ofError(ex as Error));
@@ -136,15 +133,15 @@ const cmd = {
 		task: (...args: TArgs) => unknown,
 		...args: TArgs
 	): Cmd<TErrorMessage> {
-		const bind = (_dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): Promise<void> | undefined => {
+		const bind = (): Promise<unknown> | undefined => {
 			try {
 				const taskResult = task(...args);
 
-				return Promise.resolve(taskResult)
-					.then(() => fallback?.())
-					.catch(() => fallback?.());
+				return Promise.resolve(taskResult).catch(() => {
+					// The error case is ignored.
+				});
 			} catch {
-				fallback?.();
+				// The error case is ignored.
 			}
 		};
 
@@ -156,10 +153,6 @@ function dispatchUnlessNoop<TMessage extends Message>(dispatch: Dispatch<TMessag
 	if (!isNoop(msg)) {
 		dispatch(msg);
 	}
-}
-
-function defaultFallbackHandler(): void {
-	// blank
 }
 
 export { cmd };
