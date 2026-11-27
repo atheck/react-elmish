@@ -112,7 +112,6 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 		),
 	);
 
-	// The dispatch function of the current initialization, which is passed to the commands and subscriptions.
 	const initDispatchRef = useRef(dispatch);
 	let initializedModel = model;
 
@@ -148,9 +147,11 @@ function useElmishBase<TProps, TModel, TStoredModel, TMessage extends Message, T
 		resetModel();
 	});
 	useInitCommands(initDispatch, pendingInitCommandsRef);
-	useSubscription(subscription, initializedModel, props, initDispatch);
+
+	const unsubscribe = useSubscription(subscription, initializedModel, props, initDispatch);
+
 	// biome-ignore-end lint/nursery/useReactCompiler: See above.
-	useDispose(dispose, currentModelRef, reInitOn, () => {
+	useDispose(dispose, currentModelRef, reInitOn, unsubscribe, () => {
 		isDisposedRef.current = true;
 	});
 

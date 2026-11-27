@@ -1,5 +1,5 @@
 import { act, render } from "@testing-library/react";
-import { type JSX, useEffect } from "react";
+import { type JSX, StrictMode, useEffect } from "react";
 import { init as initElmish } from "./Init";
 import { useElmish as useImmutableElmish } from "./immutable";
 import type { ReduxDevTools, ReduxDevToolsExtension } from "./reduxDevTools";
@@ -91,6 +91,7 @@ describe.each([
 	["immutable useElmish", ImmutableComponent],
 ])("Redux DevTools with %s", (_name, Component) => {
 	let devTools: jest.Mocked<ReduxDevTools>;
+	let extension: jest.Mocked<ReduxDevToolsExtension>;
 	let subscription: ReduxMessageCallbackHolder;
 
 	beforeEach(() => {
@@ -106,7 +107,7 @@ describe.each([
 			unsubscribe: jest.fn(),
 		};
 
-		const extension: ReduxDevToolsExtension = {
+		extension = {
 			connect: jest.fn(() => devTools),
 			disconnect: jest.fn(),
 		};
@@ -126,6 +127,45 @@ describe.each([
 
 		// assert
 		expect(devTools.init).toHaveBeenCalledWith({ value: 0 });
+	});
+
+	it("releases the connection on unmount without disconnecting the extension", () => {
+		// arrange
+		const { unmount } = render(<Component />);
+
+		// act
+		unmount();
+
+		// assert
+		expect(devTools.unsubscribe).toHaveBeenCalledTimes(1);
+		expect(extension.disconnect).not.toHaveBeenCalled();
+	});
+
+	it("releases the first connection when StrictMode connects again", () => {
+		// act
+		render(
+			<StrictMode>
+				<Component />
+			</StrictMode>,
+		);
+
+		// assert
+		expect(extension.connect).toHaveBeenCalledTimes(2);
+		expect(devTools.unsubscribe).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not send messages after unmount", () => {
+		// arrange
+		const { unmount } = render(<Component />);
+		const dispatch = componentDispatch;
+
+		unmount();
+
+		// act
+		act(() => dispatch?.({ name: "increment" }));
+
+		// assert
+		expect(devTools.send).not.toHaveBeenCalled();
 	});
 
 	it("sends the processed messages with the updated model", () => {

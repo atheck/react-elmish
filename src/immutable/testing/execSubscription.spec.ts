@@ -1,7 +1,7 @@
 import { castImmutable } from "immer";
 import { cmd } from "../../cmd";
 import type { Subscription } from "../Types";
-import { execSubscription } from "./execSubscription";
+import { execSubscription } from ".";
 
 interface Message {
 	name: "foo";

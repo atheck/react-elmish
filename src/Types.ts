@@ -56,12 +56,15 @@ type BaseHandler<TModel, TProps, TMessage extends Message, TBaseMessage extends 
 
 type UpdateMapFunction<TProps, TModel, TMessage extends Message> = Variant.UpdateMapFunction<"mutable", TProps, TModel, TMessage>;
 
-type UpdateFunctionOptions<
+/**
+ * The options passed to an update handler.
+ */
+type UpdateFunctionOptions<TProps, TModel, TMessage extends Message> = Variant.UpdateFunctionOptions<
+	"mutable",
 	TProps,
 	TModel,
-	TMessage extends Message,
-	TCurrentMessage extends Message = TMessage,
-> = Variant.UpdateFunctionOptions<"mutable", TProps, TModel, TMessage, TCurrentMessage>;
+	TMessage
+>;
 
 type UpdateFunction<TProps, TModel, TMessage extends Message> = Variant.UpdateFunction<"mutable", TProps, TModel, TMessage>;
 
@@ -85,7 +88,11 @@ type Update<TProps, TModel, TMessage extends Message> =
  * @template TMessage The type of the messages discriminated union.
  */
 type SubscriptionResult<TMessage> = [Cmd<TMessage>, (() => void)?] | SubscriptionFunction<TMessage>[];
-type SubscriptionFunction<TMessage> = (dispatch: Dispatch<TMessage>) => (() => void) | undefined;
+/**
+ * A subscriber. It can return a destructor which is called when the subscription ends.
+ */
+// biome-ignore lint/suspicious/noConfusingVoidType: A subscriber without a destructor may return nothing at all.
+type SubscriptionFunction<TMessage> = (dispatch: Dispatch<TMessage>) => (() => void) | void;
 type Subscription<TProps, TModel, TMessage> = (model: TModel, props: TProps) => SubscriptionResult<TMessage>;
 
 type DisposeFunction<TModel> = (model: TModel) => void;

@@ -53,6 +53,4 @@ function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
 	};
 }
 
-export type { Update } from "../Types";
-
 export { getUpdateAndExecCmdFn, getUpdateFn };

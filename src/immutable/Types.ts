@@ -26,12 +26,15 @@ type UpdateMapFunction<TProps, TModel, TMessage extends Message> = Variant.Updat
 	TMessage
 >;
 
-type UpdateFunctionOptions<
+/**
+ * The options passed to an update handler.
+ */
+type UpdateFunctionOptions<TProps, TModel, TMessage extends Message> = Variant.UpdateFunctionOptions<
+	"immutable",
 	TProps,
 	TModel,
-	TMessage extends Message,
-	TCurrentMessage extends Message = TMessage,
-> = Variant.UpdateFunctionOptions<"immutable", TProps, TModel, TMessage, TCurrentMessage>;
+	TMessage
+>;
 
 type UpdateFunction<TProps, TModel, TMessage extends Message> = Variant.UpdateFunction<"immutable", TProps, TModel, TMessage>;
 

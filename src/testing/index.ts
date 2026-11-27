@@ -1,4 +1,5 @@
 export type { RenderWithModelOptions } from "../fakeOptions";
+export type { Update } from "../Types";
 export { createModelAndProps } from "./createModelAndProps";
 export type { UpdateArgsFactory } from "./createUpdateArgsFactory";
 export { createUpdateArgsFactory } from "./createUpdateArgsFactory";
@@ -7,7 +8,6 @@ export { execSubscription } from "./execSubscription";
 export { getConsecutiveUpdateFn } from "./getConsecutiveUpdate";
 export type { ModelAndPropsFactory } from "./getCreateUpdateArgs";
 export { getCreateModelAndProps, getCreateUpdateArgs } from "./getCreateUpdateArgs";
-export type { Update } from "./getUpdateFn";
 export { getUpdateAndExecCmdFn, getUpdateFn } from "./getUpdateFn";
 export { initAndExecCmd } from "./initAndExecCmd";
 export { renderWithModel } from "./renderWithModel";

@@ -1,5 +1,5 @@
 import { cmd } from "../cmd";
-import type { Subscription } from "../Types";
+import type { Dispatch, Subscription } from "../Types";
 import { execSubscription } from "./execSubscription";
 
 interface Message {
@@ -90,5 +90,21 @@ describe("execSubscription", () => {
 		expect(mockDispatch).toHaveBeenNthCalledWith(2, { name: "foo", value: "second" });
 		expect(mockDestructor1).toHaveBeenCalledTimes(1);
 		expect(mockDestructor2).toHaveBeenCalledTimes(1);
+	});
+
+	it("accepts subscription functions which return nothing", () => {
+		// arrange
+		const mockDispatch = jest.fn();
+		const sub = (dispatch: Dispatch<Message>): void => {
+			dispatch({ name: "foo", value: "no destructor" });
+		};
+		const subscription: Subscription<Props, Model, Message> = () => [sub];
+
+		// act
+		const dispose = execSubscription(subscription, mockDispatch, model, props);
+
+		// assert
+		expect(mockDispatch).toHaveBeenCalledWith({ name: "foo", value: "no destructor" });
+		expect(dispose).not.toThrow();
 	});
 });

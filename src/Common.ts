@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useLayoutEffect, useRef } from "react";
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Services } from "./Init";
 import { isReduxDevToolsEnabled, type ReduxDevTools } from "./reduxDevTools";
 import {
@@ -83,14 +83,14 @@ function useRedux(name: string, getModel: () => unknown, setModel: (model: unkno
 		// The model is initialized during the first render, before we are connected, so we send it now.
 		devTools.init(callbacksRef.current.getModel());
 
-		const reduxUnsubscribe = devTools.subscribe((message) => {
+		devTools.subscribe((message) => {
 			if (message.type === "DISPATCH" && message.payload.type === "JUMP_TO_ACTION") {
 				callbacksRef.current.setModel(JSON.parse(message.state));
 			}
 		});
 
 		return () => {
-			reduxUnsubscribe();
+			devTools.unsubscribe();
 			devToolsRef.current = null;
 		};
 	}, [name]);
@@ -133,7 +133,7 @@ function runSubscription<TProps, TModel, TMessage extends Message>(
 	const subscriptionResult = subscription(model, props);
 
 	if (isSubscriptionFunctionArray(subscriptionResult)) {
-		const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((current) => current !== undefined);
+		const destructors = subscriptionResult.map((sub) => sub(dispatch)).filter((current) => typeof current === "function");
 
 		return function combinedDestructor() {
 			for (const destructor of destructors) {
@@ -155,15 +155,31 @@ function runSubscription<TProps, TModel, TMessage extends Message>(
  * @param model The current model.
  * @param props The current props.
  * @param initDispatch The dispatch function of the current initialization. A change triggers a re-subscription.
+ * @returns A stable function which ends the current subscription. It can be called more than once.
+ * It is used to end the subscription before the model is disposed.
  */
 function useSubscription<TProps, TModel, TMessage extends Message>(
 	subscription: Subscription<TProps, TModel, TMessage> | undefined,
 	model: TModel,
 	props: TProps,
 	initDispatch: Dispatch<TMessage>,
-): void {
+): () => void {
+	const destructorRef = useRef<(() => void) | undefined>(undefined);
+	const [unsubscribe] = useState(() => (): void => {
+		const destructor = destructorRef.current;
+
+		destructorRef.current = undefined;
+		destructor?.();
+	});
+
 	// biome-ignore lint/correctness/useExhaustiveDependencies: We only want to re-subscribe when the model has been re-initialized
-	useEffect(() => runSubscription(subscription, model, props, initDispatch), [initDispatch]);
+	useEffect(() => {
+		destructorRef.current = runSubscription(subscription, model, props, initDispatch);
+
+		return unsubscribe;
+	}, [initDispatch]);
+
+	return unsubscribe;
 }
 
 /**
@@ -323,16 +339,19 @@ function useInitCommands<TMessage>(
 
 /**
  * Calls the dispose function with the current model when the component unmounts or the `reInitOn` values change.
+ * The subscription is ended first, so the order is the same in both cases.
  * @param dispose The dispose function.
  * @param currentModelRef The ref to the current model. It is read when disposing, so the model changes of messages
  * which have not been rendered yet are included. It is `null` if the model has already been disposed and reset.
  * @param reInitOn The values which trigger a re-initialization.
+ * @param unsubscribe Ends the subscription of the model. It must be stable.
  * @param onDisposed Is called after the dispose function has been called.
  */
 function useDispose<TModel>(
 	dispose: DisposeFunction<TModel> | undefined,
 	currentModelRef: RefObject<Nullable<TModel>>,
 	reInitOn: unknown[] | undefined,
+	unsubscribe: () => void,
 	onDisposed: () => void,
 ): void {
 	// The cleanup runs later, so it reads the latest values through this ref.
@@ -344,6 +363,8 @@ function useDispose<TModel>(
 
 	useEffect(
 		() => () => {
+			unsubscribe();
+
 			const latest = latestRef.current;
 			const model = currentModelRef.current;
 

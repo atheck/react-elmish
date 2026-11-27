@@ -44,7 +44,6 @@ abstract class ElmComponentBase<TModel, TStoredModel, TMessage extends Message, 
 
 		this.#disposeHandler = disposeHandler;
 		this.#initialize = (): void => {
-			// Class components do not support the Redux DevTools.
 			const [model, commands] = runInit(name, init, this.props, () => null, fakeOptions?.model);
 
 			this.#currentModel = toStoredModel(model);

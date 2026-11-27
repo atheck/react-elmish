@@ -101,6 +101,4 @@ function getDiffFromPatches<TModel>(patches: Patch[], model: Immutable<TModel>):
 	return diff as Partial<TModel>;
 }
 
-export type { Update } from "../Types";
-
 export { getUpdateAndExecCmdFn, getUpdateFn, runUpdateWithDiff };
