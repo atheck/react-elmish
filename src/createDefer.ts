@@ -1,11 +1,11 @@
-import type { Cmd, DeferFunction, Message } from "./Types";
+import type { Commands, DeferFunction, Message } from "./Types";
 
 function createDefer<TModel, TMessage extends Message>(): [
 	DeferFunction<TModel, TMessage>,
-	() => [Partial<TModel>, (Cmd<TMessage> | undefined)[]],
+	() => [Partial<TModel>, Commands<TMessage>],
 ] {
 	let deferredModel: Partial<TModel> = {};
-	const deferredCommands: (Cmd<TMessage> | undefined)[] = [];
+	const deferredCommands: Commands<TMessage> = [];
 
 	const defer: DeferFunction<TModel, TMessage> = (tempDeferredModel, ...tempDeferredCommands) => {
 		deferredModel = { ...deferredModel, ...tempDeferredModel };

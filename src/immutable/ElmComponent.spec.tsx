@@ -77,6 +77,27 @@ describe("ElmComponent", () => {
 		expect(ref.current?.model).toStrictEqual({ count: 1 });
 	});
 
+	it("re-renders only if the model has changed", () => {
+		// arrange
+		const ref = createRef<RenderCountTestComponent>();
+
+		render(<RenderCountTestComponent ref={ref} />);
+
+		const initialRenderCount = ref.current?.renderCount;
+
+		// act
+		act(() => ref.current?.dispatch({ name: "Noop" }));
+
+		const renderCountAfterNoop = ref.current?.renderCount;
+
+		act(() => ref.current?.dispatch({ name: "Increment" }));
+
+		// assert
+		expect(initialRenderCount).toBe(1);
+		expect(renderCountAfterNoop).toBe(1);
+		expect(ref.current?.renderCount).toBe(2);
+	});
+
 	it("applies the model changes of the base handler called with callBase", () => {
 		// arrange
 		const ref = createRef<TestComponent>();
@@ -174,6 +195,31 @@ class LockTestComponent extends ElmComponent<LockModel, LockMessage, object> {
 
 	// biome-ignore lint/style/useThisInClassMethods: Test only.
 	public override render(): JSX.Element {
+		return <div />;
+	}
+}
+
+type RenderCountMessage = { name: "Noop" } | { name: "Increment" };
+
+class RenderCountTestComponent extends ElmComponent<LockModel, RenderCountMessage, object> {
+	public renderCount = 0;
+
+	public constructor(props: object) {
+		super(props, () => [{ count: 0 }], "RenderCountTest");
+	}
+
+	// biome-ignore lint/style/useThisInClassMethods: Test only.
+	public update = (model: Draft<LockModel>, msg: RenderCountMessage): UpdateReturnType<RenderCountMessage> => {
+		if (msg.name === "Increment") {
+			model.count++;
+		}
+
+		return [];
+	};
+
+	public override render(): JSX.Element {
+		this.renderCount++;
+
 		return <div />;
 	}
 }

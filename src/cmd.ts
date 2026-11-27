@@ -1,5 +1,5 @@
 import { isNoop, type NoopMessage } from "./noop";
-import type { Cmd, Dispatch, FallbackHandler, Message, Sub } from "./Types";
+import type { Cmd, Dispatch, Message, Sub } from "./Types";
 
 const cmd = {
 	/**
@@ -51,27 +51,15 @@ const cmd = {
 
 				return Promise.resolve(taskResult)
 					.then((result) => {
-						const msg = ofSuccess(result);
-
-						if (!isNoop(msg)) {
-							dispatch(msg);
-						}
+						dispatchUnlessNoop(dispatch, ofSuccess(result));
 					})
 					.catch((ex: unknown) => {
 						// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
-						const msg = ofError(ex as Error);
-
-						if (!isNoop(msg)) {
-							dispatch(msg);
-						}
+						dispatchUnlessNoop(dispatch, ofError(ex as Error));
 					});
 			} catch (ex: unknown) {
 				// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
-				const msg = ofError(ex as Error);
-
-				if (!isNoop(msg)) {
-					dispatch(msg);
-				}
+				dispatchUnlessNoop(dispatch, ofError(ex as Error));
 			}
 		};
 
@@ -89,24 +77,19 @@ const cmd = {
 		ofSuccess: (result: Awaited<TReturn>) => TSuccessMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TSuccessMessage> {
-		const bind = (
-			dispatch: Dispatch<TSuccessMessage>,
-			fallback: FallbackHandler = defaultFallbackHandler,
-		): Promise<void> | undefined => {
+		const bind = (dispatch: Dispatch<TSuccessMessage>): Promise<void> | undefined => {
 			try {
 				const taskResult = task(...args);
 
 				return Promise.resolve(taskResult)
 					.then((result) => {
-						const msg = ofSuccess(result);
-
-						if (!isNoop(msg)) {
-							dispatch(msg);
-						}
+						dispatchUnlessNoop(dispatch, ofSuccess(result));
 					})
-					.catch(() => fallback());
+					.catch(() => {
+						// The error case is ignored.
+					});
 			} catch {
-				fallback();
+				// The error case is ignored.
 			}
 		};
 
@@ -116,7 +99,7 @@ const cmd = {
 	/**
 	 * Creates a command out of a function and ignores the success case. This can also be an async function.
 	 * @param task The function to call.
-	 * @param ofError Creates the message to dispatch when the function runs successfully or, for an async function, the promise is rejected.
+	 * @param ofError Creates the message to dispatch when the function throws an error or, for an async function, the promise is rejected.
 	 * @param args The parameters of the task.
 	 */
 	ofError<TErrorMessage extends Message, TArgs extends unknown[]>(
@@ -124,27 +107,17 @@ const cmd = {
 		ofError: (error: Error) => TErrorMessage | NoopMessage,
 		...args: TArgs
 	): Cmd<TErrorMessage> {
-		const bind = (dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): Promise<void> | undefined => {
+		const bind = (dispatch: Dispatch<TErrorMessage>): Promise<unknown> | undefined => {
 			try {
 				const taskResult = task(...args);
 
-				return Promise.resolve(taskResult)
-					.then(() => fallback?.())
-					.catch((ex: unknown) => {
-						// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
-						const msg = ofError(ex as Error);
-
-						if (!isNoop(msg)) {
-							dispatch(msg);
-						}
-					});
+				return Promise.resolve(taskResult).catch((ex: unknown) => {
+					// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
+					dispatchUnlessNoop(dispatch, ofError(ex as Error));
+				});
 			} catch (ex: unknown) {
 				// biome-ignore lint/nursery/noUnsafeTypeAssertion: We only support Error types here.
-				const msg = ofError(ex as Error);
-
-				if (!isNoop(msg)) {
-					dispatch(msg);
-				}
+				dispatchUnlessNoop(dispatch, ofError(ex as Error));
 			}
 		};
 
@@ -156,19 +129,16 @@ const cmd = {
 	 * @param task The function to call.
 	 * @param args The parameters of the task.
 	 */
-	ofNone<TErrorMessage extends Message, TArgs extends unknown[]>(
-		task: (...args: TArgs) => unknown,
-		...args: TArgs
-	): Cmd<TErrorMessage> {
-		const bind = (_dispatch: Dispatch<TErrorMessage>, fallback?: FallbackHandler): Promise<void> | undefined => {
+	ofNone<TMessage extends Message, TArgs extends unknown[]>(task: (...args: TArgs) => unknown, ...args: TArgs): Cmd<TMessage> {
+		const bind = (): Promise<unknown> | undefined => {
 			try {
 				const taskResult = task(...args);
 
-				return Promise.resolve(taskResult)
-					.then(() => fallback?.())
-					.catch(() => fallback?.());
+				return Promise.resolve(taskResult).catch(() => {
+					// The error case is ignored.
+				});
 			} catch {
-				fallback?.();
+				// The error case is ignored.
 			}
 		};
 
@@ -176,8 +146,10 @@ const cmd = {
 	},
 };
 
-function defaultFallbackHandler(): void {
-	// blank
+function dispatchUnlessNoop<TMessage extends Message>(dispatch: Dispatch<TMessage>, msg: TMessage | NoopMessage): void {
+	if (!isNoop(msg)) {
+		dispatch(msg);
+	}
 }
 
 export { cmd };

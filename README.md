@@ -58,6 +58,7 @@ The source code for the demo lives in the [`demo/`](./demo) directory of this re
   - [From v7.x to v8.x](#from-v7x-to-v8x)
   - [From v8.x to v9.x](#from-v8x-to-v9x)
   - [From v9.x to v10.x](#from-v9x-to-v10x)
+  - [From v10.x to v11.x](#from-v10x-to-v11x)
 - [VS Code Snippets Extension](#vs-code-snippets-extension)
 
 ## Installation
@@ -145,7 +146,7 @@ export const update: UpdateMap<Props, Model, Message> = {
 Alternatively we can use an `update` function:
 
 ```ts
-export const update = (model: Model, msg: Msg, props: Props): UpdateReturnType<Model, Message> => {
+export const update = (model: Model, msg: Message, props: Props): UpdateReturnType<Model, Message> => {
     switch (msg.name) {
         case "increment":
             return [{ value: model.value + 1 }];
@@ -155,6 +156,18 @@ export const update = (model: Model, msg: Msg, props: Props): UpdateReturnType<M
     }
 };
 ```
+
+You can also annotate the whole function with the `UpdateFunction` type. Then the types of all parameters, including the `options` with `defer` and `callBase`, are inferred:
+
+```ts
+import { type UpdateFunction } from "react-elmish";
+
+export const update: UpdateFunction<Props, Model, Message> = (model, msg, props, { defer }) => {
+    // ...
+};
+```
+
+The same way you can type your `init` function with `InitFunction<Props, Model, Message>`. Both `react-elmish` and `react-elmish/immutable` export these types together with `Update` (an `UpdateMap` or an update function), `UpdateMapFunction` (a single handler of an `UpdateMap`), `UpdateFunctionOptions`, `DeferFunction`, `CallBaseFunction`, and `SubscriptionFunction`.
 
 > **Note:** If you are using **TypeScript** and **typescript-eslint**, you should enable the [switch-exhaustive-check](https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/switch-exhaustiveness-check.md) rule.
 
@@ -225,6 +238,8 @@ class App extends ElmComponent<Model, Message, Props> {
 ```
 
 > **Note**: When using a class component, you can only use an `update` function. Class components do not support `UpdateMap`s.
+>
+> Class components also do not support [subscriptions](#subscriptions), [re-initialization with `reInitOn`](#re-initialize-the-component), or the [Redux Dev Tools](#redux-dev-tools). Use the `useElmish` hook if you need one of these features.
 
 You can use these components like any other React component.
 
@@ -420,7 +435,7 @@ When `noop()` is returned from a callback, the dispatch is silently skipped — 
 
 ### Working with external sources of events
 
-If you want to use external sources of events (e.g. a timer), you can use a `subscription`. With this those events can be processed by our `update` handler.
+If you want to use external sources of events (e.g. a timer), you can pass a `subscription` to the `useElmish` hook (class components do not support subscriptions). With this those events can be processed by our `update` handler.
 
 Let's define a `Model` and a `Message`:
 
@@ -499,7 +514,7 @@ The destructor is called when the component is removed from the DOM.
 
 ## Re-Initialize the component
 
-If you want to re-initialize the component when a prop (or another value) changes, you can pass a `reInitOn` array to the `useElmish` hook. This array contains the dependencies that trigger a re-initialization of the component.
+If you want to re-initialize the component when a prop (or another value) changes, you can pass a `reInitOn` array to the `useElmish` hook (class components do not support this). This array contains the dependencies that trigger a re-initialization of the component.
 
 ```tsx
 interface Props {
@@ -548,6 +563,8 @@ The `dispose` function is called:
 - When the component is **unmounted**.
 - When `reInitOn` dependencies **change** (before the new `init` call), cleaning up the old session.
 
+In both cases the [subscription](#cleanup-subscriptions) of the model is ended first, so its destructor can still use the resources of the model before `dispose` releases them.
+
 > **Note**: The `dispose` function does not receive a `dispatch` function. It is intended purely for side-effect cleanup, not for dispatching messages, since the component is being torn down.
 
 ## Immutability
@@ -571,7 +588,7 @@ function App(props: Props): JSX.Element {
 You can simply update the draft of the model like this:
 
 ```ts
-import { type UpdateMap } from "react-elmish/immutable";
+import { cmd, type UpdateMap } from "react-elmish/immutable";
 
 const updateMap: UpdateMap<Props, Model, Message> = {
     increment(_msg, model) {
@@ -658,7 +675,7 @@ import { update } from "./MyComponent";
 const updateFn = getUpdateFn(update);
 
 // Call the update function in the test
-const [model, cmd] = updateFn(msg, model, props);
+const [newModel, cmd] = updateFn(msg, model, props);
 ```
 
 ## Setup
@@ -689,7 +706,7 @@ init({
 
 The error middleware function is called by the `handleError` function (see [Error handling](#error-handling)).
 
-The dispatch middleware function is called whenever a Message is dispatched.
+The dispatch middleware function is called for every message which is processed by a component, right before its update handler runs. Messages which are dropped are not passed to it, e.g. messages dispatched while the component re-initializes or messages of a previous initialization (see [Re-Initialize the component](#re-initialize-the-component)).
 
 ## Error handling
 
@@ -844,11 +861,11 @@ To inform the parent component about some action — for example, to close a dia
 1. Handle the message and call the callback function:
 
     ```ts Dialog.ts
-    {
+    const updateMap: UpdateMap<Props, Model, Message> = {
         // ...
-        close () {
+        close (_msg, _model, props) {
             return [{}, cmd.ofError(props.onClose, Msg.error)];
-        }
+        },
         // ...
     };
     ```
@@ -1113,7 +1130,7 @@ export function update (model: Model, msg: Message): UpdateReturnType<Model, Mes
 }
 
 // For the msg parameter we use the local CompositionMessage type
-const updateComposition = (model: Model, msg: CompositionMessage): Elm.UpdateReturnType<Model, Message> => {
+const updateComposition = (model: Model, msg: CompositionMessage): UpdateReturnType<Model, Message> => {
     switch (msg.name) {
         case "myMessage":
             return [{}];
@@ -1162,7 +1179,7 @@ const updatedModel = produce(model, (draft) => {
 });
 ```
 
-This package also re-exports the `UpdateFunction` and `UpdateMapFunction` types. Most applications will never need this package directly, since `useElmish` and `ElmComponent` already wire this up for you.
+This package also re-exports the `UpdateFunction` and `UpdateMapFunction` types, which are available from `react-elmish` and `react-elmish/immutable` as well. Most applications will never need this package directly, since `useElmish` and `ElmComponent` already wire this up for you.
 
 ## Testing
 
@@ -1177,8 +1194,11 @@ To test your **update** handler you can use some helper functions in `react-elmi
 | `getCreateUpdateArgs` | Creates a factory function to create a message, a model, and props in a test. |
 | `createUpdateArgsFactory` | This is an alternative for `getCreateUpdateArgs`. Creates a factory function to create a message, a model, and props in a test. |
 | `getCreateModelAndProps` | Creates a factory function to create a model and props, which can be passed to an `update` or `subscription` function in a test. |
+| `createModelAndProps` | Creates a model with the `init` function and props in a test. It takes the `init` function, a function to create the initial props, and optional templates to override the model and the props. |
 | `execCmd` | Executes the provided command and returns an array of all messages. |
+| `execCmdWithDispatch` | Executes the provided commands with the given `dispatch` function, e.g. a `jest.fn()`. Unlike `execCmd`, it does not wait for asynchronous commands. |
 | `execSubscription` | Executes a `subscription` function with a fake dispatch function and returns its combined dispose function. |
+| `renderWithModel` | Renders a component with a fake model and an optional fake `dispatch` function, see [UI Tests](#ui-tests). |
 
 ### Testing the init function
 
@@ -1210,15 +1230,16 @@ import { updateMap } from "./MyComponent";
 const updateFn = getUpdateFn(updateMap);
 
 // Call the update function in the test
-const [model, cmd] = updateFn(msg, model, props);
+const [newModel, cmd] = updateFn(msg, model, props);
 ```
 
 A simple test:
 
 ```ts
-import { getCreateUpdateArgs, createUpdateArgsFactory, execCmd } from "react-elmish/testing";
-import { init, Msg } from "./MyComponent";
+import { getCreateUpdateArgs, createUpdateArgsFactory, execCmd, getUpdateFn } from "react-elmish/testing";
+import { init, Msg, updateMap } from "./MyComponent";
 
+const updateFn = getUpdateFn(updateMap);
 const createUpdateArgs = getCreateUpdateArgs(init, () => ({ /* initial props */ }));
 // Or: const createUpdateArgs = createUpdateArgsFactory(() => ({ /* initial model */ }), () => ({ /* initial props */ }));
 
@@ -1259,17 +1280,18 @@ A command that does not dispatch any message resolves its slot with `null`. This
 There is an alternative function `getUpdateAndExecCmdFn` to get the `update` function for an update map, which immediately invokes the command and returns the messages.
 
 ```ts
-import { createUpdateArgs, getUpdateAndExecCmdFn } from "react-elmish/testing";
+import { getCreateUpdateArgs, getUpdateAndExecCmdFn } from "react-elmish/testing";
+import { init, Msg, updateMap } from "./MyComponent";
 
+const createUpdateArgs = getCreateUpdateArgs(init, () => ({ /* initial props */ }));
 const updateAndExecCmdFn = getUpdateAndExecCmdFn(updateMap);
 
 ...
 it("returns the correct cmd", async () => {
     // arrange
-    const args = createUpdateArgs(Msg.asyncTest());
-
-    // mock function which is called when the "AsyncTest" message is handled
+    // mock function which is called when the "asyncTest" message is handled, e.g. `cmd.ofSuccess(props.loadData, Msg.asyncTestSuccess)`
     const functionMock = jest.fn();
+    const args = createUpdateArgs(Msg.asyncTest(), {}, { loadData: functionMock });
 
     // act
     const [, messages] = await updateAndExecCmdFn(...args);
@@ -1292,10 +1314,10 @@ You may have something like this in your `update` map:
 Then the `consecutiveUpdateFn` will execute all these commands in a row and return the final model after all commands have been executed.
 
 ```ts
-import { getConsecutiveUpdateFn, createUpdateArgsFactory } from "react-elmish/testing";
-import { init, Msg } from "./MyComponent";
+import { getConsecutiveUpdateFn, getCreateUpdateArgs } from "react-elmish/testing";
+import { init, Msg, updateMap } from "./MyComponent";
 
-const createUpdateArgs = createUpdateArgsFactory(init, () => ({ /* initial props */ }));
+const createUpdateArgs = getCreateUpdateArgs(init, () => ({ /* initial props */ }));
 const consecutiveUpdateFn = getConsecutiveUpdateFn(updateMap);
 
 it("updates the model and executes all commands", async () => {
@@ -1389,6 +1411,8 @@ init({
 
 Hint: You should only enable this in development mode.
 
+The Redux Dev Tools are only supported for components using the `useElmish` hook, not for class components.
+
 ## Migrations
 
 ### From v1.x to v2.x
@@ -1406,14 +1430,7 @@ Hint: You should only enable this in development mode.
 
 The signature of `useElmish` has changed. It takes an options object now. Thus there is no need for the `useElmishMap` function. Use the new `useElmish` hook with an `UpdateMap` instead.
 
-To use the old `useElmish` and `useElmishMap` functions, import them from the legacy namespace:
-
-```ts
-import { useElmish } from "react-elmish/dist/legacy/useElmish";
-import { useElmishMap } from "react-elmish/dist/legacy/useElmishMap";
-```
-
-**Notice**: These functions are marked as deprecated and will be removed in a later release.
+v3 still shipped the old `useElmish` and `useElmishMap` functions in a legacy namespace. They have been removed in v4 (see below).
 
 ### From v3.x to v4.x
 

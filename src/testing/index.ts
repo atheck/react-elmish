@@ -1,4 +1,5 @@
 export type { RenderWithModelOptions } from "../fakeOptions";
+export type { Update } from "../Types";
 export { createModelAndProps } from "./createModelAndProps";
 export type { UpdateArgsFactory } from "./createUpdateArgsFactory";
 export { createUpdateArgsFactory } from "./createUpdateArgsFactory";

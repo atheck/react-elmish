@@ -46,4 +46,14 @@ describe("createCallBase", () => {
 		expect(mockCallBase).toHaveBeenCalledWith(updateMap1.test);
 		expect(mockDefer).toHaveBeenCalledWith({ foo: "bar" }, { name: "second" });
 	});
+
+	it("type checks the options of the base handler", () => {
+		// arrange
+		const handler: UpdateMap<Props, Model, Message1>["test"] = (_msg, _model, _props, { callBase }) =>
+			// @ts-expect-error -- The base handler must not expect options which are not passed by callBase.
+			callBase((_baseMsg, _baseModel, _baseProps, _options: { unknownOption: string }) => [{}]);
+
+		// assert
+		expect(handler).toBeInstanceOf(Function);
+	});
 });

@@ -232,7 +232,7 @@ describe("execCmd", () => {
 		expect(messages).toStrictEqual([null]);
 	});
 
-	it("resolves for a sub that neither dispatches nor calls the fallback", async () => {
+	it("resolves for a sub that does not dispatch", async () => {
 		// arrange
 		const commands = cmd.ofSub<Message>(() => {
 			// does not dispatch

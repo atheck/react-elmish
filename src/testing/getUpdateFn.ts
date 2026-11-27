@@ -1,12 +1,21 @@
-import { createCallBase } from "../createCallBase";
-import { createDefer } from "../createDefer";
-import type { Message, Nullable, UpdateFunctionOptions, UpdateMap, UpdateReturnType } from "../Types";
-import { callUpdateMap } from "../useElmish";
+import { runUpdate } from "../runUpdate";
+import type { Message, Nullable, Update, UpdateFunctionOptions, UpdateReturnType } from "../Types";
 import { execCmd } from "./execCmd";
 
+type UpdateFn<TProps, TModel, TMessage extends Message> = (
+	msg: TMessage,
+	model: TModel,
+	props: TProps,
+	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
+) => UpdateReturnType<TModel, TMessage>;
+
+type UpdateAndExecCmdFn<TProps, TModel, TMessage extends Message> = (
+	...args: Parameters<UpdateFn<TProps, TModel, TMessage>>
+) => Promise<[Partial<TModel>, Nullable<TMessage>[]]>;
+
 /**
- * Creates an update function out of an UpdateMap.
- * @param updateMap The UpdateMap.
+ * Creates an update function out of an UpdateMap or an update function.
+ * @param update The UpdateMap or update function.
  * @returns The created update function which can be used in tests.
  * @example
  * const updateFn = getUpdateFn(update);
@@ -15,34 +24,16 @@ import { execCmd } from "./execCmd";
  * const [model, cmd] = updateFn(...args);
  */
 function getUpdateFn<TProps, TModel, TMessage extends Message>(
-	updateMap: UpdateMap<TProps, TModel, TMessage>,
-): (
-	msg: TMessage,
-	model: TModel,
-	props: TProps,
-	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-) => UpdateReturnType<TModel, TMessage> {
-	return function updateFn(msg, model, props, optionsTemplate): UpdateReturnType<TModel, TMessage> {
-		const [defer, getDeferred] = createDefer<TModel, TMessage>();
-		const callBase = createCallBase(msg, model, props, { defer });
-
-		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
-			defer,
-			callBase,
-			...optionsTemplate,
-		};
-
-		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props, options);
-
-		const [deferredModel, deferredCommands] = getDeferred();
-
-		return [{ ...deferredModel, ...updatedModel }, ...commands, ...deferredCommands];
+	update: Update<TProps, TModel, TMessage>,
+): UpdateFn<TProps, TModel, TMessage> {
+	return function updateFn(msg, model, props, optionsTemplate) {
+		return runUpdate(update, msg, model, props, optionsTemplate);
 	};
 }
 
 /**
- * Creates an update function out of an UpdateMap which immediately executes the command.
- * @param updateMap The UpdateMap.
+ * Creates an update function out of an UpdateMap or an update function which immediately executes the command.
+ * @param update The UpdateMap or update function.
  * @returns The created update function which can be used in tests.
  * @example
  * const updateAndExecCmd = getUpdateAndExecCmdFn(update);
@@ -51,30 +42,14 @@ function getUpdateFn<TProps, TModel, TMessage extends Message>(
  * const [model, messages] = await updateAndExecCmd(...args);
  */
 function getUpdateAndExecCmdFn<TProps, TModel, TMessage extends Message>(
-	updateMap: UpdateMap<TProps, TModel, TMessage>,
-): (
-	msg: TMessage,
-	model: TModel,
-	props: TProps,
-	optionsTemplate?: Partial<UpdateFunctionOptions<TProps, TModel, TMessage>>,
-) => Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
-	return async function updateAndExecCmdFn(msg, model, props, optionsTemplate): Promise<[Partial<TModel>, Nullable<TMessage>[]]> {
-		const [defer, getDeferred] = createDefer<TModel, TMessage>();
-		const callBase = createCallBase(msg, model, props, { defer });
+	update: Update<TProps, TModel, TMessage>,
+): UpdateAndExecCmdFn<TProps, TModel, TMessage> {
+	const updateFn = getUpdateFn(update);
 
-		const options: UpdateFunctionOptions<TProps, TModel, TMessage> = {
-			defer,
-			callBase,
-			...optionsTemplate,
-		};
+	return async function updateAndExecCmdFn(...args) {
+		const [updatedModel, ...commands] = updateFn(...args);
 
-		const [updatedModel, ...commands] = callUpdateMap(updateMap, msg, model, props, options);
-
-		const [deferredModel, deferredCommands] = getDeferred();
-
-		const messages = await execCmd(...commands, ...deferredCommands);
-
-		return [{ ...deferredModel, ...updatedModel }, messages];
+		return [updatedModel, await execCmd(...commands)];
 	};
 }
 

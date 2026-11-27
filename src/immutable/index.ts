@@ -10,16 +10,24 @@ export type {
 	Cmd,
 	Dispatch,
 	DisposeFunction,
+	InitFunction,
 	InitResult,
 	Message,
+	MsgSource,
+	SubscriptionFunction,
 	SubscriptionResult,
 } from "../Types";
 export { ElmComponent } from "./ElmComponent";
 export { errorHandler, handleError } from "./ErrorHandling";
 export type {
+	CallBaseFunction,
+	DeferFunction,
 	Subscription,
+	Update,
+	UpdateFunction,
 	UpdateFunctionOptions,
 	UpdateMap,
+	UpdateMapFunction,
 	UpdateReturnType,
 } from "./Types";
 export type { UseElmishOptions } from "./useElmish";
